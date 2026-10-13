@@ -1,0 +1,387 @@
+{% extends "layout.html" %}
+{% block title %}PTDex :: Leaderboards{% endblock %}
+{% block body %}
+{#
+  PLAYER LEADERBOARDS -- the board the top nav opens.
+
+  Re-themed onto the site's own tokens. It was the last page still wearing raw
+  Bootstrap (container / nav-tabs / table-striped / badge bg-warning) against a
+  site that looks nothing like Bootstrap, which is why it read as foreign.
+
+  The Bootstrap tab MECHANISM is kept (data-bs-toggle) -- bootstrap.bundle is
+  already loaded by layout.html, so restyling is far less risky than replacing
+  working behaviour with hand-rolled JS. Only the skin changes.
+
+  Top three of each board get a plaque, matching the boss pages.
+#}
+<style>
+  .lbplay{--void:#05080e;--panel:#0d1420;--panel2:#111b2b;--cell:#0c1420;
+    --line:#1a2637;--line2:#25384f;--arc:#4db2ff;--arc-hi:#8fd0ff;--arc-dp:#1d4a75;
+    --ember:#ff8a4a;--ember-hi:#ffc08e;--gold:#e5cc80;--green:#5fe0a3;
+    --silver:#d7e0ea;--bronze:#c8873f;
+    --ctext:#dce7f5;--muted:#7f92a9;--dim:#55677d;
+    --lserif:Georgia,"Iowan Old Style","Times New Roman",serif;
+    --lmono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+    position:relative;z-index:1;max-width:74rem;margin:1.4rem auto 4rem;
+    padding:0 1.15rem;color:var(--ctext)}
+
+  .lbp-sky{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden}
+  .lbp-sky .aur{position:absolute;inset:-20%;filter:blur(70px);opacity:.26}
+  .lbp-sky .aur i{position:absolute;border-radius:50%;mix-blend-mode:screen;
+    animation:lbpAu 27s ease-in-out infinite}
+  .lbp-sky .a1{width:470px;height:470px;left:-3%;top:-12%;
+    background:radial-gradient(circle,#1f6dd0,transparent 66%)}
+  .lbp-sky .a2{width:510px;height:510px;right:-7%;top:-16%;
+    background:radial-gradient(circle,#7b53d6,transparent 66%);animation-delay:-9s}
+  .lbp-sky .a3{width:520px;height:520px;left:42%;bottom:-36%;
+    background:radial-gradient(circle,#b3541e,transparent 66%);animation-delay:-16s}
+  @keyframes lbpAu{0%,100%{transform:translate(0,0) scale(1)}
+    50%{transform:translate(24px,-18px) scale(1.08)}}
+  .lbp-sky canvas{position:absolute;inset:-50px;opacity:.45;
+    animation:lbpDrift 52s ease-in-out infinite}
+  @keyframes lbpDrift{0%,100%{transform:translate(0,0)}50%{transform:translate(22px,-16px)}}
+
+  .lbplay .eyebrow{font-family:var(--lmono);font-size:.66rem;letter-spacing:.26em;
+    text-transform:uppercase;color:var(--ember);margin-bottom:.85rem}
+
+  .lbplay .hero{position:relative;border:1px solid var(--line2);border-radius:1.1rem;
+    overflow:hidden;background:linear-gradient(180deg,var(--panel),#080d16);
+    box-shadow:0 30px 70px rgba(0,0,0,.6);margin-bottom:1.35rem}
+  .lbplay .hero .aur2{position:absolute;inset:-60% -20% auto -20%;height:200%;
+    pointer-events:none;background:conic-gradient(from 200deg,rgba(77,178,255,0),
+      rgba(77,178,255,.20),rgba(229,204,128,.13),rgba(255,138,74,.16),rgba(77,178,255,0));
+    filter:blur(58px);animation:lbpSpin 42s linear infinite}
+  @keyframes lbpSpin{to{transform:rotate(360deg)}}
+  .lbplay .hero .in{position:relative;padding:1.6rem 1.5rem 1.4rem}
+  .lbplay h1{font-family:var(--lserif);font-size:clamp(1.9rem,1.5rem+1.8vw,2.8rem);
+    margin:0 0 .4rem;font-weight:700;letter-spacing:-.015em;color:#fff}
+  .lbplay .lede{color:var(--muted);max-width:38rem;line-height:1.6;margin:0}
+  .lbplay .tots{display:flex;gap:1.9rem;flex-wrap:wrap;margin-top:1.05rem}
+  .lbplay .tot .n{font-family:var(--lserif);font-size:1.7rem;font-weight:700;line-height:1;
+    font-variant-numeric:tabular-nums;color:var(--arc-hi)}
+  .lbplay .tot .n.g{color:var(--gold)}
+  .lbplay .tot .n.e{color:var(--ember)}
+  .lbplay .tot .k{font-family:var(--lmono);font-size:.58rem;letter-spacing:.14em;
+    text-transform:uppercase;color:var(--dim);margin-top:.32rem}
+
+  /* ---- board selector (bootstrap tabs, restyled) ---- */
+  .lbplay .nav-tabs{display:flex;gap:.35rem;flex-wrap:wrap;border:0;margin:0 0 1.2rem;
+    padding:0;list-style:none}
+  .lbplay .nav-tabs .nav-item{margin:0}
+  .lbplay .nav-tabs .nav-link{font-family:var(--lmono);font-size:.68rem;letter-spacing:.13em;
+    text-transform:uppercase;font-weight:700;color:var(--muted);text-decoration:none;
+    padding:.5rem 1rem;border-radius:.45rem;border:1px solid var(--line2);
+    background:rgba(255,255,255,.02);transition:all .15s;cursor:pointer}
+  .lbplay .nav-tabs .nav-link:hover{color:var(--arc-hi);border-color:var(--arc-dp);
+    background:rgba(143,208,255,.05)}
+  .lbplay .nav-tabs .nav-link.active{color:#0a0f18;background:var(--ember);
+    border-color:var(--ember)}
+
+  /* ---- plaques ---- */
+  .lbplay .podium{display:grid;grid-template-columns:repeat(3,1fr);gap:.8rem;
+    margin-bottom:.9rem}
+  .lbplay .plq{position:relative;display:block;text-decoration:none;color:inherit;
+    border-radius:.85rem;padding:1.05rem 1.1rem 1rem;
+    background:linear-gradient(160deg,#1a2130,#0d131c);border:1px solid var(--line2);
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.055),inset 0 -2px 6px rgba(0,0,0,.4),
+               0 4px 16px rgba(0,0,0,.35);
+    transition:transform .16s,box-shadow .16s,border-color .16s}
+  .lbplay .plq:hover{transform:translateY(-2px);border-color:var(--arc-dp);
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.07),0 10px 26px rgba(0,0,0,.5)}
+  .lbplay .plq.r1{border-color:rgba(229,204,128,.45);
+    background:linear-gradient(160deg,#241f16,#0f1219)}
+  .lbplay .plq.r1:hover{border-color:var(--gold)}
+  .lbplay .plq .medal{position:absolute;top:-.6rem;left:1.05rem;width:1.75rem;height:1.75rem;
+    border-radius:50%;display:grid;place-items:center;font-family:var(--lmono);
+    font-size:.7rem;font-weight:700;color:#0a0f18;background:var(--line2);
+    border:2px solid #0d1420}
+  .lbplay .plq.r1 .medal{background:linear-gradient(145deg,#fff2cd,var(--gold));
+    box-shadow:0 0 14px rgba(229,204,128,.35)}
+  .lbplay .plq.r2 .medal{background:linear-gradient(145deg,#f2f7fc,var(--silver))}
+  .lbplay .plq.r3 .medal{background:linear-gradient(145deg,#e8b075,var(--bronze))}
+  .lbplay .plq .cap{font-family:var(--lmono);font-size:.55rem;letter-spacing:.16em;
+    text-transform:uppercase;color:var(--dim);margin:.5rem 0 .3rem}
+  .lbplay .plq .who{font-family:var(--lserif);font-size:1.3rem;font-weight:700;
+    line-height:1.2;color:var(--arc-hi);margin-bottom:.15rem}
+  .lbplay .plq.r1 .who{background:linear-gradient(175deg,#fff6e2 8%,var(--gold) 46%,#a07a32 100%);
+    -webkit-background-clip:text;background-clip:text;color:transparent;
+    text-shadow:0 1px 0 rgba(0,0,0,.45)}
+  .lbplay .plq .guild{font-size:.76rem;color:var(--muted);margin-bottom:.55rem;
+    overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .lbplay .plq .big{font-family:var(--lmono);font-size:1.5rem;font-weight:700;
+    font-variant-numeric:tabular-nums;line-height:1;color:var(--gold)}
+  .lbplay .plq .sub{display:flex;gap:.7rem;flex-wrap:wrap;margin-top:.5rem;
+    font-family:var(--lmono);font-size:.63rem;color:var(--dim)}
+  .lbplay .plq .sub b{color:var(--muted);font-weight:600}
+
+  /* ---- tables ---- */
+  .lbplay .tbl{border:1px solid var(--line);border-radius:.75rem;overflow:hidden;
+    background:var(--panel)}
+  .lbplay .scroll{overflow-x:auto}
+  .lbplay table{width:100%;border-collapse:collapse;font-size:.87rem;margin:0}
+  .lbplay thead th{font-family:var(--lmono);font-size:.58rem;letter-spacing:.13em;
+    text-transform:uppercase;color:var(--dim);font-weight:700;text-align:left;
+    padding:.65rem .85rem;background:var(--panel2);border-bottom:1px solid var(--line);
+    white-space:nowrap}
+  .lbplay tbody td{padding:.55rem .85rem;border-bottom:1px solid rgba(255,255,255,.035);
+    vertical-align:middle}
+  .lbplay tbody tr:last-child td{border-bottom:0}
+  .lbplay tbody tr:hover{background:rgba(143,208,255,.045)}
+  .lbplay .rk{font-family:var(--lmono);color:var(--dim);width:3rem;
+    font-variant-numeric:tabular-nums}
+  .lbplay .num{font-family:var(--lmono);font-variant-numeric:tabular-nums;text-align:right}
+  .lbplay td a{color:var(--arc-hi);text-decoration:none;font-weight:600}
+  .lbplay td a:hover{text-decoration:underline}
+  .lbplay td .gld a{color:var(--muted);font-weight:400}
+  .lbplay td .gld a:hover{color:var(--arc-hi)}
+  .lbplay .cls{color:var(--dim);font-size:.82rem}
+  .lbplay .none{color:var(--dim)}
+  /* the score chip -- ember, matching the site accent rather than bootstrap gold */
+  .lbplay .score{display:inline-block;font-family:var(--lmono);font-weight:700;
+    font-variant-numeric:tabular-nums;font-size:.82rem;color:var(--ember-hi);
+    background:rgba(255,138,74,.12);border:1px solid rgba(255,138,74,.3);
+    border-radius:.35rem;padding:.1rem .5rem}
+  .lbplay .gs{display:inline-block;font-family:var(--lmono);font-weight:700;
+    font-variant-numeric:tabular-nums;font-size:.82rem;color:var(--gold);
+    background:rgba(229,204,128,.1);border:1px solid rgba(229,204,128,.28);
+    border-radius:.35rem;padding:.1rem .5rem}
+  /* Parse keeps the WoW-style tier colour it is given by lb_parse_color, so the
+     number means the same thing here as on the raid boards. */
+  .lbplay .parse{font-family:var(--lmono);font-weight:700;font-variant-numeric:tabular-nums;
+    font-size:.85rem}
+  .lbplay .aa{display:inline-block;font-family:var(--lmono);font-weight:700;
+    font-variant-numeric:tabular-nums;font-size:.82rem;color:var(--green);
+    background:rgba(95,224,163,.1);border:1px solid rgba(95,224,163,.28);
+    border-radius:.35rem;padding:.1rem .5rem}
+
+  .lbplay .expl{margin-top:1.4rem;padding:.95rem 1.1rem;border:1px solid var(--line);
+    border-radius:.7rem;background:rgba(255,255,255,.015);font-family:var(--lmono);
+    font-size:.68rem;color:var(--muted);line-height:1.7}
+  .lbplay .expl b{color:var(--arc-hi)}
+  .lbplay .expl a{color:var(--arc-hi);text-decoration:none}
+  .lbplay .expl a:hover{text-decoration:underline}
+
+  @media(max-width:62rem){.lbplay .podium{grid-template-columns:1fr}}
+  @media(prefers-reduced-motion:reduce){
+    .lbp-sky .aur i,.lbp-sky canvas,.lbplay .hero .aur2{animation:none}
+    .lbplay .plq:hover{transform:none}
+  }
+</style>
+
+{% set MEDAL = ['r1','r2','r3'] %}
+
+{# One plaque. `metric` is the headline number; `sub` is supporting detail. #}
+{% macro plaque(char, i, metric, label, sub) %}
+<a class="plq {{ MEDAL[i] }}"
+   href="{{ url_for('characters.character_profile', char_id=char.id) }}">
+  <span class="medal">{{ i + 1 }}</span>
+  <div class="cap">{{ label }}</div>
+  <div class="who">{{ char.name }}</div>
+  <div class="guild">
+    {%- if char.guild_name %}{{ char.guild_name }}{% else %}<span class="none">No guild</span>{% endif -%}
+  </div>
+  <div class="big">{{ metric }}</div>
+  <div class="sub">{{ sub|safe }}</div>
+</a>
+{% endmacro %}
+
+<div class="lbp-sky" aria-hidden="true">
+  <div class="aur"><i class="a1"></i><i class="a2"></i><i class="a3"></i></div>
+  <canvas id="lbp-stars"></canvas>
+</div>
+
+<div class="lbplay">
+  <div class="eyebrow">PTDEX // PLAYER.RANKINGS</div>
+  {% with lbtab = 'players' %}{% include 'leaderboard_tabs.html' %}{% endwith %}
+
+  <div class="hero">
+    <div class="aur2"></div>
+    <div class="in">
+      <h1>Leaderboards</h1>
+      <p class="lede">Every ranked character on Project Triune, scored on level, alternate
+        advancement, equipped gear and raid parse.</p>
+      <div class="tots">
+        <div class="tot"><div class="n">{{ top_players|length }}</div>
+          <div class="k">Ranked players</div></div>
+        {% if top_players %}
+        <div class="tot"><div class="n e">{{ top_players[0].score }}</div>
+          <div class="k">Highest score</div></div>
+        {% endif %}
+        {% if top_gear %}
+        <div class="tot"><div class="n g">{{ top_gear[0].gear_score }}</div>
+          <div class="k">Best gear score</div></div>
+        {% endif %}
+        {% if top_aa %}
+        <div class="tot"><div class="n">{{ '{:,}'.format(top_aa[0].aa_points or 0) }}</div>
+          <div class="k">Most AA spent</div></div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <ul class="nav nav-tabs" id="leaderboardTabs" role="tablist">
+    <li class="nav-item" role="presentation">
+      <button class="nav-link active" id="players-tab" data-bs-toggle="tab"
+              data-bs-target="#players-pane" type="button" role="tab"
+              aria-controls="players-pane" aria-selected="true">Top Players</button>
+    </li>
+    <li class="nav-item" role="presentation">
+      <button class="nav-link" id="aa-tab" data-bs-toggle="tab" data-bs-target="#aa-pane"
+              type="button" role="tab" aria-controls="aa-pane"
+              aria-selected="false">Top AA Spent</button>
+    </li>
+    <li class="nav-item" role="presentation">
+      <button class="nav-link" id="gear-tab" data-bs-toggle="tab" data-bs-target="#gear-pane"
+              type="button" role="tab" aria-controls="gear-pane"
+              aria-selected="false">Top Gear Score</button>
+    </li>
+  </ul>
+
+  <div class="tab-content" id="leaderboardTabsContent">
+
+    {# ============ TOP PLAYERS ============ #}
+    <div class="tab-pane fade show active" id="players-pane" role="tabpanel"
+         aria-labelledby="players-tab">
+      {% if top_players %}
+      <div class="podium">
+        {% for p in top_players[:3] %}
+          {# Parse is one of the four things Player Score is built from, so it
+             belongs on the plaque next to the other three. #}
+          {{ plaque(p, loop.index0, p.score,
+                    'Highest player score' if loop.first else ('2nd overall' if loop.index == 2 else '3rd overall'),
+                    '<b>' ~ p.class_name ~ '</b> · lvl ' ~ p.level ~ ' · ' ~ '{:,}'.format(p.aa) ~ ' AA'
+                    ~ (' · parse <b style="color:' ~ p.parse_trophy.color ~ '">' ~ '%.0f'|format(p.parse_score) ~ '</b>' if p.parse_trophy else '')) }}
+        {% endfor %}
+      </div>
+      {% endif %}
+      <div class="tbl"><div class="scroll">
+        <table>
+          <thead><tr>
+            <th class="rk">#</th><th>Name</th><th>Guild</th><th>Class</th>
+            <th class="num">Level</th><th class="num">AA Spent</th>
+            <th class="num">Gear</th><th class="num">Parse</th><th class="num">Player Score</th>
+          </tr></thead>
+          <tbody>
+          {% for char in top_players[3:] %}
+          <tr>
+            <td class="rk">{{ char.rank }}</td>
+            <td><a href="{{ url_for('characters.character_profile', char_id=char.id) }}">{{ char.name }}</a></td>
+            <td class="gld">{% if char.guild_id %}<a href="{{ url_for('guilds.guild_detail', guild_id=char.guild_id) }}">{{ char.guild_name }}</a>{% else %}<span class="none">&mdash;</span>{% endif %}</td>
+            <td class="cls">{{ char.class_name }}</td>
+            <td class="num">{{ char.level }}</td>
+            <td class="num">{{ '{:,}'.format(char.aa) }}</td>
+            <td class="num">{{ char.gear_score }}</td>
+            <td class="num">{% if char.parse_trophy %}<span class="parse" title="{{ char.parse_trophy.label }} parse tier" style="color:{{ char.parse_trophy.color }}">{{ '%.0f'|format(char.parse_score) }}</span>{% else %}<span class="none">&mdash;</span>{% endif %}</td>
+            <td class="num"><span class="score">{{ char.score }}</span></td>
+          </tr>
+          {% else %}
+          <tr><td colspan="9" class="none" style="text-align:center;padding:1.4rem">No characters found.</td></tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      </div></div>
+    </div>
+
+    {# ============ TOP AA ============ #}
+    <div class="tab-pane fade" id="aa-pane" role="tabpanel" aria-labelledby="aa-tab">
+      {% if top_aa %}
+      <div class="podium">
+        {% for p in top_aa[:3] %}
+          {{ plaque(p, loop.index0, '{:,}'.format(p.aa_points or 0),
+                    'Most AA spent' if loop.first else ('2nd most' if loop.index == 2 else '3rd most'),
+                    '<b>' ~ p.class_name ~ '</b> · ' ~ p.race_name) }}
+        {% endfor %}
+      </div>
+      {% endif %}
+      <div class="tbl"><div class="scroll">
+        <table>
+          <thead><tr>
+            <th class="rk">#</th><th>Name</th><th>Guild</th><th>Class</th>
+            <th class="num">AA Spent</th>
+          </tr></thead>
+          <tbody>
+          {% for char in top_aa[3:] %}
+          <tr>
+            <td class="rk">{{ loop.index + 3 }}</td>
+            <td><a href="{{ url_for('characters.character_profile', char_id=char.id) }}">{{ char.name }}</a></td>
+            <td class="gld">{% if char.guild_id %}<a href="{{ url_for('guilds.guild_detail', guild_id=char.guild_id) }}">{{ char.guild_name }}</a>{% else %}<span class="none">&mdash;</span>{% endif %}</td>
+            <td class="cls">{{ char.class_name }}</td>
+            <td class="num"><span class="aa">{{ '{:,}'.format(char.aa_points or 0) }}</span></td>
+          </tr>
+          {% else %}
+          <tr><td colspan="5" class="none" style="text-align:center;padding:1.4rem">No characters found.</td></tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      </div></div>
+    </div>
+
+    {# ============ TOP GEAR ============ #}
+    <div class="tab-pane fade" id="gear-pane" role="tabpanel" aria-labelledby="gear-tab">
+      <p class="lede" style="margin:0 0 1rem">Gear score is a 0&ndash;1000 rating of equipped
+        gear, where <b style="color:var(--ctext)">1000 is a full best-in-slot set attainable in
+        the current era</b>.</p>
+      {% if top_gear %}
+      <div class="podium">
+        {% for p in top_gear[:3] %}
+          {{ plaque(p, loop.index0, p.gear_score,
+                    'Best geared' if loop.first else ('2nd best' if loop.index == 2 else '3rd best'),
+                    '<b>' ~ p.class_name ~ '</b> · lvl ' ~ p.level) }}
+        {% endfor %}
+      </div>
+      {% endif %}
+      <div class="tbl"><div class="scroll">
+        <table>
+          <thead><tr>
+            <th class="rk">#</th><th>Name</th><th>Guild</th><th>Class</th>
+            <th class="num">Level</th><th class="num">Gear Score</th>
+          </tr></thead>
+          <tbody>
+          {% for char in top_gear[3:] %}
+          <tr>
+            <td class="rk">{{ loop.index + 3 }}</td>
+            <td><a href="{{ url_for('characters.character_profile', char_id=char.id) }}">{{ char.name }}</a></td>
+            <td class="gld">{% if char.guild_id %}<a href="{{ url_for('guilds.guild_detail', guild_id=char.guild_id) }}">{{ char.guild_name }}</a>{% else %}<span class="none">&mdash;</span>{% endif %}</td>
+            <td class="cls">{{ char.class_name }}</td>
+            <td class="num">{{ char.level }}</td>
+            <td class="num"><span class="gs">{{ char.gear_score }}</span></td>
+          </tr>
+          {% else %}
+          <tr><td colspan="6" class="none" style="text-align:center;padding:1.4rem">
+            No gear scores yet &mdash; run <code>build_gear_scores.py</code>.</td></tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      </div></div>
+    </div>
+  </div>
+
+  <div class="expl">
+    <b>Player Score</b> is a weighted blend out of 1000 &mdash; level, AA spent, gear score and
+    raid parse. Per-boss Solo / Duo / Trio boards live on the
+    <a href="{{ url_for('leaderboard.leaderboard_home') }}">Race Board</a>, and guild standings on
+    the <a href="{{ url_for('guilds.guild_portal') }}">Guild Portal</a>.
+    Anonymous characters are excluded.
+  </div>
+</div>
+
+<script>
+(function(){
+  var c=document.getElementById('lbp-stars'); if(!c)return;
+  var PAL=['#8fd0ff','#ffffff','#cfe6ff','#ff8a4a','#e5cc80'];
+  function paint(){
+    var x=c.getContext('2d'),W=c.width=innerWidth+100,H=c.height=innerHeight+100;
+    x.clearRect(0,0,W,H);
+    var n=Math.round(W*H/3400);
+    for(var i=0;i<n;i++){
+      x.globalAlpha=.2+Math.random()*.5;
+      x.fillStyle=PAL[Math.floor(Math.random()*PAL.length)];
+      x.beginPath();x.arc(Math.random()*W,Math.random()*H,.3+Math.random()*1.1,0,6.283);x.fill();
+    }
+    x.globalAlpha=1;
+  }
+  paint();
+  var t;addEventListener('resize',function(){clearTimeout(t);t=setTimeout(paint,180);});
+})();
+</script>
+{% endblock %}

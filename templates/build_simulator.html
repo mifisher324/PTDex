@@ -1,0 +1,179 @@
+{% extends "layout.html" %}
+{% block title %}PTDex :: Build Simulator{% endblock %}
+{% block body %}
+<style>
+    .bs-wrap { max-width: 68.75rem; margin: 0 auto; padding: 0 1rem 3.75rem; }
+    .bs-h1 { font-size: 1.8rem; margin: 1.125rem 0 0.25rem; }
+    .bs-sub { color: #9aa0a6; margin-bottom: 0.875rem; }
+    /* The picker is a <form>; the global stylesheet sets form{display:inline},
+       which makes this card shrink-wrap and lets the icon grid spill past it.
+       Force block so the card properly contains its content at full width. */
+    .bs-pick { display: block; box-sizing: border-box; background: #1b1f24;
+               border: 1px solid #333a44; border-radius: 0.625rem; padding: 1rem; }
+    .bs-icons { display: grid; grid-template-columns: repeat(8, 1fr); gap: 0.625rem; }
+    @media (max-width: 47.5em) { .bs-icons { grid-template-columns: repeat(4, 1fr); } }
+    @media (max-width: 26.25em) { .bs-icons { grid-template-columns: repeat(2, 1fr); } }
+    .bs-icon { position: relative; border: 2px solid #333a44; border-radius: 0.625rem; background: #14171d;
+               padding: 0.5rem 0.375rem 0.375rem; text-align: center; cursor: pointer; transition: border-color .12s, transform .12s;
+               user-select: none; }
+    .bs-icon:hover { border-color: #5b6470; }
+    .bs-icon.selected { border-color: #e5b95c; box-shadow: 0 0 0 1px #e5b95c inset; }
+    .bs-icon img { width: 3.5rem; height: 3.5rem; object-fit: contain; display: block; margin: 0 auto 0.25rem; image-rendering: auto; }
+    .bs-icon .nm { font-size: .74rem; color: #cdd2d8; line-height: 1.1; }
+    .bs-icon .pin { position: absolute; top: 0.25rem; right: 0.375rem; color: #e5b95c; font-weight: 800; font-size: .8rem; }
+    .bs-icon.disabled { opacity: .4; cursor: not-allowed; }
+    .bs-bar { display: flex; align-items: center; gap: 0.875rem; flex-wrap: wrap; margin-top: 0.875rem; }
+    .bs-bar .lvl { display: flex; align-items: center; gap: 0.5rem; color: #9aa0a6; }
+    .bs-bar input[type=number] { background: #14171d; color: #ecebe6; border: 1px solid #333a44; border-radius: 0.375rem;
+                                 padding: 0.4375rem 0.625rem; width: 5rem; }
+    .bs-chosen { color: #e5b95c; font-weight: 700; }
+
+    .bs-section { margin: 1.75rem 0; }
+    .bs-section h2 { font-size: 1.25rem; border-bottom: 1px solid #333a44; padding-bottom: 0.375rem; }
+    .bs-chip { display:inline-block; background:#2b6cb0; color:#fff; border-radius:1.25rem; padding:0.125rem 0.75rem; font-weight:600; }
+    .bs-tag { font-size: .72rem; color: #8a8f98; }
+    .bs-scroll { max-height: 30rem; overflow-y: auto; border: 1px solid #262b31; border-radius: 0.5rem; }
+    .bs-aa-list { columns: 2; column-gap: 22px; padding: 0.75rem 0.875rem; }
+    .bs-aa { break-inside: avoid; padding: 0.3125rem 0; font-size: .92rem; display: flex; align-items: baseline; gap: 0.375rem; }
+    .bs-aa .who { font-size: .68rem; color: #7a7f87; }
+    .bs-aa .who.shared { color: #e5b95c; }
+    .bs-aa .timer { font-size: .68rem; color: #7fb3ff; margin-left: auto; white-space: nowrap; }
+    .bs-aa a { color: #cdd2d8; text-decoration: none; border-bottom: 1px dotted #4a515c; }
+    .bs-aa a:hover { color: #fff; }
+    .bs-aa .aa-tip { color: #cdd2d8; border-bottom: 1px dotted #4a515c; cursor: help; }
+    .bs-aa .aa-tip:hover { color: #fff; }
+    table.bs-table { width: 100%; border-collapse: collapse; font-size: .9rem; }
+    table.bs-table th, table.bs-table td { padding: 0.4375rem 0.625rem; text-align: left; border-bottom: 1px solid #262b31; }
+    table.bs-table thead th { position: sticky; top: 0; background: #1b1f24; color: #9aa0a6; }
+    .bs-defer { border: 1px dashed #444b57; border-radius: 0.5rem; padding: 0.875rem 1rem; color: #9aa0a6; background: #171b20; }
+    @media (max-width: 43.75em) { .bs-aa-list { columns: 1; } }
+</style>
+<div class="bs-wrap">
+    <h1 class="bs-h1">Build Simulator</h1>
+    <div class="bs-sub">Click up to three class icons to build your trio, then see what it can do.</div>
+
+    <form class="bs-pick" method="get" action="{{ url_for('build_simulator.build_simulator') }}" id="bsForm">
+        <div class="bs-icons">
+            {% for c in class_list %}
+            <div class="bs-icon" data-class-id="{{ c.id }}" title="{{ c.name }}">
+                <span class="pin"></span>
+                <img src="{{ url_for('static', filename='class_icons/' ~ c.icon ~ '.gif') }}" alt="{{ c.name }}">
+                <div class="nm">{{ c.name }}</div>
+            </div>
+            {% endfor %}
+        </div>
+        <input type="hidden" name="class1" id="class1" value="{{ picked[0] if picked|length > 0 else '' }}">
+        <input type="hidden" name="class2" id="class2" value="{{ picked[1] if picked|length > 1 else '' }}">
+        <input type="hidden" name="class3" id="class3" value="{{ picked[2] if picked|length > 2 else '' }}">
+        <div class="bs-bar">
+            <span>Selected: <span class="bs-chosen" id="bsChosen">none</span></span>
+            <span class="lv"><label class="lvl">Level <input type="number" name="level" min="1" max="{{ max_level }}" value="{{ level }}"></label></span>
+            <input class="btn btn-primary" type="submit" value="Simulate" id="bsSimulate">
+        </div>
+    </form>
+
+    {% if result %}
+    <div class="bs-section">
+        <h2>{{ result.class_names | join(' / ') }}
+            <span class="bs-chip">{{ result.class_trio }}</span>
+            <span class="bs-tag">Level {{ result.level }}</span>
+        </h2>
+    </div>
+
+    {# ---- AAs ---- #}
+    <div class="bs-section">
+        <h2>Alternate Advancement
+            <span class="bs-tag">{{ result.aa_count }} in-era &middot; {{ result.shared_aa_count }} shared by 2+ classes &middot; hover for effect</span>
+        </h2>
+        <div class="bs-scroll">
+            <div class="bs-aa-list">
+                {% for aa in result.aas %}
+                <div class="bs-aa">
+                    <a class="aa-tip aa-tooltip-link" data-url="{{ aa.id }}" href="{{ url_for('aas.aa_detail', aa_id=aa.id) }}">{{ aa.name }}</a>
+                    <span class="who {{ 'shared' if aa.shared }}">{{ aa.classes | join('/') }}</span>
+                    {% if aa.recast %}<span class="timer">&#8635; {{ aa.recast }}</span>{% endif %}
+                </div>
+                {% else %}
+                <div class="bs-aa">No in-era AAs for this combination.</div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    {# ---- Spells ---- #}
+    <div class="bs-section">
+        <h2>Spells &amp; Disciplines
+            <span class="bs-tag">showing {{ result.spells|length }} of {{ result.spell_total }} &middot; hover for effect</span>
+        </h2>
+        <div class="bs-scroll">
+            <table class="bs-table">
+                <thead><tr><th>Spell / Disc</th><th>Unlock</th></tr></thead>
+                <tbody>
+                {% for sp in result.spells %}
+                <tr>
+                    <td><a class="spell-tooltip-link" data-url="{{ sp.id }}" href="{{ url_for('spells.spell_detail', spell_id=sp.id) }}">{{ sp.name }}</a></td>
+                    <td>{{ sp.class_abbr }} &middot; Lvl {{ sp.level }}</td>
+                </tr>
+                {% else %}
+                <tr><td colspan="2">No spells for this combination.</td></tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="bs-section">
+        <div class="bs-defer"><strong>Synergies &amp; DPS &mdash; coming later.</strong>
+            These need the server's build mechanics and damage formulas (not defined yet), so they aren't shown as
+            guessed numbers. The gold-highlighted AAs above (shared by 2+ of your classes) are the current synergy hint.</div>
+    </div>
+    {% else %}
+    <div class="bs-section"><div class="bs-defer">Pick 1&ndash;3 class icons above and hit <strong>Simulate</strong>.</div></div>
+    {% endif %}
+</div>
+
+<script>
+(function () {
+    var MAX = 3;
+    var form = document.getElementById('bsForm');
+    var icons = Array.prototype.slice.call(form.querySelectorAll('.bs-icon'));
+    var inputs = [document.getElementById('class1'), document.getElementById('class2'), document.getElementById('class3')];
+    var chosenLabel = document.getElementById('bsChosen');
+    // Restore selection order from the hidden inputs (server round-trip).
+    var selected = inputs.map(function (i) { return i.value ? parseInt(i.value, 10) : null; })
+                         .filter(function (v) { return v; });
+
+    function render() {
+        icons.forEach(function (el) {
+            var id = parseInt(el.getAttribute('data-class-id'), 10);
+            var idx = selected.indexOf(id);
+            el.classList.toggle('selected', idx !== -1);
+            el.classList.toggle('disabled', idx === -1 && selected.length >= MAX);
+            el.querySelector('.pin').textContent = idx !== -1 ? (idx + 1) : '';
+        });
+        inputs.forEach(function (inp, i) { inp.value = selected[i] || ''; });
+        chosenLabel.textContent = selected.length
+            ? selected.map(function (id) {
+                var el = icons.filter(function (e) { return parseInt(e.getAttribute('data-class-id'), 10) === id; })[0];
+                return el ? el.getAttribute('title') : id;
+              }).join(' / ')
+            : 'none';
+    }
+
+    icons.forEach(function (el) {
+        el.addEventListener('click', function () {
+            var id = parseInt(el.getAttribute('data-class-id'), 10);
+            var idx = selected.indexOf(id);
+            if (idx !== -1) { selected.splice(idx, 1); }
+            else if (selected.length < MAX) { selected.push(id); }
+            render();
+        });
+    });
+    render();
+
+    // AA descriptions use the native `title` attribute (same mechanism as the
+    // class-icon tooltips, which work) rather than tippy, which does not render
+    // reliably on this site.
+})();
+</script>
+{% endblock %}

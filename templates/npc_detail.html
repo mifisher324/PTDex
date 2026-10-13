@@ -1,0 +1,179 @@
+{% extends "layout.html" %}
+{% block title %}PTDex :: NPC{% if data %} :: {{ data.name }}{% endif %}{% endblock %}
+{% block body %}
+{% if data is none %}
+<div class="wp"><h1>NPC not found</h1></div>
+{% else %}
+<style>
+  .npc-cols{display:grid;grid-template-columns:18.75rem 1fr;gap:1rem;align-items:start}
+  @media(max-width:51.25em){.npc-cols{grid-template-columns:1fr}}
+  .npc-kv .r{display:flex;justify-content:space-between;gap:0.75rem;padding:0.375rem 0;border-bottom:1px dotted var(--w-line);font-size:.88rem}
+  .npc-kv .r:last-child{border-bottom:0}.npc-kv .k{color:var(--w-muted)}.npc-kv .v{font-weight:600;text-align:right}
+  .npc-res{display:grid;grid-template-columns:repeat(5,1fr);gap:0.375rem;padding:0.375rem 1rem 0.75rem}
+  .npc-res .b{background:var(--w-cell);border:1px solid var(--w-line);border-radius:0.5rem;padding:0.375rem;text-align:center}
+  .npc-res .l{font-family:var(--w-mono);font-size:.58rem;color:var(--w-muted)}.npc-res .n{font-weight:700;font-variant-numeric:tabular-nums}
+  .npc-fac{padding:0.5rem 1rem 0.75rem;display:flex;flex-direction:column;gap:0.25rem;font-size:.86rem}
+  .npc-fac a{color:var(--w-arc-hi)} .npc-fac .up{color:var(--w-green)} .npc-fac .dn{color:var(--w-ember)}
+  .npc-map{background:#0f1622;border:1px solid var(--w-line2);border-radius:0.75rem;overflow:hidden;margin-bottom:1rem}
+  .npc-map .map-container{position:relative;width:100%;height:28.75rem;background:#11161f}
+  .npc-map #mouse-position-box{position:absolute;bottom:0.625rem;left:0.625rem;background:rgba(8,11,17,.8);color:var(--w-arc-hi);
+    padding:0.3125rem 0.5625rem;border-radius:0.375rem;font-family:var(--w-mono);font-size:.78rem;border:1px solid var(--w-line2)}
+  .loot-list{border:1px solid var(--w-line);border-radius:0.625rem;margin:0 0 0.75rem;overflow:hidden}
+  .loot-list .lh{padding:0.5625rem 0.8125rem;background:rgba(0,0,0,.16);border-bottom:1px solid var(--w-line);font-family:var(--w-mono);font-size:.74rem;color:var(--w-gold)}
+  .loot-list .li2{display:flex;align-items:center;gap:0.5625rem;padding:0.4375rem 0.8125rem;border-bottom:1px solid var(--w-line);font-size:.88rem}
+  .loot-list .li2:last-child{border-bottom:0} .loot-list .li2:hover{background:rgba(77,178,255,.05)}
+  .loot-list .li2 img{width:1.75rem;height:1.75rem;border-radius:0.25rem} .loot-list .li2 .ch{margin-left:auto;color:var(--w-green);font-family:var(--w-mono);font-size:.8rem}
+  /* spawn cards (matches zone page) */
+  .sp-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(17.5rem,1fr));gap:0.625rem;padding:0.75rem 1rem 1rem}
+  .sp-card{background:rgba(13,20,32,.6);border:1px solid var(--w-line);border-radius:0.625rem;padding:0.5625rem 0.75rem;transition:.13s}
+  .sp-card:hover{border-color:var(--w-line2);background:rgba(77,178,255,.05)}
+  .sp-card.rare{border-color:var(--w-gold2);background:rgba(255,178,137,.05);box-shadow:0 0 14px rgba(255,178,137,.1)}
+  .sp-head{display:flex;align-items:center;gap:0.5625rem;font-family:var(--w-mono);font-size:.72rem;color:var(--w-muted)}
+  .sp-idx{color:var(--w-arc-hi);font-weight:700;flex:none}
+  .sp-card.rare .sp-idx{color:var(--w-gold)}
+  .sp-rs{margin-left:auto;flex:none;background:rgba(77,178,255,.08);border:1px solid var(--w-line2);border-radius:999px;
+    padding:0.0625rem 0.5625rem;font-size:.66rem;color:var(--w-arc-hi)}
+  .sp-card.rare .sp-rs{color:var(--w-gold);border-color:var(--w-gold2);background:rgba(255,178,137,.1)}
+  .sp-npcs{display:flex;flex-wrap:wrap;gap:0.3125rem;margin-top:0.5rem}
+  .sp-npc{font-size:.8rem;background:rgba(77,178,255,.06);border:1px solid var(--w-line);border-radius:0.4375rem;padding:0.125rem 0.5625rem}
+  .sp-npc a{color:var(--w-text);text-decoration:none}
+  .sp-npc a:hover{color:var(--w-arc-hi)}
+  .sp-card.rare .sp-npc a{color:var(--w-gold)}
+  .sp-npc .ch{color:var(--w-muted);font-family:var(--w-mono);font-size:.66rem}
+  .sp-npc .xn{color:var(--w-gold);font-family:var(--w-mono);font-size:.68rem;font-weight:700}
+  .sp-count{font-family:var(--w-mono);font-size:.68rem;color:var(--w-muted);font-weight:400;margin-left:0.625rem}
+</style>
+<div class="wp">
+  <div class="wp-eyebrow">PTDex // world.npcs</div>
+  <h1>{{ data.longname or data.name }}</h1>
+
+  {% if data['map_zone'] or data['spawn_groups'] %}
+  <div class="npc-map"><div class="map-container">
+    {% if data['spawn_groups'] %}{% set cx = data['spawn_groups'][0]['x'] - 750 %}{% set cy = data['spawn_groups'][0]['y'] - 750 %}
+    {% else %}{% set cx = -500 %}{% set cy = -500 %}{% endif %}
+    <svg class="svg" id="zone-map" width="100%" height="100%" viewBox="{{cx}} {{cy}} 1500.0 1500.0" xmlns="http://www.w3.org/2000/svg">
+      <defs><marker id="arrow" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z"/></marker></defs>
+      <g id="zone-map-lines"></g>
+      {% for entry in data['spawn_groups'] %}<circle r="10" cx="{{entry['x']}}" cy="{{entry['y']}}" fill="#ff7a45"><animate attributeName="opacity" dur="1s" values="0;1;0" repeatCount="indefinite" begin="0.1"/></circle>{% endfor %}
+    </svg>
+    <div id="mouse-position-box">Y: 0, X: 0</div>
+  </div></div>
+  <script defer src="https://cdn.jsdelivr.net/npm/@svgdotjs/svg.js@3.0/dist/svg.min.js"></script>
+  <script defer src="/static/svg.panzoom.min.js"></script>
+  <script type="module">const draw = SVG('#zone-map'); draw.panZoom({ zoomMin: 0.1, zoomMax: 10, zoomFactor: 1 });</script>
+  <script>
+    const svg=document.getElementById('zone-map'), mb=document.getElementById('mouse-position-box'), pt=svg.createSVGPoint();
+    function cp(e){pt.x=e.clientX;pt.y=e.clientY;return pt.matrixTransform(svg.getScreenCTM().inverse());}
+    svg.addEventListener('mousemove',function(e){const l=cp(e);mb.textContent=`Y: ${-Math.round(l.y)}, X: ${-Math.round(l.x)}`;});
+    {% if data['map_zone'] %}
+    // the zone map loads after the page is shown; the loot list never waits for it
+    fetch({{ url_for('npcs.npc_map', short_name=data['map_zone'])|tojson }}).then(r => r.ok ? r.json() : []).then(function (lines) {
+      const NS = 'http://www.w3.org/2000/svg', frag = document.createDocumentFragment();
+      for (const [x1, y1, x2, y2, rgb] of lines) {
+        const l = document.createElementNS(NS, 'line');
+        l.setAttribute('x1', x1); l.setAttribute('y1', y1); l.setAttribute('x2', x2); l.setAttribute('y2', y2);
+        l.setAttribute('stroke', 'rgb(' + rgb + ')'); l.setAttribute('stroke-width', '2'); l.setAttribute('stroke-linecap', 'round');
+        frag.appendChild(l);
+      }
+      document.getElementById('zone-map-lines').appendChild(frag);
+    }).catch(function () {});
+    {% endif %}
+  </script>
+  {% endif %}
+
+  <div class="npc-cols">
+    <div style="display:flex;flex-direction:column;gap:16px">
+      <div class="wp-panel">
+        <h2>NPC Info</h2>
+        <div class="wp-pb npc-kv">
+          <div class="r"><span class="k">Zone</span><span class="v"><a href="{{ url_for('zones.zone_detail', zone_id=data.zone_id) }}">{{ data.zone_name }}</a></span></div>
+          <div class="r"><span class="k">Expansion</span><span class="v">{{ data.expansion }}</span></div>
+          <div class="r"><span class="k">Level</span><span class="v">{{ data.level }}</span></div>
+          <div class="r"><span class="k">Class</span><span class="v">{{ data.class }}</span></div>
+          <div class="r"><span class="k">Race</span><span class="v">{{ data.race }}</span></div>
+          <div class="r"><span class="k">Body Type</span><span class="v">{{ data.bodytype }}</span></div>
+          <div class="r"><span class="k">HP</span><span class="v" style="color:var(--w-green)">{{ data.hp }}</span></div>
+          <div class="r"><span class="k">Hit</span><span class="v">{{ data.mindmg }} - {{ data.maxdmg }}</span></div>
+          {% if not data.spawn_groups %}<div class="r"><span class="k" style="color:var(--w-ember)">Spawn</span><span class="v" style="color:var(--w-ember)">Triggered</span></div>{% endif %}
+        </div>
+        <div class="npc-res">
+          <div class="b"><div class="l">MR</div><div class="n">{{ data.MR }}</div></div>
+          <div class="b"><div class="l">CR</div><div class="n">{{ data.CR }}</div></div>
+          <div class="b"><div class="l">FR</div><div class="n">{{ data.FR }}</div></div>
+          <div class="b"><div class="l">DR</div><div class="n">{{ data.DR }}</div></div>
+          <div class="b"><div class="l">PR</div><div class="n">{{ data.PR }}</div></div>
+        </div>
+        {% if data.faction %}
+        <div class="npc-fac"><span style="color:var(--w-muted);font-family:var(--w-mono);font-size:.66rem;letter-spacing:.1em;text-transform:uppercase">Faction</span>
+          {% for entry in data.faction %}
+          <span><a href="{{ url_for('factions.faction_detail', faction_id=entry.faction_id) }}">{{ entry.faction_name }}</a>
+            <span class="{{ 'up' if entry.faction_amt > 0 else 'dn' }}">{{ '+' if entry.faction_amt > 0 }}{{ entry.faction_amt }}</span></span>
+          {% endfor %}
+        </div>
+        {% endif %}
+        {% if data.special_attacks %}
+        <div class="wp-pb" style="border-top:1px solid var(--w-line)"><span style="color:var(--w-muted);font-family:var(--w-mono);font-size:.66rem;letter-spacing:.1em;text-transform:uppercase">Special Abilities</span>
+          <ul style="margin:6px 0 0 16px;padding:0;font-size:.86rem">{% for entry in data.special_attacks %}<li>{{ entry }}</li>{% endfor %}</ul>
+        </div>
+        {% endif %}
+        {% if data.spells %}
+        <div class="wp-pb" style="border-top:1px solid var(--w-line)"><span style="color:var(--w-muted);font-family:var(--w-mono);font-size:.66rem;letter-spacing:.1em;text-transform:uppercase">Spells</span>
+          <div style="margin-top:6px">{% for entry in data.spells %}
+          <div style="display:flex;align-items:center;gap:8px;padding:3px 0;font-size:.85rem"><img src="/static/spell_icons/{{ entry.icon }}.png" style="width:24px;height:24px;border-radius:4px" onerror="this.style.visibility='hidden'"><a href="{{ url_for('spells.spell_detail', spell_id=entry.spell_id) }}">{{ entry.spell_name }}</a> <span style="color:var(--w-muted)">({{ entry.spell_type }}{% if entry.proc_chance %} {{ entry.proc_chance }}%{% endif %})</span></div>
+          {% endfor %}</div>
+        </div>
+        {% endif %}
+        <a class="rawlink" style="display:block;padding:10px 16px;font-size:.82rem;border-top:1px solid var(--w-line)" href="{{ url_for('npcs.npc_raw', npc_id=data.id) }}">Raw Data &rarr;</a>
+      </div>
+    </div>
+
+    <div style="display:flex;flex-direction:column;gap:16px">
+      <div class="wp-panel">
+        <h2>Loot Drops</h2>
+        <div class="wp-pb">
+          {% for entry in data['loot_lists'] %}
+          <div class="loot-list">
+            <div class="lh">{{ data['loot_lists'][entry]['probability']|int }}% &middot; {{ data['loot_lists'][entry]['mindrop'] }} to {{ data['loot_lists'][entry]['droplimit'] }} drops</div>
+            {% for sub in data['loot_lists'][entry]['items'] %}
+            <a class="li2" href="{{ url_for('items.item_detail', item_id=(quality_map or {}).get(sub.item_id, sub.item_id)) }}"><img src="/static/item_icons/item_{{ sub.icon }}.png" onerror="this.style.visibility='hidden'"><span>{{ sub.item_name }}</span><span class="ch">{{ sub.probability|int }}%</span></a>
+            {% endfor %}
+          </div>
+          {% else %}<div style="color:var(--w-muted)">No loot.</div>{% endfor %}
+        </div>
+      </div>
+
+      {% if data['merch'] %}
+      <div class="wp-panel"><h2>Merchant Items</h2><div class="wp-pb">
+        {% for entry in data['merch'] %}
+        <a class="li2" style="display:flex;align-items:center;gap:9px;padding:7px 4px;font-size:.88rem" href="{{ url_for('items.item_detail', item_id=entry.item_id) }}"><img src="/static/item_icons/item_{{ entry.icon }}.png" style="width:28px;height:28px;border-radius:4px" onerror="this.style.visibility='hidden'">{{ entry.item_name }}</a>
+        {% endfor %}
+      </div></div>
+      {% endif %}
+
+      {% if data['spawn_groups'] %}
+      <div class="wp-panel"><h2>Spawn Points<span class="sp-count">{{ data['spawn_groups']|length }} points &middot; y, x, z</span></h2>
+        <div class="sp-grid">
+        {% for entry in data['spawn_groups'] %}
+          {% set rare = ('day' in entry.respawn) or ('hour' in entry.respawn) %}
+          {% set parts = entry.name.rsplit('_', 1) %}
+          <div class="sp-card{% if rare %} rare{% endif %}">
+            <div class="sp-head">
+              <span class="sp-idx">{% if parts|length == 2 and parts[1].isdigit() %}#{{ parts[1] }}{% else %}{{ entry.name }}{% endif %}</span>
+              <span>{{ (entry.y * -1)|round|int }}, {{ (entry.x * -1)|round|int }}, {{ entry.z|round|int }}</span>
+              <span class="sp-rs" title="Respawn time">{{ entry.respawn|replace(' minutes','m')|replace(' minute','m')|replace(' seconds','s')|replace(' second','s')|replace(' hours','h')|replace(' hour','h')|replace(' days','d')|replace(' day','d')|replace(', ',' ') }}</span>
+            </div>
+            <div class="sp-npcs">
+              {% for nname, grp in entry.spawn_npcs|groupby('npc_name') %}
+              <span class="sp-npc"><a href="{{ url_for('npcs.npc_detail', npc_id=grp[0].npc_id) }}">{{ nname|replace('_',' ')|replace('#','') }}</a>{% if grp|length > 1 %} <span class="xn">&times;{{ grp|length }}</span>{% endif %} <span class="ch">{{ grp[0].chance }}%</span></span>
+              {% endfor %}
+            </div>
+          </div>
+        {% endfor %}
+        </div>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endif %}
+{% endblock %}

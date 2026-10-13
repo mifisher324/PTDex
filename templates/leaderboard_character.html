@@ -1,0 +1,92 @@
+{% extends "layout.html" %}
+{% from 'leaderboard_macros.html' import parse_badge, member_list %}
+{% block title %}PTDex :: Character :: {{ data.character_name }}{% endblock %}
+{% block body %}
+{% include 'leaderboard_style.html' %}
+<div class="lb-wrap">
+    {% include 'leaderboard_season.html' %}
+    <h1 class="lb-h1">{{ data.character_name }}</h1>
+    <div class="lb-sub">Boss Performance{% if season %} &middot; {{ season.name }}{% endif %}</div>
+
+    <div class="lb-kv">
+        <div class="cell"><div class="k">Overall Parse Average</div><div class="v">{{ parse_badge(data.overall_parse_avg) }}</div></div>
+        <div class="cell"><div class="k">Best Parse</div><div class="v">{{ parse_badge(data.best_parse) }}</div></div>
+        <div class="cell"><div class="k">Total Boss Clears</div><div class="v">{{ data.total_clears }}</div></div>
+    </div>
+
+    <div class="lb-section">
+        <h2>Per-Boss Bests</h2>
+        <div class="lb-scroll">
+        <table class="lb-table">
+            <thead><tr>
+                <th>Boss</th><th>Best DPS Parse</th><th title="Your Individual-DPS percentile vs everyone running your exact class combo -- shown once that build has 10+ kills on the boss">vs Build</th><th>Best Speed Parse</th><th>Best Group Parse</th>
+                <th>Best Raw DPS</th><th>Fastest Kill</th><th>Clears</th>
+            </tr></thead>
+            <tbody>
+            {% for slot in data.per_boss %}
+            <tr>
+                <td><a class="lb-member" href="{{ url_for('leaderboard.boss_rankings', boss_key=slot.boss_key) }}">{{ slot.name }}</a></td>
+                <td>{{ parse_badge(slot.best_dps_parse_d) }}</td>
+                <td>{% if slot.build_parse %}<span class="lb-parse" style="color:{{ slot.build_parse.color }};" title="vs {{ slot.build_parse.build }} &mdash; {{ slot.build_parse.count }} same-build kills">{{ '%.1f'|format(slot.build_parse.percentile) }}</span>{% else %}<span class="lb-parse lb-muted" title="Not enough same-build kills yet (need 10+)">&mdash;</span>{% endif %}</td>
+                <td>{{ parse_badge(slot.best_speed_parse_d) }}</td>
+                <td>{{ parse_badge(slot.best_group_parse_d) }}</td>
+                <td class="lb-num">{{ '{:,}'.format(slot.best_raw_dps or 0) }}</td>
+                <td>{{ slot.fastest_display or '—' }}</td>
+                <td class="lb-num">{{ slot.clears }}</td>
+            </tr>
+            {% else %}
+            <tr><td colspan="8" class="lb-muted">No raid clears{% if season %} in {{ season.name }}{% endif %} yet.</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+        </div>
+    </div>
+
+    {% if data.missions %}
+    <div class="lb-section">
+        <h2>Monster Missions</h2>
+        <div class="lb-scroll">
+        <table class="lb-table">
+            <thead><tr><th>Mission</th><th>Fastest Run</th><th>Speed Parse</th><th>Best DPS</th><th>DPS Parse</th><th>Completed</th></tr></thead>
+            <tbody>
+            {% for slot in data.missions %}
+            <tr>
+                <td><a class="lb-member" href="{{ url_for('leaderboard.boss_rankings', boss_key=slot.boss_key, season=season.key if season else None) }}">{{ slot.name.split(': ', 1)[-1] }}</a></td>
+                <td>{{ slot.fastest_display or '—' }}</td>
+                <td>{{ parse_badge(slot.best_speed_parse_d) }}</td>
+                <td class="lb-num">{{ '{:,}'.format(slot.best_raw_dps or 0) }}</td>
+                <td>{{ parse_badge(slot.best_dps_parse_d) }}</td>
+                <td class="lb-num">{{ slot.clears }}</td>
+            </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+        </div>
+    </div>
+    {% endif %}
+
+    <div class="lb-section">
+        <h2>Recent Boss Kills</h2>
+        <div class="lb-scroll">
+        <table class="lb-table">
+            <thead><tr><th>Date</th><th>Boss</th><th>Group Size</th><th>Group</th><th>Completion Time</th><th>Active DPS</th></tr></thead>
+            <tbody>
+            {% for k in data.recent_kills %}
+            <tr>
+                <td class="lb-muted"><a href="{{ url_for('leaderboard.encounter_detail', encounter_id=k.encounter_id) }}">{{ (k.end_time or '')[:16]|replace('T',' ') }}</a></td>
+                <td><a class="lb-member" href="{{ url_for('leaderboard.boss_rankings', boss_key=k.boss_key) }}">{{ k.boss_name }}</a></td>
+                <td>{{ k.group_label }}</td>
+                <td>{{ member_list(k.members) }}</td>
+                <td>{{ k.duration_display }}</td>
+                <td class="lb-num">{{ '{:,}'.format(k.active_dps or 0) }}</td>
+            </tr>
+            {% else %}
+            <tr><td colspan="6" class="lb-muted">No recent valid kills.</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+        </div>
+    </div>
+    {% include 'parse_note.html' %}
+</div>
+{% endblock %}

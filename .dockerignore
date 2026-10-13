@@ -1,0 +1,15 @@
+.git
+configuration.ini
+configuration.ini.*
+!configuration.ini.example
+*.db
+*.bak
+*.bak.*
+logs/
+db/
+__pycache__/
+*.pyc
+venv/
+.venv/
+community-wiki/_comments/
+community-wiki/_trash/

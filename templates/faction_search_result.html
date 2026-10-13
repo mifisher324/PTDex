@@ -1,0 +1,15 @@
+{% extends "layout.html" %}
+{% block title %}PTDex :: Faction Results{% endblock %}
+{% block body %}
+<div class="wp">
+  <div class="wp-eyebrow">PTDex // world.factions</div>
+  <h1>Faction Results</h1>
+  <div class="wp-panel"><div class="wp-list">
+    {% for entry in data %}
+    <a class="li" href="{{ url_for('factions.faction_detail', faction_id=entry.faction_id) }}"><span>{{ entry.faction_name }}</span></a>
+    {% else %}
+    <div class="li" style="color:var(--w-muted)">No factions found.</div>
+    {% endfor %}
+  </div></div>
+</div>
+{% endblock %}

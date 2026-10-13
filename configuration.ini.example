@@ -1,0 +1,59 @@
+[DEFAULT]
+site_fqdn = localhost
+site_type = Development
+debug = True
+site_version = 0.0.0.0
+
+[triune]
+expansion = 5
+expansion_rule = 
+
+[database]
+driver = mysql+pymysql
+user = 
+password = 
+database = peq
+host = 127.0.0.1
+port = 3306
+
+[local_database]
+connection = sqlite:///local_db.db
+
+[leaderboard_database]
+connection = 
+
+[leaderboard]
+staff_discord_ids = 
+ingest_token = 
+
+[forums]
+moderator_ids = 
+
+[path]
+app_log = logs/eqdb.log
+flask_log = logs/flask.log
+
+[discord]
+client_id = 
+client_secret = 
+
+[flask]
+secret_key = 
+
+[site]
+name = EQDB
+base_url = 
+patcher_url = 
+discord_invite = 
+support_url = 
+partner_feed_enabled = false
+partner_feed_path = 
+
+[loginserver]
+api_url = 
+api_token = 
+cors_origin = *
+
+[internal]
+allow_ips = 
+

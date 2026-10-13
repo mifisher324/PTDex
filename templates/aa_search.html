@@ -1,0 +1,88 @@
+{% extends "layout.html" %}
+{% block title %}PTDex :: AA Search{% endblock %}
+{% block body %}
+<style>
+  .aas{max-width:72rem;margin:1.4rem auto 3rem;padding:0 1.1rem}
+  .aas form{display:grid;grid-template-columns:repeat(auto-fit,minmax(12rem,1fr));gap:.7rem 1rem;
+    align-items:end;border:1px solid #1e3149;border-radius:10px;padding:1rem;
+    background:linear-gradient(180deg,#0d1826,#0a1320);margin-bottom:1.2rem}
+  .aas label{display:flex;flex-direction:column;gap:.3rem;font-size:.72rem;letter-spacing:.08em;
+    text-transform:uppercase;color:var(--muted,#7f92a9)}
+  .aas input[type=text],.aas select{background:#0c1725;border:1px solid #25384f;border-radius:6px;
+    color:#dce7f5;padding:.45rem .55rem;font-size:.9rem;text-transform:none;letter-spacing:0}
+  .aas .classes{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:.35rem}
+  .aas .classes label{flex-direction:row;align-items:center;gap:.3rem;text-transform:none;
+    letter-spacing:0;font-size:.82rem;color:#cfe0f2;border:1px solid #25384f;border-radius:999px;
+    padding:.2rem .6rem;cursor:pointer}
+  .aas .classes input:checked + span{color:#ffc08e}
+  .aas .hint{grid-column:1/-1;font-size:.75rem;color:var(--muted,#7f92a9)}
+  .aas button{background:linear-gradient(90deg,#ff8a4a,#ffb289);border:0;border-radius:6px;
+    color:#1a1206;font-weight:700;padding:.55rem 1.2rem;cursor:pointer}
+  .aas .count{font-size:.8rem;color:var(--muted,#7f92a9);margin:.2rem 0 .6rem}
+  .aas-scroll{overflow-x:auto}
+  .aas table{width:100%;border-collapse:collapse;font-size:.85rem}
+  .aas th{text-align:left;font-size:.7rem;letter-spacing:.08em;text-transform:uppercase;
+    color:var(--muted,#7f92a9);border-bottom:1px solid #1e3149;padding:.4rem .5rem}
+  .aas td{padding:.45rem .5rem;border-bottom:1px solid #142334;vertical-align:top}
+  .aas td.num{font-variant-numeric:tabular-nums;text-align:right;white-space:nowrap}
+  .aas .desc{color:#9fb0c4;font-size:.8rem;max-width:34rem}
+  .aas .pill{font-size:.66rem;padding:.05rem .4rem;border-radius:999px;border:1px solid #25384f;
+    color:#9fb0c4;white-space:nowrap}
+  .aas .pill.act{border-color:#8a5a2b;color:#ffc08e}
+</style>
+<div class="aas">
+  <div class="srch-head"><p class="srch-eyebrow">Alternate Advancement</p><h1>AA Search</h1></div>
+  <form method="get" action="{{ url_for('aas.aa_search') }}">
+    <label>Name <input type="text" name="name" id="aa-name" value="{{ name }}" placeholder="e.g. Innate"></label>
+    <label>Description contains <input type="text" name="text" id="aa-text" value="{{ words }}" placeholder="e.g. critical"></label>
+    <label>Tab
+      <select name="tab" id="aa-tab"><option value="">Any</option>
+        {% for k, v in AA_TABS.items() %}<option value="{{ k }}" {{ 'selected' if tab and tab|int == k }}>{{ v }}</option>{% endfor %}
+      </select></label>
+    <label>Type
+      <select name="activation" id="aa-act">
+        <option value="any">Any</option>
+        <option value="active" {{ 'selected' if activation == 'active' }}>Activated</option>
+        <option value="passive" {{ 'selected' if activation == 'passive' }}>Passive</option>
+      </select></label>
+    <label>Era
+      <select name="eras" id="aa-eras">
+        <option value="current">Available now</option>
+        <option value="all" {{ 'selected' if all_eras }}>Include later expansions</option>
+      </select></label>
+    <div class="classes" role="group" aria-label="Classes (up to three)">
+      {% for cid, cname in CLASS_NAMES.items() %}
+      <label><input type="checkbox" name="class" value="{{ cid }}" id="aa-c{{ cid }}" {{ 'checked' if cid in classes }}><span>{{ cname }}</span></label>
+      {% endfor %}
+    </div>
+    <div class="hint">Pick up to three classes to see everything that trio can train. Leave everything blank to list every AA.</div>
+    <div><button type="submit">Search</button></div>
+  </form>
+
+  {% if results is not none %}
+  <div class="count">{{ results|length }} AA{{ '' if results|length == 1 else 's' }}{% if results|length >= 400 %} (first 400 &mdash; narrow the search){% endif %}</div>
+  <div class="aas-scroll">
+  <table>
+    <thead><tr><th>AA</th><th>Classes</th><th>Tab</th><th>Ranks</th><th>Cost</th><th>Level</th><th>Recast</th><th>What it does</th></tr></thead>
+    <tbody>
+    {% for r in results %}
+    <tr>
+      <td><a class="aa-tooltip-link" data-url="{{ r.id }}" href="{{ url_for('aas.aa_detail', aa_id=r.id) }}">{{ r.name }}</a>
+        {% if r.activated %}<span class="pill act">Activated</span>{% endif %}</td>
+      <td>{{ r.classes|join(', ') if r.classes|length <= 3 else r.class_abbrs|join('/') }}</td>
+      <td>{{ r.tab }}</td>
+      <td class="num">{{ r.ranks }}</td>
+      <td class="num">{{ r.cost }}</td>
+      <td class="num">{{ r.level }}</td>
+      <td class="num">{{ r.recast or '—' }}</td>
+      <td class="desc">{{ r.description|truncate(160) if r.description else '' }}</td>
+    </tr>
+    {% else %}
+    <tr><td colspan="8">No AAs match that search.</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

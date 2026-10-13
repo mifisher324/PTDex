@@ -1,0 +1,41 @@
+{% extends "layout.html" %}
+{% block title %}PTDex :: Faction{% if data %} :: {{ data.name }}{% endif %}{% endblock %}
+{% block body %}
+{% if not data %}
+<div class="wp"><h1>Faction not found</h1><p style="color:var(--w-muted)">No data for this faction.</p></div>
+{% else %}
+<style>.wp-cols2{display:grid;grid-template-columns:1fr 1fr;gap:1rem;align-items:start}@media(max-width:47.5em){.wp-cols2{grid-template-columns:1fr}}</style>
+<div class="wp">
+  <div class="wp-eyebrow">PTDex // world.factions</div>
+  <h1>{{ data.name }}</h1>
+  <div class="wp-cols2">
+    <div class="wp-panel">
+      <h2 style="color:var(--w-green)">Raises Faction</h2>
+      <div class="wp-tw"><table>
+        <thead><tr><th>NPC</th><th>Zone</th><th>Amount</th></tr></thead>
+        <tbody>
+        {% for zone_name in data.positive %}{% for entry in data.positive[zone_name] %}
+          <tr><td><a href="{{ url_for('npcs.npc_detail', npc_id=entry.npc_id) }}">{{ entry.npc_name }}</a></td>
+              <td style="color:var(--w-muted)">{{ zone_name }}</td>
+              <td style="color:var(--w-green);font-variant-numeric:tabular-nums">+{{ entry.value }}</td></tr>
+        {% endfor %}{% else %}<tr><td colspan="3" style="text-align:center;color:var(--w-muted)">None</td></tr>{% endfor %}
+        </tbody>
+      </table></div>
+    </div>
+    <div class="wp-panel">
+      <h2 style="color:var(--w-ember)">Lowers Faction</h2>
+      <div class="wp-tw"><table>
+        <thead><tr><th>NPC</th><th>Zone</th><th>Amount</th></tr></thead>
+        <tbody>
+        {% for zone_name in data.negative %}{% for entry in data.negative[zone_name] %}
+          <tr><td><a href="{{ url_for('npcs.npc_detail', npc_id=entry.npc_id) }}">{{ entry.npc_name }}</a></td>
+              <td style="color:var(--w-muted)">{{ zone_name }}</td>
+              <td style="color:var(--w-ember);font-variant-numeric:tabular-nums">{{ entry.value }}</td></tr>
+        {% endfor %}{% else %}<tr><td colspan="3" style="text-align:center;color:var(--w-muted)">None</td></tr>{% endfor %}
+        </tbody>
+      </table></div>
+    </div>
+  </div>
+</div>
+{% endif %}
+{% endblock %}

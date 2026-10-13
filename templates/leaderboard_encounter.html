@@ -1,0 +1,98 @@
+{% extends "layout.html" %}
+{% from 'leaderboard_macros.html' import parse_badge, member_list, status_pill %}
+{% block title %}PTDex :: Encounter #{{ data.id }} :: {{ data.boss.name }}{% endblock %}
+{% block body %}
+{% include 'leaderboard_style.html' %}
+<div class="lb-wrap">
+    <h1 class="lb-h1">{{ data.boss.name }}
+        {% if data.boss.is_gauntlet %}<span class="lb-badge-gauntlet">Gauntlet</span>{% endif %}
+        &nbsp;{{ status_pill(data.validation_status) }}
+    </h1>
+    <div class="lb-sub">
+        {{ data.group_label }} &middot; {{ (data.end_time or '')[:19]|replace('T',' ') }}
+        &middot; Boss Version: {{ data.boss_version }} &middot; Season: {{ data.season }}
+        &middot; Ruleset: {{ data.ruleset }}
+    </div>
+
+    <div class="lb-kv">
+        <div class="cell"><div class="k">Duration</div><div class="v">{{ data.duration_display }}</div></div>
+        <div class="cell"><div class="k">Combat Time</div><div class="v">{{ data.combat_time_seconds|int }}s</div></div>
+        <div class="cell"><div class="k">Encounter DPS</div><div class="v">{{ '{:,}'.format(data.encounter_dps) }}</div></div>
+        <div class="cell"><div class="k">Active DPS</div><div class="v">{{ '{:,}'.format(data.active_dps) }}</div></div>
+        <div class="cell"><div class="k">Speed Parse</div><div class="v">{{ parse_badge(data.speed_parse) }}</div></div>
+        <div class="cell"><div class="k">Group Parse</div><div class="v">{{ parse_badge(data.group_parse) }}</div></div>
+        <div class="cell"><div class="k">Boss Damage</div><div class="v">{{ '{:,}'.format(data.total_boss_damage) }}</div></div>
+        <div class="cell"><div class="k">Pet Damage</div><div class="v">{{ '{:,}'.format(data.total_pet_damage) }}</div></div>
+        <div class="cell"><div class="k">Deaths</div><div class="v">{{ data.deaths }}</div></div>
+    </div>
+
+    {% if data.flags %}
+    <div class="lb-section">
+        <h2>Validation Flags</h2>
+        {% for f in data.flags %}
+        <div class="lb-flag {{ f.severity }}">
+            <b>{{ f.code }}</b> <span class="lb-muted">({{ f.severity }}{{ ', auto' if f.auto else ', staff' }})</span>
+            {% if f.details %}<br>{{ f.details }}{% endif %}
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <div class="lb-section">
+        <h2>Participants</h2>
+        <div class="lb-scroll">
+        <table class="lb-table">
+            <thead><tr>
+                <th>Character</th><th>Class</th><th>Gear Score</th><th>Boss Damage</th><th>Pet Damage</th>
+                <th>Encounter DPS</th><th>Active DPS</th><th>DPS Parse</th><th>Deaths</th>
+            </tr></thead>
+            <tbody>
+            {% for p in data.participants %}
+            <tr>
+                <td><a class="lb-member" href="{{ url_for('leaderboard.character_profile', character_id=p.character_id) }}">{{ p.character_name }}</a>
+                    {% if not p.is_valid %}<span class="badge bg-danger">excluded</span>{% endif %}</td>
+                <td class="lb-muted">{{ p.class_name }}</td>
+                <td class="lb-num">{{ p.gear_score or '—' }}</td>
+                <td class="lb-num">{{ '{:,}'.format(p.boss_damage) }}</td>
+                <td class="lb-num">{{ '{:,}'.format(p.pet_damage) }}</td>
+                <td class="lb-num">{{ '{:,}'.format(p.encounter_dps) }}</td>
+                <td class="lb-num">{{ '{:,}'.format(p.active_dps) }}</td>
+                <td>{{ parse_badge(p.dps_parse) }}</td>
+                <td class="lb-num">{{ p.deaths }}</td>
+            </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+        </div>
+    </div>
+
+    {% if data.segments %}
+    <div class="lb-section">
+        <h2>Combat Timeline{% if data.boss.is_gauntlet %} (Active Boss Segments){% endif %}</h2>
+        <div class="lb-scroll">
+        <table class="lb-table">
+            <thead><tr><th class="lb-rank">#</th><th>Segment</th><th>Duration</th><th>Damage</th></tr></thead>
+            <tbody>
+            {% for s in data.segments %}
+            <tr>
+                <td class="lb-rank">{{ s.sequence }}</td>
+                <td>{{ s.segment_name }}</td>
+                <td class="lb-num">{{ s.duration_seconds|int }}s</td>
+                <td class="lb-num">{{ '{:,}'.format(s.damage) }}</td>
+            </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+        </div>
+        {% if data.boss.is_gauntlet %}
+        <div class="lb-muted" style="margin-top:8px;">
+            Active DPS uses only the summed boss-combat segments above
+            ({{ data.combat_time_seconds|int }}s); the {{ data.duration_display }} duration (travel,
+            downtime, and progression included) is the official speed metric.
+        </div>
+        {% endif %}
+    </div>
+    {% endif %}
+    {% include 'parse_note.html' %}
+</div>
+{% endblock %}

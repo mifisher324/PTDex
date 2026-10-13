@@ -1,0 +1,263 @@
+{% extends "layout.html" %}
+{% block title %}PTDex :: Guild Portal{% endblock %}
+{% block body %}
+<style>
+  .gportal{--void:#05080e;--panel:#0d1420;--panel2:#111b2b;--cell:#0c1420;
+    --line:#1a2637;--line2:#25384f;--arc:#4db2ff;--arc-hi:#8fd0ff;--arc-dp:#1d4a75;
+    --ember:#ff8a4a;--ember-hi:#ffc08e;--gold:#ffb289;--green:#5fe0a3;--green-dp:#2f6b52;
+    --ctext:#dce7f5;--muted:#7f92a9;--dim:#55677d;
+    --gserif:Georgia,"Iowan Old Style","Times New Roman",serif;
+    --gmono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+    position:relative;z-index:1;max-width:68rem;margin:1.4rem auto 4rem;padding:0 1.15rem;color:var(--ctext)}
+  .gp-sky{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden}
+  .gp-sky .aur{position:absolute;inset:-20%;filter:blur(70px);opacity:.30}
+  .gp-sky .aur i{position:absolute;border-radius:50%;mix-blend-mode:screen;animation:gpAu 24s ease-in-out infinite}
+  .gp-sky .a1{width:440px;height:440px;left:2%;top:-8%;background:radial-gradient(circle,#1f6dd0,transparent 66%)}
+  .gp-sky .a2{width:480px;height:480px;right:-4%;top:-14%;background:radial-gradient(circle,#7b53d6,transparent 66%);animation-delay:-8s}
+  .gp-sky .a3{width:520px;height:520px;left:40%;bottom:-32%;background:radial-gradient(circle,#1f9c8a,transparent 66%);animation-delay:-14s}
+  @keyframes gpAu{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(24px,-18px) scale(1.09)}}
+  .gp-sky canvas{position:absolute;inset:-50px;opacity:.5;animation:gpDrift 46s ease-in-out infinite}
+  @keyframes gpDrift{0%,100%{transform:translate(0,0)}50%{transform:translate(28px,-16px)}}
+
+  .gportal .eyebrow{font-family:var(--gmono);font-size:.66rem;letter-spacing:.26em;text-transform:uppercase;
+    color:var(--arc);display:flex;justify-content:space-between;align-items:center;gap:1rem;margin-bottom:.85rem;flex-wrap:wrap}
+  .gportal .eyebrow a{color:var(--arc-hi);text-decoration:none;border-bottom:1px solid transparent}
+  .gportal .eyebrow a:hover{border-color:currentColor}
+
+  .gportal .hero{position:relative;border:1px solid var(--line2);border-radius:1.1rem;overflow:hidden;
+    background:linear-gradient(180deg,var(--panel),#080d16);box-shadow:0 34px 80px rgba(0,0,0,.62)}
+  .gportal .hero .aur2{position:absolute;inset:-60% -20% auto -20%;height:200%;pointer-events:none;
+    background:conic-gradient(from 200deg,rgba(77,178,255,0),rgba(77,178,255,.22),rgba(95,224,163,.14),
+      rgba(255,138,74,.18),rgba(77,178,255,0));filter:blur(58px);animation:gpSpin 38s linear infinite}
+  @keyframes gpSpin{to{transform:rotate(360deg)}}
+  .gportal .hero .in{position:relative;padding:1.7rem 1.5rem 1.5rem;
+    display:flex;gap:1.5rem;align-items:center;flex-wrap:wrap}
+  .gportal .hcopy{flex:1;min-width:16rem}
+
+  /* PTUI emblem (routes.characters._build_ptui_emblem) -- the same mark the
+     in-game all-in-one chat bar draws. Motion mirrors NMSTheme::DrawEmblem:
+     0.55 rad/s out (11.4s), 0.38 rad/s back (16.5s), a 4.5s halo breath, and
+     nodes on a 3.0s pulse offset by 2.09 rad each so the trio shimmers rather
+     than blinking together. */
+  .gportal .gp-sigil{position:relative;width:11rem;height:11rem;flex:none;
+    margin-left:auto;display:grid;place-items:center;pointer-events:none}
+  .gportal .gp-sigil svg{position:relative;width:100%;height:100%;overflow:visible;
+    filter:drop-shadow(0 0 14px rgba(143,208,255,.30))}
+  .gportal .gp-sigil .pt-out,.gportal .gp-sigil .pt-in{
+    transform-box:view-box;transform-origin:100px 100px}
+  .gportal .gp-sigil .pt-out{animation:gpSpin 11.4s linear infinite}
+  .gportal .gp-sigil .pt-in{animation:gpSpin 16.5s linear infinite reverse}
+  .gportal .gp-sigil .pt-h3{transform-box:view-box;transform-origin:100px 100px;
+    animation:gpBreath 4.5s ease-in-out infinite}
+  /* The node glow is a gradient shell that already carries its own falloff, so
+     the pulse only breathes its size and overall opacity. Each node runs the
+     same 3s cycle offset by a third, which is what makes the trio shimmer
+     instead of blinking in unison. */
+  .gportal .gp-sigil .pt-g1{transform-box:fill-box;transform-origin:center;
+    animation:gpPulseA 3s ease-in-out infinite}
+  .gportal .gp-sigil .pt-n2 .pt-g1{animation-delay:-1s}
+  .gportal .gp-sigil .pt-n3 .pt-g1{animation-delay:-2s}
+  @keyframes gpBreath{0%,100%{transform:scale(.96);opacity:.6}50%{transform:scale(1.05);opacity:1}}
+  @keyframes gpPulseA{0%,100%{transform:scale(.88);opacity:.7}50%{transform:scale(1.12);opacity:1}}
+  @media(max-width:60rem){.gportal .gp-sigil{display:none}}
+  .gportal .kicker{font-family:var(--gmono);font-size:.6rem;letter-spacing:.2em;text-transform:uppercase;color:var(--ember);margin-bottom:.35rem}
+  .gportal h1{font-family:var(--gserif);margin:0;font-size:2.5rem;line-height:1.02;font-weight:700;
+    background:linear-gradient(92deg,#fff 15%,var(--arc-hi) 72%);-webkit-background-clip:text;background-clip:text;color:transparent}
+  .gportal .sub{color:var(--muted);font-size:.95rem;margin-top:.5rem;max-width:42rem}
+  .gportal .tally{display:flex;gap:1.6rem;margin-top:1.15rem;flex-wrap:wrap}
+  .gportal .t .n{font-size:1.5rem;font-weight:800;line-height:1;font-variant-numeric:tabular-nums}
+  .gportal .t .l{font-family:var(--gmono);font-size:.53rem;letter-spacing:.15em;text-transform:uppercase;color:var(--muted);margin-top:.3rem}
+  .gportal .t.a .n{color:var(--arc-hi)} .gportal .t.b .n{color:var(--green)}
+  .gportal .t.c .n{color:var(--gold)} .gportal .t.d .n{color:var(--ember)}
+
+  .gportal .bar{display:flex;align-items:center;gap:.6rem;margin:1.4rem .15rem .8rem;flex-wrap:wrap}
+  .gportal .note{font-family:var(--gmono);font-size:.64rem;color:var(--muted)}
+  .gportal .pbtn{font-family:var(--gmono);font-size:.64rem;letter-spacing:.1em;text-transform:uppercase;
+    color:var(--arc-hi);background:rgba(77,178,255,.08);border:1px solid var(--arc-dp);
+    padding:.4rem .8rem;border-radius:999px;cursor:pointer;transition:.15s;text-decoration:none}
+  .gportal .pbtn:hover{background:rgba(77,178,255,.18);color:var(--arc-hi)}
+  .gportal .pbtn.on{background:var(--arc-hi);color:#04121f;border-color:transparent;font-weight:700}
+  .gportal .pbtn.mine{color:var(--ember-hi);border-color:rgba(255,138,74,.45);background:rgba(255,138,74,.08)}
+  .gportal .spacer{flex:1}
+
+  /* ---- guild cards ---- */
+  .gp-list{display:grid;gap:.8rem}
+  .gp-card{position:relative;display:grid;grid-template-columns:auto auto 1fr auto;gap:1.1rem;align-items:center;
+    border:1px solid var(--line2);border-radius:.9rem;padding:1rem 1.15rem;
+    background:linear-gradient(180deg,var(--panel2),var(--cell));transition:.16s;text-decoration:none;color:inherit}
+  .gp-card:hover{border-color:var(--arc-dp);transform:translateY(-1px);color:inherit;text-decoration:none;
+    box-shadow:0 16px 40px rgba(0,0,0,.45)}
+  .gp-card .pos{font-family:var(--gserif);font-size:1.5rem;font-weight:700;color:var(--dim);
+    width:2.1rem;text-align:center;font-variant-numeric:tabular-nums}
+  .gp-card:nth-child(1) .pos{color:var(--gold)}
+  .gp-card:nth-child(2) .pos{color:#cfd8e3}
+  .gp-card:nth-child(3) .pos{color:#c58a5a}
+  .gp-card .bn{flex:none;display:grid;place-items:center;filter:drop-shadow(0 4px 10px rgba(0,0,0,.5))}
+  .gp-card .bn svg{display:block}
+  .gp-main{min-width:0}
+  .gp-main .nm{font-family:var(--gserif);font-size:1.22rem;font-weight:700;display:flex;align-items:center;gap:.5rem;flex-wrap:wrap}
+  .gp-main .nm .rec{font-family:var(--gmono);font-size:.55rem;letter-spacing:.12em;text-transform:uppercase;
+    font-weight:700;color:#04231a;background:var(--green);padding:.12rem .42rem;border-radius:.3rem}
+  .gp-main .nm .own{font-family:var(--gmono);font-size:.55rem;letter-spacing:.12em;text-transform:uppercase;
+    font-weight:700;color:var(--ember-hi);border:1px solid rgba(255,138,74,.4);padding:.1rem .4rem;border-radius:.3rem}
+  .gp-main .bl{font-size:.82rem;color:var(--muted);margin-top:.25rem;line-height:1.45;
+    display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+  .gp-stats{display:flex;gap:1.1rem;margin-top:.55rem;flex-wrap:wrap}
+  .gp-stats div{font-family:var(--gmono);font-size:.68rem;color:var(--dim);font-variant-numeric:tabular-nums}
+  .gp-stats b{color:#a8bdd4;font-weight:600}
+  .gp-stats .hot b{color:var(--green)}
+  .gp-stats .cold b{color:var(--ember)}
+  /* window marker -- raid kills are a rolling 7-day count, not a lifetime total */
+  .gp-stats .win{font-size:.55rem;letter-spacing:.08em;color:var(--dim);opacity:.7;
+    border:1px solid var(--line2);border-radius:.25rem;padding:0 .22rem;margin-left:.1rem}
+
+  /* achievement badges on the directory card -- the four highest tiers held */
+  .gp-ach{display:flex;align-items:center;gap:.3rem;margin-top:.5rem;flex-wrap:wrap}
+  .gp-ach .ab{position:relative;width:1.55rem;height:1.55rem;border-radius:.35rem;display:grid;place-items:center;
+    font-size:.78rem;background:rgba(95,224,163,.09);border:1px solid var(--green-dp);color:var(--green)}
+  .gp-ach .ab.max{background:rgba(255,138,74,.12);border-color:var(--gold);color:var(--gold)}
+  .gp-ach .ab i{position:absolute;bottom:-.24rem;right:-.24rem;font-style:normal;font-family:var(--gmono);
+    font-size:.46rem;font-weight:700;background:var(--cell);border:1px solid currentColor;
+    border-radius:.2rem;padding:0 .14rem;line-height:1.25}
+  .gp-ach .ac{font-family:var(--gmono);font-size:.62rem;color:var(--dim);margin-left:.2rem}
+
+  .gp-score{text-align:right;flex:none}
+  .gp-score .v{font-size:1.5rem;font-weight:800;line-height:1;color:var(--arc-hi);font-variant-numeric:tabular-nums}
+  .gp-score .k{font-family:var(--gmono);font-size:.5rem;letter-spacing:.15em;text-transform:uppercase;color:var(--muted);margin-top:.28rem}
+  .gp-score .mini{width:4.2rem;height:.3rem;border-radius:999px;background:#0a1220;border:1px solid var(--line);overflow:hidden;margin-top:.4rem}
+  .gp-score .mini i{display:block;height:100%;background:linear-gradient(90deg,var(--arc),var(--green))}
+
+  .gp-empty{padding:2.6rem 1.5rem;text-align:center;color:var(--muted);border:1px dashed var(--line2);border-radius:.9rem}
+  .gp-empty .big{font-family:var(--gserif);font-size:1.15rem;color:var(--ctext);font-weight:700;margin-bottom:.35rem}
+
+  .gp-foot{margin-top:1.6rem;padding:.95rem 1.1rem;border:1px solid var(--line);border-radius:.7rem;
+    background:rgba(255,255,255,.015);font-family:var(--gmono);font-size:.68rem;color:var(--muted);line-height:1.7;text-align:center}
+  .gp-foot b{color:var(--arc-hi)}
+  @media(prefers-reduced-motion:reduce){.gp-sky .aur i,.gp-sky canvas,.gportal .hero .aur2,
+    .gportal .gp-sigil .pt-out,.gportal .gp-sigil .pt-in,.gportal .gp-sigil .pt-h3,
+    .gportal .gp-sigil .pt-g1{animation:none}}
+  @media(max-width:52rem){
+    .gp-card{grid-template-columns:auto auto 1fr;gap:.8rem}
+    .gp-score{grid-column:1/-1;text-align:left;display:flex;align-items:center;gap:.7rem}
+    .gp-score .mini{margin-top:0}
+  }
+  @media(max-width:34rem){.gportal h1{font-size:1.9rem}.gp-card .pos{display:none}}
+</style>
+
+<div class="gp-sky" aria-hidden="true">
+  <div class="aur"><i class="a1"></i><i class="a2"></i><i class="a3"></i></div>
+  <canvas id="gp-stars"></canvas>
+</div>
+
+<div class="gportal">
+  <div class="eyebrow">
+    <span>PTDex // guild.portal</span>
+    <a href="{{ url_for('characters.leaderboards') }}">Leaderboards &rarr;</a>
+  </div>
+
+  <section class="hero">
+    <div class="aur2"></div>
+    <div class="in">
+      <div class="hcopy">
+        <div class="kicker">Project Triune &middot; The Guilds of Norrath</div>
+        <h1>Guild Portal</h1>
+        <p class="sub">Every guild on the server, ranked by how far its members have actually come &mdash;
+          progression through the planes, the strength of its capped players, and how much of the roster
+          still logs in.</p>
+        <div class="tally">
+          <div class="t a"><div class="n">{{ totals.guilds }}</div><div class="l">Guilds</div></div>
+          <div class="t b"><div class="n">{{ totals.members }}</div><div class="l">Members</div></div>
+          <div class="t c"><div class="n">{{ totals.active }}</div><div class="l">Active (14d)</div></div>
+          <div class="t d"><div class="n">{{ totals.recruiting }}</div><div class="l">Recruiting</div></div>
+        </div>
+      </div>
+      <div class="gp-sigil" aria-hidden="true">{{ sigil|safe }}</div>
+    </div>
+  </section>
+
+  <div class="bar">
+    <a class="pbtn {{ 'on' if recruiting_only }}"
+       href="{{ url_for('guilds.guild_portal', recruiting=0 if recruiting_only else 1) }}">
+      {{ 'Showing recruiting only' if recruiting_only else 'Recruiting only' }}</a>
+    {% if manage_count %}
+      <span class="pbtn mine">&#9873; You manage {{ manage_count }} guild{{ '' if manage_count == 1 else 's' }}</span>
+    {% endif %}
+    <span class="spacer"></span>
+    <span class="note">Standing = progression 26% &middot; power 22% &middot; activity 18%
+      &middot; raiding 16% &middot; achievements 13% &middot; size 5%</span>
+  </div>
+
+  {% if guilds %}
+  <div class="gp-list">
+    {% for g in guilds %}
+    <a class="gp-card" href="{{ url_for('guilds.guild_detail', guild_id=g.id) }}">
+      <div class="pos">{{ g.rank }}</div>
+      <div class="bn">{{ g.banner_svg|safe }}</div>
+      <div class="gp-main">
+        <div class="nm">{{ g.name }}
+          {% if g.recruiting %}<span class="rec">Recruiting</span>{% endif %}
+          {% if g.can_manage %}<span class="own">Yours</span>{% endif %}
+        </div>
+        {% if g.blurb %}<div class="bl">{{ g.blurb }}</div>
+        {% elif g.motd %}<div class="bl">{{ g.motd }}</div>{% endif %}
+        <div class="gp-stats">
+          <div><b>{{ g.members }}</b> members</div>
+          <div class="{{ 'hot' if g.active_pct >= 50 else 'cold' }}"><b>{{ g.active_pct }}%</b> active</div>
+          <div><b>{{ g.capped }}</b> at 65</div>
+          <div><b>{{ '{:,}'.format(g.avg_aa) }}</b> avg AA</div>
+          <div><b>{{ g.pop_pct }}%</b> PoP unlocked</div>
+          {% if g.kills %}<div title="Raid kills in the last 7 days &mdash; the server prunes its kill log weekly, so this is current tempo, not a lifetime total."><b>{{ '{:,}'.format(g.kills) }}</b> raid kills <span class="win">7d</span></div>{% endif %}
+        </div>
+        {% if g.ach_earned %}
+        <div class="gp-ach" title="{{ g.ach_earned }} of {{ g.ach_total }} achievements &middot; {{ g.ach_points }} of {{ g.ach_max }} points">
+          {% for a in g.ach_top %}<span class="ab {{ 'max' if a.complete }}">{{ a.icon|safe }}<i>{{ a.roman }}</i></span>{% endfor %}
+          <span class="ac">{{ g.ach_points }} pts &middot; {{ g.ach_earned }}/{{ g.ach_total }}</span>
+        </div>
+        {% endif %}
+      </div>
+      <div class="gp-score">
+        <div><div class="v">{{ g.standing }}</div>
+          <div class="k">Standing</div></div>
+        <div class="mini"><i style="width:{{ (g.standing / 10)|round|int }}%"></i></div>
+      </div>
+    </a>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="gp-empty">
+    <div class="big">No guilds match</div>
+    {% if recruiting_only %}No guild has marked itself as recruiting yet.{% else %}No guilds found.{% endif %}
+  </div>
+  {% endif %}
+
+  <div class="gp-foot">
+    Rosters, ranks and messages of the day are read live from the game &mdash; officers keep them current
+    in-game, not here. Raid kills come from the server's own kill log, so they count
+    <b>every group size</b>, not just the ranked Solo/Duo/Trio boards &mdash; and because that log is
+    pruned weekly they are a <b>rolling 7-day</b> figure, so a guild that stops raiding falls back down.
+    Every pillar of standing counts both how <b>large a share</b> of a guild has done something and
+    <b>how many</b> have, so recruiting never costs a guild its place.
+    Anonymous characters are excluded, exactly as on the player boards.
+  </div>
+</div>
+
+<script>
+(function(){
+  var c=document.getElementById('gp-stars'); if(!c)return;
+  var PAL=['#8fd0ff','#ffffff','#cfe6ff','#ff8a4a','#5fe0a3'];
+  function paint(){
+    var x=c.getContext('2d'),W=c.width=innerWidth+100,H=c.height=innerHeight+100;
+    x.clearRect(0,0,W,H);
+    var n=Math.round(W*H/3200);
+    for(var i=0;i<n;i++){
+      x.globalAlpha=.2+Math.random()*.5;
+      x.fillStyle=PAL[Math.floor(Math.random()*PAL.length)];
+      x.beginPath();x.arc(Math.random()*W,Math.random()*H,.3+Math.random()*1.1,0,6.283);x.fill();
+    }
+    x.globalAlpha=1;
+  }
+  paint();
+  var t;addEventListener('resize',function(){clearTimeout(t);t=setTimeout(paint,180);});
+})();
+</script>
+{% endblock %}

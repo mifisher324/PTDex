@@ -1,0 +1,392 @@
+{% extends "layout.html" %}
+{% block title %}PTDex :: My Profile{% endblock %}
+{% block body %}
+<style>
+  .dash{--d-ink:#0f1319;--d-ink2:#0b0e13;--d-panel:#171c24;--d-panel2:#1e242e;--d-cell:#0f1826;
+    --d-line:#2b3441;--d-line2:#3a4552;--arc:#4db2ff;--arc-hi:#8fd0ff;--emb:#ff8a4a;--emb-hi:#ffb289;
+    --teal:#49d0a0;--violet:#b79bff;--txt:#ece5d6;--dim:#b3b0a4;--mut:#8a8f98;
+    --gold:#ffd558;--gold-n:#ffe9a8;--silver:#c9d6e8;--silver-n:#eef4fb;--bronze:#d0894f;--bronze-n:#f0c49a;
+    --mono:ui-monospace,"Cascadia Code",Consolas,monospace;--serif:var(--nms-serif,Georgia,serif);
+    max-width:64rem;margin:0 auto;padding:1.5rem 1.25rem 5rem;position:relative;z-index:1;color:var(--txt)}
+  .dash a{color:var(--arc-hi);text-decoration:none}
+  .dash .eye{font-family:var(--mono);font-size:.68rem;letter-spacing:.2em;text-transform:uppercase;color:var(--emb);font-weight:700;margin:0 0 .5rem}
+  .dash h2.sec{font-family:var(--serif);font-size:1.35rem;margin:0 0 .15rem;font-weight:700;color:#f4ecda}
+  .dash .subh{color:var(--mut);font-size:.86rem;margin:0 0 1.1rem}
+
+  /* cosmic backdrop */
+  .cosmos{position:fixed;inset:0;z-index:0;overflow:hidden;pointer-events:none}
+  .cosmos .aurora{position:absolute;inset:-20%;filter:blur(70px);opacity:.4}
+  .cosmos .aurora i{position:absolute;border-radius:50%;mix-blend-mode:screen;animation:dDrift 26s ease-in-out infinite}
+  .cosmos .a1{width:30rem;height:30rem;left:2%;top:-14%;background:radial-gradient(circle,#1f6dd0,transparent 66%)}
+  .cosmos .a2{width:34rem;height:34rem;right:-4%;top:-24%;background:radial-gradient(circle,#7b53d6,transparent 66%);animation-delay:-8s}
+  .cosmos .a3{width:38rem;height:38rem;left:34%;bottom:-38%;background:radial-gradient(circle,#1f9c8a,transparent 66%);animation-delay:-14s}
+  .cosmos .stars i{position:absolute;border-radius:50%}
+  @keyframes dDrift{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(2rem,1.4rem) scale(1.08)}}
+  @keyframes dTw{0%,100%{opacity:.22}50%{opacity:1}}
+  @keyframes dfA{0%,100%{transform:translate(0,0)}50%{transform:translate(14px,42px)}}
+  @keyframes dfB{0%,100%{transform:translate(0,0)}50%{transform:translate(-18px,-36px)}}
+  @keyframes dfC{0%,100%{transform:translate(0,0)}50%{transform:translate(20px,26px)}}
+  @media(prefers-reduced-motion:reduce){.cosmos .stars i,.cosmos .aurora i,.dash .tri-ico .t-ring,.dash .tri-ico .t-in,.dash .seal .s-ring{animation:none}}
+
+  /* identity */
+  .idbar{display:flex;align-items:center;gap:1.1rem;flex-wrap:wrap;background:linear-gradient(180deg,var(--d-panel),var(--d-ink2));
+    border:1px solid var(--d-line2);border-radius:1rem;padding:1.2rem 1.4rem;box-shadow:0 1.4rem 3rem rgba(0,0,0,.4);
+    margin-bottom:1.5rem;position:relative;overflow:hidden}
+  .idbar::before{content:"";position:absolute;inset:0 auto 0 0;width:.25rem;background:linear-gradient(180deg,var(--emb),var(--teal))}
+  .idbar .av{width:3.5rem;height:3.5rem;border-radius:50%;flex:none;display:grid;place-items:center;overflow:hidden;
+    background:linear-gradient(135deg,#37507a,#22314d);border:2px solid rgba(73,208,160,.5);font-family:var(--serif);font-weight:800;font-size:1.4rem;color:#cfe7ff}
+  .idbar .av img{width:100%;height:100%;object-fit:cover}
+  .idbar .hi{font-family:var(--serif);font-size:1.5rem;font-weight:700;color:#f4ecda;line-height:1.1}
+  .idbar .hi b{color:var(--emb-hi)}
+  .idmeta{display:flex;gap:.5rem;flex-wrap:wrap;margin-top:.4rem}
+  .chip{font-family:var(--mono);font-size:.68rem;padding:.2rem .6rem;border-radius:2rem;border:1px solid var(--d-line2);color:var(--dim);white-space:nowrap}
+  .chip.ok{color:var(--teal);border-color:rgba(73,208,160,.5);background:rgba(73,208,160,.08)}
+  .chip.staff{color:var(--violet);border-color:rgba(183,155,255,.5);background:rgba(183,155,255,.08)}
+
+  /* rollup */
+  .rollup{display:grid;grid-template-columns:repeat(auto-fit,minmax(8.5rem,1fr));gap:.75rem;margin-bottom:1.5rem}
+  .stat{background:var(--d-panel);border:1px solid var(--d-line);border-radius:.6rem;padding:.85rem 1rem}
+  .stat .n{font-family:var(--mono);font-size:1.5rem;font-weight:700;line-height:1;color:var(--arc-hi);font-variant-numeric:tabular-nums}
+  .stat.e .n{color:var(--emb-hi)} .stat.g .n{color:var(--teal)}
+  .stat .k{font-size:.72rem;color:var(--mut);margin-top:.35rem;text-transform:uppercase;letter-spacing:.06em}
+
+  /* trio spotlight */
+  .spot{display:flex;align-items:center;gap:1.4rem;flex-wrap:wrap;margin:0 0 1.75rem;
+    background:linear-gradient(110deg,rgba(255,138,74,.10),rgba(73,208,160,.06) 55%,rgba(77,178,255,.10)),var(--d-panel);
+    border:1px solid var(--d-line2);border-radius:1rem;padding:1.2rem 1.4rem;box-shadow:0 1rem 2.2rem rgba(0,0,0,.35)}
+  .spot .l{display:flex;flex-direction:column;gap:.5rem;min-width:0;flex:1 1 16rem}
+  .spot .se{font-family:var(--mono);font-size:.64rem;letter-spacing:.18em;text-transform:uppercase;color:var(--emb-hi);font-weight:700}
+  .spot .cls{display:flex;gap:.4rem;flex-wrap:wrap}
+  .spot .c{font-family:var(--serif);font-size:1.15rem;font-weight:800;color:#fff;display:flex;align-items:center;gap:.45rem}
+  .spot .dot{width:.55rem;height:.55rem;border-radius:50%;flex:none}
+  .spot .sub{color:var(--mut);font-size:.82rem}
+  .spot .r{text-align:center;flex:none;padding-left:1rem;border-left:1px solid var(--d-line)}
+  .spot .rank{font-family:var(--serif);font-size:2.4rem;font-weight:800;line-height:1;background:linear-gradient(180deg,#fff,var(--emb-hi));-webkit-background-clip:text;background-clip:text;color:transparent}
+  .spot .of{font-family:var(--mono);font-size:.62rem;letter-spacing:.08em;color:var(--mut);margin-top:.3rem}
+
+  /* character icons (Triune + initial) */
+  .tri-ico{flex:none;filter:drop-shadow(0 0 .35rem rgba(77,178,255,.3))}
+  .tri-ico.big{width:4.7rem;height:4.7rem} .tri-ico.sm{width:3rem;height:3rem}
+  .tri-ico .t-ring,.tri-ico .t-in{transform-origin:50px 50px}
+  .tri-ico.spin .t-ring{animation:dSpin 42s linear infinite} .tri-ico.spin .t-in{animation:dSpin 30s linear infinite reverse}
+  @keyframes dSpin{to{transform:rotate(360deg)}}
+  .tri-ico .lett{font-family:var(--serif);font-weight:800;fill:#f0e8d6}
+  .tri-ico.anon{filter:grayscale(.75) opacity(.6)}
+
+  /* featured main */
+  .featured{display:grid;grid-template-columns:auto 1fr auto;gap:1.2rem;align-items:center;position:relative;
+    background:linear-gradient(180deg,var(--d-panel2),var(--d-cell));border:1px solid var(--emb);border-radius:.9rem;
+    padding:1.3rem 1.4rem;margin-bottom:1rem;box-shadow:0 0 0 1px rgba(255,138,74,.15),0 1.2rem 2.5rem rgba(0,0,0,.4)}
+  @media(max-width:38rem){.featured{grid-template-columns:1fr;text-align:center;justify-items:center}}
+  .mainflag{position:absolute;top:-.7rem;left:1.2rem;font-family:var(--mono);font-size:.62rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#1a1206;background:linear-gradient(90deg,var(--gold),var(--emb-hi));padding:.2rem .7rem;border-radius:2rem}
+  .cbody .nm{font-family:var(--serif);font-size:1.55rem;font-weight:800;color:#fff;line-height:1.05}
+  .cbody .trio{display:flex;gap:.35rem;flex-wrap:wrap;margin:.45rem 0}
+  .clschip{font-family:var(--mono);font-size:.72rem;font-weight:700;color:var(--emb-hi);background:rgba(255,178,137,.08);border:1px solid rgba(255,178,137,.3);padding:.12rem .55rem;border-radius:.35rem}
+  .cbody .meta{font-family:var(--mono);font-size:.76rem;color:var(--mut)} .cbody .meta b{color:var(--txt)}
+  .gtier{font-family:var(--mono);font-size:.66rem;font-weight:700;letter-spacing:.05em;text-transform:uppercase;padding:.12rem .55rem;border-radius:.3rem;white-space:nowrap}
+  .gtier.myth{color:var(--gold-n);background:rgba(255,213,88,.12);border:1px solid rgba(255,213,88,.4)}
+  .gtier.leg{color:#ffdca8;background:rgba(255,178,137,.12);border:1px solid rgba(255,178,137,.4)}
+  .gtier.epic{color:var(--violet);background:rgba(183,155,255,.12);border:1px solid rgba(183,155,255,.4)}
+  .gtier.sup{color:var(--teal);background:rgba(73,208,160,.12);border:1px solid rgba(73,208,160,.4)}
+  .gtier.adv{color:var(--mut);background:rgba(138,143,152,.12);border:1px solid var(--d-line2)}
+  .prog{margin-top:.6rem;max-width:20rem}
+  .prog .ptop{display:flex;justify-content:space-between;font-family:var(--mono);font-size:.66rem;color:var(--mut);margin-bottom:.25rem}
+  .prog .ptop b{color:var(--emb-hi)}
+  .prog .track{height:.5rem;border-radius:2rem;background:#0a1120;border:1px solid var(--d-line);overflow:hidden}
+  .prog .fill{height:100%;border-radius:2rem;background:linear-gradient(90deg,var(--arc),var(--teal));box-shadow:0 0 .5rem rgba(77,178,255,.5)}
+  .cright{display:flex;gap:.7rem;align-items:flex-start}
+  .rankcell{display:flex;flex-direction:column;align-items:center;gap:.3rem}
+  .rankcell .rlab{font-family:var(--mono);font-size:.52rem;letter-spacing:.12em;text-transform:uppercase;color:var(--mut)}
+  .seal.mini{width:4.4rem;height:4.4rem;filter:drop-shadow(0 0 .35rem rgba(77,178,255,.3))}
+  .seal .s-ring{transform-origin:50px 50px}
+  .seal .snum{font-family:var(--serif);font-weight:800;fill:#fff;font-variant-numeric:lining-nums tabular-nums;font-feature-settings:"lnum" 1,"tnum" 1}
+  .anon-note{font-family:var(--mono);font-size:.7rem;color:var(--mut);border:1px dashed var(--d-line2);border-radius:.4rem;padding:.4rem .7rem;text-align:center}
+
+  /* grid others */
+  .cgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(16rem,1fr));gap:.85rem}
+  .ccard{display:flex;gap:.85rem;align-items:center;background:var(--d-panel);border:1px solid var(--d-line);border-radius:.7rem;padding:.9rem 1rem;transition:.14s}
+  .ccard:hover{border-color:var(--arc);transform:translateY(-2px);box-shadow:0 .6rem 1.4rem rgba(0,0,0,.4)}
+  .ccard .cn{font-family:var(--serif);font-size:1.05rem;font-weight:700;color:#f0e8d6;line-height:1.1}
+  .ccard .cn a{color:inherit} .ccard .cn a:hover{color:var(--arc-hi)}
+  .ccard .cm{font-family:var(--mono);font-size:.68rem;color:var(--mut);margin-top:.2rem}
+  .ccard .rt{margin-left:auto;text-align:right;flex:none;display:flex;flex-direction:column;align-items:flex-end;gap:.3rem}
+  .ccard .ps .v{font-family:var(--mono);font-size:1.1rem;font-weight:800;color:var(--teal);font-variant-numeric:tabular-nums}
+  .ccard .ps .l{font-family:var(--mono);font-size:.54rem;letter-spacing:.1em;text-transform:uppercase;color:var(--mut)}
+  .setmain{background:none;border:0;font-family:var(--mono);font-size:.6rem;color:var(--mut);cursor:pointer;padding:0}
+  .setmain:hover{color:var(--gold-n)}
+  .ccard.anon{border-style:dashed;opacity:.85}
+  .anonbadge{font-family:var(--mono);font-size:.56rem;letter-spacing:.06em;text-transform:uppercase;color:var(--mut);border:1px solid var(--d-line2);border-radius:.3rem;padding:.1rem .4rem;margin-left:auto}
+  .note{font-size:.8rem;color:var(--mut);font-style:italic;margin-top:.5rem}
+
+  /* coming soon panels */
+  .soon{border:1px dashed var(--d-line2);border-radius:.8rem;padding:1.4rem 1.4rem;background:rgba(15,22,34,.5);display:flex;align-items:center;gap:1rem;flex-wrap:wrap}
+  .soon .badge{font-family:var(--mono);font-size:.62rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--arc-hi);border:1px solid var(--arc);border-radius:2rem;padding:.2rem .7rem;white-space:nowrap}
+  .soon p{margin:0;color:var(--mut);font-size:.88rem}
+
+  /* not-linked cta */
+  .cta{background:linear-gradient(180deg,rgba(88,101,242,.12),transparent),var(--d-panel);border:1px solid rgba(88,101,242,.4);border-radius:.8rem;padding:1.3rem 1.5rem;display:flex;gap:1rem;align-items:flex-start;margin-top:1rem}
+  .cta .di{width:2.4rem;height:2.4rem;flex:none;color:#7e8aeb}
+  .cta h3{margin:0 0 .3rem;font-family:var(--serif);font-size:1.1rem;color:#cdd3f7}
+  .cta p{margin:0;color:var(--dim);font-size:.88rem}
+  .cta code{font-family:var(--mono);font-size:.82rem;background:#0c1017;border:1px solid var(--d-line2);border-radius:.3rem;padding:.1rem .4rem;color:var(--emb-hi)}
+  .divlab{display:flex;align-items:center;gap:.75rem;margin:2.5rem 0 1rem;color:var(--mut);font-family:var(--mono);font-size:.64rem;letter-spacing:.16em;text-transform:uppercase}
+  .divlab::before,.divlab::after{content:"";height:1px;background:var(--d-line);flex:1}
+
+  /* raid records */
+  .rrec-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(15rem,1fr));gap:.85rem}
+  .rrec{background:var(--d-panel);border:1px solid var(--d-line);border-radius:.7rem;padding:.9rem 1rem;position:relative;overflow:hidden}
+  .rrec::before{content:"";position:absolute;inset:0 auto 0 0;width:.2rem;background:var(--acc,#4db2ff)}
+  .rrec .rb{font-family:var(--serif);font-size:1.02rem;font-weight:700;color:#f0e8d6;margin-bottom:.55rem;display:flex;align-items:center;gap:.5rem;flex-wrap:wrap}
+  .rrec .rb a{color:inherit}
+  .rrec .troph{font-family:var(--mono);font-size:.58rem;font-weight:700;letter-spacing:.05em;padding:.06rem .45rem;border-radius:1rem;border:1px solid currentColor;white-space:nowrap;margin-left:auto}
+  .rrec .rrow{display:flex;justify-content:space-between;gap:.5rem;font-family:var(--mono);font-size:.74rem;color:var(--mut);padding:.14rem 0}
+  .rrec .rrow b{color:var(--txt);font-variant-numeric:tabular-nums}
+  .rrec .holder{color:var(--arc-hi)}
+  /* milestones */
+  .ms-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(11.5rem,1fr));gap:.7rem}
+  .mstone{display:flex;gap:.7rem;align-items:center;background:var(--d-panel);border:1px solid var(--d-line);border-radius:.6rem;padding:.7rem .85rem}
+  .mstone.locked{opacity:.4;filter:grayscale(.65)}
+  .mstone .mi{width:2rem;height:2rem;flex:none;display:grid;place-items:center;border-radius:50%;border:1.5px solid currentColor;font-size:.85rem}
+  .mstone .mn{font-family:var(--serif);font-size:.92rem;font-weight:700;color:#f0e8d6;line-height:1.1}
+  .mstone .md{font-family:var(--mono);font-size:.6rem;color:var(--mut);margin-top:.18rem;line-height:1.25}
+  .emptyrec{font-size:.86rem;color:var(--mut);font-style:italic;margin:.2rem 0 0}
+</style>
+
+{# ---------- reusable Triune seal icon with the character's initial ---------- #}
+{% macro tri_icon(name, big=false, anon=false) %}
+<svg class="tri-ico {{ 'big spin' if big else 'sm' }}{{ ' anon' if anon else '' }}" viewBox="0 0 100 100" fill="none" aria-label="{{ name }}">
+  <g class="t-ring" stroke="#4db2ff"><circle cx="50" cy="50" r="46" stroke-width="2.4" stroke-opacity=".5"/>
+    <circle cx="50" cy="50" r="39" stroke-width="2" stroke-dasharray="2 6" stroke-opacity=".75"/></g>
+  <g class="t-in"><polygon points="50,15 80,67 20,67" stroke="#8fa5eb" stroke-width="2" stroke-opacity=".7"/>
+    <circle cx="50" cy="15" r="5.5" fill="#9be1ff"/><circle cx="80" cy="67" r="5.5" fill="#ff8a4a"/><circle cx="20" cy="67" r="5.5" fill="#49d0a0"/></g>
+  <circle cx="50" cy="50" r="19" fill="#0a121c" stroke="#8fd0ff" stroke-width="2"/>
+  <text class="lett" x="50" y="51" text-anchor="middle" dominant-baseline="central" font-size="22">{{ (name[0]|upper) if name else '?' }}</text>
+</svg>
+{% endmacro %}
+
+{# ---------- rank seal: number in the medallion, metal + crown for top-3 ---------- #}
+{% macro seal(value, label, ring) %}
+  {% set s = value|string %}
+  {% set fs = 24 if s|length<=1 else (22 if s|length==2 else (17 if s|length==3 else 13.5)) %}
+  {% set medal = (value == 1) or (value == 2) or (value == 3) if label != 'Score' else false %}
+  {% set metal = {1:'#ffd558',2:'#c9d6e8',3:'#d0894f'}.get(value) if medal else '' %}
+  {% set metaln = {1:'#ffe9a8',2:'#eef4fb',3:'#f0c49a'}.get(value) if medal else '' %}
+  <div class="rankcell">
+    <svg class="seal mini" viewBox="0 0 100 100" fill="none" aria-label="{{ label }} {{ value }}">
+      <g class="s-ring" stroke="{{ metal if medal else ring }}"><circle cx="50" cy="50" r="46" stroke-width="2.4" stroke-opacity=".58"/>
+        <circle cx="50" cy="50" r="39" stroke-width="2" stroke-dasharray="2 6" stroke-opacity=".8"/></g>
+      {% if medal %}
+        <polygon points="50,16 80,67 20,67" stroke="{{ metal }}" stroke-width="1.6" stroke-opacity=".55"/>
+        <circle cx="80" cy="67" r="5" fill="{{ metal }}"/><circle cx="20" cy="67" r="5" fill="{{ metal }}"/>
+        <g transform="translate(38.5,4) scale(0.95)"><path d="M2.5 16.5 L4.5 6 L9 11.5 L12 3.5 L15 11.5 L19.5 6 L21.5 16.5 Z" fill="{{ metal }}" stroke="{{ metaln }}" stroke-width="1" stroke-linejoin="round"/><path d="M2.5 16.5 H21.5" stroke="{{ metaln }}" stroke-width="1.6" stroke-linecap="round"/><circle cx="12" cy="3.5" r="1.7" fill="{{ metaln }}"/></g>
+      {% else %}
+        <polygon points="50,16 80,67 20,67" stroke="#8fa5eb" stroke-width="1.6" stroke-opacity=".6"/>
+        <circle cx="50" cy="16" r="5" fill="#9be1ff"/><circle cx="80" cy="67" r="5" fill="#ff8a4a"/><circle cx="20" cy="67" r="5" fill="#49d0a0"/>
+      {% endif %}
+      <circle cx="50" cy="50" r="18" fill="#0a121c" stroke="{{ metaln if medal else ring }}" stroke-width="2"/>
+      <text class="snum" x="50" y="50" text-anchor="middle" dominant-baseline="central" font-size="{{ fs }}"{% if medal %} fill="{{ metaln }}"{% endif %}>{{ value }}</text>
+    </svg>
+    <span class="rlab" style="color:{{ metaln if medal else ring }}">{{ label }}</span>
+  </div>
+{% endmacro %}
+
+{% set tcls = {'Mythic':'myth','Legendary':'leg','Epic':'epic','Superior':'sup','Adventuring':'adv'} %}
+
+<div class="cosmos" aria-hidden="true">
+  <div class="aurora"><i class="a1"></i><i class="a2"></i><i class="a3"></i></div>
+  <div class="stars" id="stars"></div>
+</div>
+
+<div class="dash">
+
+  <!-- IDENTITY -->
+  <div class="idbar">
+    <div class="av">{% if duser.avatar %}<img src="{{ duser.avatar }}" alt="">{% else %}{{ duser.name[0]|upper }}{% endif %}</div>
+    <div>
+      <div class="hi">Hi, <b>{{ duser.name }}</b></div>
+      <div class="idmeta">
+        {% if data.linked %}<span class="chip ok">&#9679; {{ data.rollup.count }} character{{ 's' if data.rollup.count != 1 else '' }}</span>
+        {% else %}<span class="chip">No account linked yet</span>{% endif %}
+        {% if is_staff %}<span class="chip staff">&#10022; Staff</span>{% endif %}
+        {% if data.linked and private_features %}<a class="chip" href="{{ url_for('account_password_page') }}">Change game password</a>{% endif %}
+      </div>
+    </div>
+  </div>
+
+  {% if not data.linked %}
+  <!-- NOT LINKED -->
+  <div class="cta">
+    <svg class="di" viewBox="0 0 71 55" fill="currentColor" aria-hidden="true"><path d="M60.1 4.9A58.5 58.5 0 0 0 45.6.4a.2.2 0 0 0-.2.1c-.6 1.1-1.3 2.6-1.8 3.7a54 54 0 0 0-16.2 0A37 37 0 0 0 25.5.5a.2.2 0 0 0-.2-.1 58.4 58.4 0 0 0-14.5 4.5.2.2 0 0 0-.1.1C1.5 18.6-.9 31.9.3 45.1a.2.2 0 0 0 .1.2 58.8 58.8 0 0 0 17.7 9 .2.2 0 0 0 .2-.1c1.4-1.9 2.6-3.9 3.6-6a.2.2 0 0 0-.1-.3 38.7 38.7 0 0 1-5.5-2.6.2.2 0 0 1 0-.4l1.1-.9a.2.2 0 0 1 .2 0 41.9 41.9 0 0 0 35.6 0 .2.2 0 0 1 .2 0l1.1.9a.2.2 0 0 1 0 .4 36.3 36.3 0 0 1-5.5 2.6.2.2 0 0 0-.1.3c1 2.1 2.2 4.1 3.6 6a.2.2 0 0 0 .2.1 58.6 58.6 0 0 0 17.7-9 .2.2 0 0 0 .1-.2c1.5-15.3-2.4-28.5-10.2-40.1a.2.2 0 0 0-.1-.1zM23.7 37.1c-3.5 0-6.4-3.2-6.4-7.2s2.8-7.2 6.4-7.2c3.6 0 6.5 3.3 6.4 7.2 0 4-2.8 7.2-6.4 7.2zm23.7 0c-3.5 0-6.4-3.2-6.4-7.2s2.8-7.2 6.4-7.2c3.6 0 6.5 3.3 6.4 7.2 0 4-2.8 7.2-6.4 7.2z"/></svg>
+    <div>
+      <h3>Link your game account to see your characters</h3>
+      <p>You're signed in with Discord, but no game account is linked yet. Open the <code>#link-account</code>
+         channel in our Discord, click <b>Link Account</b>, and enter your game login in the secure popup.
+         You can link more than one account.</p>
+    </div>
+  </div>
+  {% else %}
+
+  <!-- ROLLUP -->
+  <div class="rollup">
+    <div class="stat"><div class="n">{{ data.rollup.count }}</div><div class="k">Characters</div></div>
+    <div class="stat e"><div class="n">{% if data.rollup.best_rank %}#{{ data.rollup.best_rank }}{% else %}&mdash;{% endif %}</div><div class="k">Best Server Rank</div></div>
+    <div class="stat g"><div class="n">{{ data.rollup.top_gear }}</div><div class="k">Top Gear Score</div></div>
+    <div class="stat"><div class="n">{{ '{:,}'.format(data.rollup.combined_aa) }}</div><div class="k">Combined AA</div></div>
+  </div>
+
+  {% if data.trio %}
+  <!-- TRIO SPOTLIGHT -->
+  {% set nodecol = ['#9be1ff','#ff8a4a','#49d0a0'] %}
+  <div class="spot">
+    <div class="l">
+      <span class="se">Your Trio</span>
+      <div class="cls">
+        {% for cl in data.trio.classes %}<span class="c"><span class="dot" style="background:{{ nodecol[loop.index0 % 3] }}"></span>{{ cl }}</span>{% endfor %}
+      </div>
+      <div class="sub">The rank of your main among everyone running this exact class combination.</div>
+    </div>
+    <div class="r">
+      <div class="rank">#{{ data.trio.rank }}</div>
+      <div class="of">of {{ data.trio.size }} {{ data.trio.classes|join(' / ') }} trio{{ 's' if data.trio.size != 1 else '' }}</div>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- MY CHARACTERS -->
+  <p class="eye">Your roster</p>
+  <h2 class="sec">Settings</h2>
+  <form method="post" action="{{ url_for('set_item_quality') }}" style="display:flex;flex-wrap:wrap;align-items:center;gap:.6rem;margin:0 0 1.2rem">
+    <label for="item_quality">Loot lists open items as</label>
+    <select id="item_quality" name="item_quality">
+      {% for q in ['Base', 'Enchanted', 'Legendary'] %}<option value="{{ q }}"{% if q == item_quality %} selected{% endif %}>{{ q }}</option>{% endfor %}
+    </select>
+    <button class="setmain" type="submit">Save</button>
+  </form>
+
+  <h2 class="sec">My Characters</h2>
+  <p class="subh">From your linked accounts. Your main is featured; the rest are sorted by total player score.</p>
+
+  {% set m = data.main %}
+  <div class="featured">
+    <span class="mainflag">&#9733; Main</span>
+    {{ tri_icon(m.name, big=true, anon=m.anon) }}
+    <div class="cbody">
+      <div class="nm">{{ m.name }}</div>
+      <div class="trio">{% for c in m.class_name.split('/') %}<span class="clschip">{{ c.strip() }}</span>{% endfor %}</div>
+      <div class="meta">Level <b>{{ m.level }}</b>{% if m.race_name %} {{ m.race_name }}{% endif %} &middot; <b>{{ '{:,}'.format(m.aa) }}</b> AA
+        {% if not m.anon %}&middot; gear <b>{{ m.gear_score }}</b> <span class="gtier {{ tcls.get(m.tier,'adv') }}" style="margin-left:.25rem">{{ m.tier }}</span>{% endif %}</div>
+      {% if not m.anon and m.next_tier %}
+      <div class="prog">
+        <div class="ptop"><span>{{ m.tier }} &rarr; <b>{{ m.next_tier }}</b></span><span>+{{ m.need }} gear score</span></div>
+        <div class="track"><div class="fill" style="width:{{ m.tier_progress }}%"></div></div>
+      </div>
+      {% endif %}
+      <div style="margin-top:.5rem">
+        {% if m.anon %}<span class="note">Anonymous &mdash; hidden from the public leaderboard &amp; player cards.</span>
+        {% else %}<a href="/character/{{ m.id }}">View full profile &rarr;</a>{% endif %}
+      </div>
+    </div>
+    <div class="cright">
+      {% if m.anon %}
+        <div class="anon-note">Anonymous<br>&#128274; private</div>
+      {% else %}
+        {% if m.rank %}{{ seal(m.rank, 'Server', '#4db2ff') }}{% endif %}
+        {{ seal(m.score, 'Score', '#49d0a0') }}
+      {% endif %}
+    </div>
+  </div>
+
+  {% set others = data.characters | rejectattr('is_main') | list %}
+  {% if others %}
+  <div class="cgrid">
+    {% for c in others %}
+    <div class="ccard{{ ' anon' if c.anon else '' }}"{% if c.anon %} title="Anonymous in-game &mdash; hidden from the public leaderboard and player cards."{% endif %}>
+      {{ tri_icon(c.name, anon=c.anon) }}
+      <div>
+        <div class="cn">{% if c.anon %}{{ c.name }}{% else %}<a href="/character/{{ c.id }}">{{ c.name }}</a>{% endif %}</div>
+        <div class="cm">{{ c.level }} &middot; {{ c.class_name }}{% if not c.anon %} &middot; gear {{ c.gear_score }}{% endif %}</div>
+      </div>
+      {% if c.anon %}
+        <span class="anonbadge">Anon &middot; private</span>
+      {% else %}
+        <div class="rt">
+          <div class="ps"><div class="v">{{ c.score }}</div><div class="l">Score</div></div>
+          {% if private_features %}<form method="post" action="{{ url_for('set_main', char_id=c.id) }}"><button class="setmain" type="submit">&#9733; set main</button></form>{% endif %}
+        </div>
+      {% endif %}
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+  {% if data.characters | selectattr('anon') | list %}
+  <p class="note">Anonymous characters appear only here, on your own dashboard &mdash; they never reach the public leaderboard or a shareable player card.</p>
+  {% endif %}
+
+  <!-- RAID RECORDS -->
+  <div class="divlab">Your trophy case</div>
+  {% if data.raid_records %}
+  <div class="rrec-grid">
+    {% for r in data.raid_records %}
+    <div class="rrec" style="--acc:{{ r.trophy.color if r.trophy else '#4db2ff' }}">
+      <div class="rb">{% if r.boss_key %}<a href="{{ url_for('leaderboard.boss_rankings', boss_key=r.boss_key) }}">{{ r.boss_name }}</a>{% else %}{{ r.boss_name }}{% endif %}
+        {% if r.trophy %}<span class="troph" style="color:{{ r.trophy.color }}">&#9733; {{ r.trophy.label }}</span>{% endif %}</div>
+      <div class="rrow"><span>Best parse</span><b style="color:{{ r.best_parse_d.color if r.best_parse_d else 'var(--txt)' }}">{{ '%.1f'|format(r.best_parse) if r.best_parse is not none else '—' }}</b></div>
+      <div class="rrow"><span>Fastest kill</span><b>{{ r.fastest_display or '—' }}</b></div>
+      <div class="rrow"><span>Clears</span><b>{{ r.clears }}</b></div>
+      {% if r.holder_id %}<div class="rrow"><span>Held by</span><a class="holder" href="/character/{{ r.holder_id }}">{{ r.holder_name }}</a></div>{% endif %}
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <p class="emptyrec">No raid records yet &mdash; down Kerafyrm, Seru, or the Plane of Time gauntlet to start your trophy case.</p>
+  {% endif %}
+
+  <!-- MILESTONES -->
+  <div class="divlab">Achievements</div>
+  <div class="ms-grid">
+    {% for ms in data.milestones %}
+    <div class="mstone{{ '' if ms.earned else ' locked' }}" title="{{ ms.desc }}">
+      <span class="mi" style="color:{{ ms.color }}">{% if ms.earned %}&#9733;{% else %}&#128274;{% endif %}</span>
+      <div><div class="mn">{{ ms.name }}</div><div class="md">{{ ms.desc }}</div></div>
+    </div>
+    {% endfor %}
+  </div>
+
+  <!-- RECENT ACTIVITY -->
+  <div class="divlab">Pulse</div>
+  <div class="soon">
+    <span class="badge">Coming soon</span>
+    <p><b style="color:var(--txt)">Recent Activity</b> &mdash; last seen, level dings, gear upgrades and
+       fresh kills across your roster.</p>
+  </div>
+
+  {% endif %}
+</div>
+
+<script>
+(function(){
+  var s=document.getElementById('stars'); if(!s) return;
+  function pick(){var r=Math.random();
+    return r<.56?'#dbe9ff':r<.70?'#ffd9a0':r<.78?'#ff9a76':r<.88?'#9bd0ff':r<.95?'#b79bff':'#7fe0c0';}
+  var h='';
+  for(var i=0;i<300;i++){
+    var big=Math.random()<.14, c=pick();
+    var sz=big?(Math.random()*3+2.6):(Math.random()*1.7+0.8);
+    var px=(big?sz*3:sz).toFixed(1);
+    var bg=big?('radial-gradient(circle, '+c+' 0%, rgba(0,0,0,0) 70%)'):c;
+    h+='<i style="left:'+(Math.random()*100).toFixed(1)+'%;top:'+(Math.random()*100).toFixed(1)
+      +'%;width:'+px+'px;height:'+px+'px;background:'+bg
+      +';animation:dTw '+(3+Math.random()*4).toFixed(1)+'s ease-in-out infinite '+(Math.random()*5).toFixed(1)
+      +'s, df'+'ABC'[i%3]+' '+(20+Math.random()*28).toFixed(0)+'s ease-in-out infinite '+(-(Math.random()*40).toFixed(0))+'s"></i>';
+  }
+  var orbs=[['#8fb8ff',86],['#ffb27a',52],['#b79bff',64],['#7fd4ff',44],['#ff9a76',58],['#9bd0ff',72]];
+  for(var k=0;k<orbs.length;k++){
+    h+='<i style="left:'+(8+Math.random()*84).toFixed(0)+'%;top:'+(6+Math.random()*70).toFixed(0)
+      +'%;width:'+orbs[k][1]+'px;height:'+orbs[k][1]+'px;opacity:.16'
+      +';background:radial-gradient(circle, '+orbs[k][0]+' 0%, rgba(0,0,0,0) 68%)'
+      +';animation:df'+'ABC'[k%3]+' '+(50+k*9)+'s ease-in-out infinite '+(-(k*17))+'s"></i>';
+  }
+  s.insertAdjacentHTML('beforeend',h);
+})();
+</script>
+{% endblock %}

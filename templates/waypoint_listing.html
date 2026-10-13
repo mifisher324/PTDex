@@ -1,0 +1,249 @@
+{% extends "layout.html" %}
+{% block title %}PTDex :: Waypoints{% endblock %}
+{% block body %}
+<style>
+  /* ---------- Attune the Map ---------- */
+  .atm{border:1px solid var(--w-line2);border-radius:0.875rem;overflow:hidden;
+    background:linear-gradient(180deg,#0e1626,#0a101c);box-shadow:0 24px 60px rgba(0,0,0,.5)}
+  .atm-title{display:flex;align-items:center;justify-content:space-between;padding:0.625rem 1rem;
+    border-bottom:1px solid var(--w-line2);background:linear-gradient(180deg,rgba(255,178,137,.08),transparent)}
+  .atm-title h2{margin:0;font-family:"Iowan Old Style",Palatino,Georgia,serif;font-size:1.05rem;letter-spacing:.04em;color:var(--w-gold)}
+  .atm-title .cnt{font-family:var(--w-mono);font-size:.7rem;color:var(--w-muted)}
+  .atm-zones{font-family:var(--w-mono);font-size:.72rem;letter-spacing:.06em;color:var(--w-gold);
+    border:1px solid var(--w-gold2);border-radius:0.4375rem;padding:0.3125rem 0.75rem;text-decoration:none;transition:.14s;
+    background:rgba(255,178,137,.06)}
+  .atm-zones:hover{background:rgba(255,178,137,.16);color:#fff;box-shadow:0 0 12px rgba(255,178,137,.25)}
+  .atm-grid{display:grid;grid-template-columns:12.5rem 1fr 17.5rem;min-height:35rem}
+  @media(max-width:60em){.atm-grid{grid-template-columns:1fr}.atm-list{max-height:16.25rem}}
+
+  /* continents */
+  .atm-conts{border-right:1px solid var(--w-line);display:flex;flex-direction:column;padding:0.625rem}
+  .atm-conts .lbl,.atm-list .lbl{font-family:var(--w-mono);font-size:.64rem;letter-spacing:.16em;
+    text-transform:uppercase;color:var(--w-muted);padding:0.25rem 0.5rem 0.5rem}
+  .atm-cont{display:flex;justify-content:space-between;align-items:center;gap:0.5rem;padding:0.5625rem 0.75rem;margin:0.125rem 0;
+    border-radius:0.5rem;border:1px solid transparent;cursor:pointer;color:var(--w-text);font-size:.92rem;transition:.13s}
+  .atm-cont:hover{background:rgba(77,178,255,.07);border-color:var(--w-line)}
+  .atm-cont.on{background:linear-gradient(90deg,rgba(255,178,137,.16),rgba(255,178,137,.05));
+    border-color:var(--w-gold2);color:var(--w-gold);font-weight:600}
+  .atm-cont .n{font-family:var(--w-mono);font-size:.68rem;color:var(--w-muted);
+    background:rgba(0,0,0,.3);border-radius:999px;padding:0.0625rem 0.5rem}
+
+  /* map */
+  .atm-map{position:relative;background:
+    radial-gradient(900px 500px at 50% 30%,#101b2e,#0a1120 70%);display:grid;place-items:center;padding:1rem}
+  .mapwrap{position:relative;display:inline-block;max-width:100%;border-radius:0.625rem;overflow:hidden;
+    border:1px solid var(--w-line2);box-shadow:0 14px 40px rgba(0,0,0,.55), inset 0 0 40px rgba(0,0,0,.25)}
+  .mapwrap img{display:block;max-width:100%;max-height:37.5rem;width:auto;height:auto;
+    opacity:0;transition:opacity .35s ease}
+  .mapwrap img.show{opacity:1}
+  .mapwrap .badge-cont{position:absolute;left:0.625rem;bottom:0.625rem;z-index:3;
+    font-family:var(--w-mono);font-size:.66rem;letter-spacing:.14em;text-transform:uppercase;
+    color:var(--w-gold);background:rgba(8,11,17,.72);border:1px solid var(--w-gold2);
+    border-radius:999px;padding:0.1875rem 0.6875rem;pointer-events:none}
+  .pins{position:absolute;inset:0;z-index:2}
+  .mpin{position:absolute;width:1.625rem;height:1.625rem;transform:translate(-50%,-50%);cursor:pointer}
+  .mpin .dot{position:absolute;inset:0.375rem;border-radius:50%;background:radial-gradient(circle at 35% 30%,#f3dfa0,#ff8a4a 70%);
+    border:2px solid #2c1c08;box-shadow:0 0 8px rgba(255,178,137,.75), 0 2px 4px rgba(0,0,0,.5);transition:.14s}
+  .mpin:hover .dot{inset:0.1875rem;box-shadow:0 0 14px rgba(255,178,137,1), 0 2px 5px rgba(0,0,0,.5)}
+  .mpin .x{position:absolute;inset:0;display:none;place-items:center;
+    color:#d8352a;font-weight:900;font-size:1.625rem;line-height:1;font-family:Georgia,serif;
+    text-shadow:0 0 6px rgba(0,0,0,.55), 0 1px 0 rgba(0,0,0,.6);transform:rotate(9deg)}
+  .mpin.sel .dot{display:none}
+  .mpin.sel .x{display:grid;animation:xin .18s ease}
+  @keyframes xin{from{transform:rotate(9deg) scale(1.7);opacity:0}to{transform:rotate(9deg) scale(1);opacity:1}}
+  #atm-tip{position:fixed;z-index:3000;pointer-events:none;opacity:0;transition:opacity .1s;
+    background:linear-gradient(180deg,#0e1830,#0a1120);border:1px solid var(--w-gold2);border-radius:0.5rem;
+    padding:0.4375rem 0.6875rem;font-size:.8rem;color:var(--w-text);box-shadow:0 10px 26px rgba(0,0,0,.5)}
+  #atm-tip .co{font-family:var(--w-mono);font-size:.68rem;color:var(--w-muted)}
+
+  /* waypoint list */
+  .atm-list{border-left:1px solid var(--w-line);display:flex;flex-direction:column;padding:0.625rem;overflow:auto}
+  .atm-wp{display:flex;justify-content:space-between;align-items:baseline;gap:0.5rem;padding:0.5rem 0.75rem;margin:0.0625rem 0;
+    border-radius:0.5rem;border:1px solid transparent;cursor:pointer;font-size:.88rem;color:var(--w-text);transition:.12s}
+  .atm-wp:hover{background:rgba(77,178,255,.07);border-color:var(--w-line)}
+  .atm-wp.on{background:linear-gradient(90deg,rgba(255,86,74,.13),rgba(255,86,74,.04));border-color:#a33d33;color:#ffd9d4}
+  .atm-wp .co{font-family:var(--w-mono);font-size:.66rem;color:var(--w-muted);white-space:nowrap}
+
+  /* bottom bar */
+  .atm-foot{display:flex;align-items:center;justify-content:space-between;gap:0.875rem;padding:0.75rem 1rem;
+    border-top:1px solid var(--w-line2);background:linear-gradient(0deg,rgba(0,0,0,.25),transparent)}
+  .atm-ask{font-family:"Iowan Old Style",Palatino,Georgia,serif;font-style:italic;color:var(--w-gold);font-size:.95rem}
+  .atm-go{border:0;border-radius:0.5625rem;padding:0.6875rem 1.625rem;font-weight:700;font-size:.95rem;cursor:pointer;
+    background:linear-gradient(180deg,var(--w-gold),var(--w-gold2));color:#1a1206;opacity:.35;pointer-events:none;transition:.15s}
+  .atm-go.ready{opacity:1;pointer-events:auto;box-shadow:0 0 18px rgba(255,178,137,.3)}
+  .atm-go.ready:hover{filter:brightness(1.07)}
+</style>
+
+<div class="wp">
+  <div class="wp-eyebrow">PTDex // world.waypoints</div>
+  <h1>Attune the Map</h1>
+  <p style="color:var(--w-muted);max-width:640px;margin:0 0 16px;font-size:.92rem">
+    The magical waypoint network, charted on the real maps of Norrath. Choose a continent, pick a
+    destination on the map or the list, and travel &mdash; each waypoint links to its zone.</p>
+
+  <div class="atm">
+    <div class="atm-title">
+      <h2>&#10022; Attune the Map</h2>
+      <div style="display:flex;align-items:center;gap:14px">
+        <span class="cnt" id="atm-count"></span>
+        <a class="atm-zones" href="{{ url_for('zones.zone_listing') }}">Zone Directory &rarr;</a>
+      </div>
+    </div>
+    <div class="atm-grid">
+      <div class="atm-conts"><div class="lbl">Continent</div><div id="atm-conts"></div></div>
+      <div class="atm-map">
+        <div class="mapwrap" id="atm-wrap">
+          <img id="atm-img" alt="Continent map">
+          <div class="pins" id="atm-pins"></div>
+          <div class="badge-cont" id="atm-badge"></div>
+        </div>
+      </div>
+      <div class="atm-list"><div class="lbl">Waypoint</div><div id="atm-wps"></div></div>
+    </div>
+    <div class="atm-foot">
+      <span class="atm-ask" id="atm-ask">Which destination awaits you?</span>
+      <button class="atm-go" id="atm-go">Travel to Waypoint</button>
+    </div>
+  </div>
+</div>
+<div id="atm-tip"></div>
+
+<script>
+const DATA = {{ data|tojson }};
+const LABELS = {'Planes':'The Planes'};
+/* in-game window order */
+const ORDER = ['Antonica','Faydwer','Odus','Kunark','Velious','Luclin','Planes'].filter(k=>k in DATA)
+  .concat(Object.keys(DATA).filter(k=>!['Antonica','Faydwer','Odus','Kunark','Velious','Luclin','Planes'].includes(k)));
+
+const MAPS = {
+  Antonica:'/static/maps/antonica.png', Faydwer:'/static/maps/faydwer.png',
+  Odus:'/static/maps/odus.png', Kunark:'/static/maps/kunark.png',
+  Velious:'/static/maps/velious.png', Luclin:'/static/maps/luclin.png',
+  Planes:'/static/maps/planes.png'
+};
+
+/* Waypoint positions on each map, in percent of image width/height. */
+const POSITIONS = {
+  Antonica: {
+    "Halas":[30,8], "Everfrost Peaks":[34,17], "The Surefall Glade":[14,19],
+    "Blackburrow":[20,30], "North Qeynos":[7,42],
+    "The Northern Plains of Karana":[32,37], "The Western Plains of Karana":[24,47],
+    "Eastern Plains of Karana":[44,42], "The Southern Plains of Karana":[32,57],
+    "Rivervale":[59,35], "High Keep":[52,43],
+    "The Lavastorm Mountains":[86,23], "Neriak - Commons":[92,32], "Ocean of Tears":[90,13],
+    "West Freeport":[92,44], "West Commonlands":[74,52], "East Commonlands":[84,54],
+    "Oasis of Marr":[85,74], "Oggok":[52,65], "Lake Rathetear":[26,66],
+    "The Feerrott":[51,78], "The Ruins of Old Guk":[76,87], "Grobb":[89,93]
+  },
+  Faydwer: {
+    "South Kaladim":[34,14], "Northern Felwithe":[80,14], "The Greater Faydark":[66,33],
+    "The Castle of Mistmoore":[44,42], "Dagnor's Cauldron":[30,63], "Ak'Anon":[79,68]
+  },
+  Odus: {
+    "Erudin":[36,22], "Toxxulia Forest":[25,41], "Paineel":[22,52], "The Hole":[24,61],
+    "The Stonebrunt Mountains":[45,55], "The Gulf of Gunthak":[74,78], "Dulak's Harbor":[64,88]
+  },
+  Kunark: {
+    "The Overthere":[29,28], "The Skyfire Mountains":[13,36],
+    "Chardok: The Halls of Betrayal":[20,48], "The Burning Wood":[15,57],
+    "Frontier Mountains":[32,53], "Lake of Ill Omen":[55,53],
+    "The Field of Bone":[66,29], "Cabilis East":[65,36], "The City of Mist":[78,50],
+    "Trakanon's Teeth":[89,63], "Firiona Vie":[68,79], "Karnor's Castle":[40,76],
+    "The Dreadlands":[30,79], "Timorous Deep":[54,93]
+  },
+  Velious: {
+    "Eastern Wastes":[66,20], "The Great Divide":[51,42], "The Iceclad Ocean":[90,36],
+    "The Wakening Land":[63,52], "Cobaltscar":[70,65], "The Western Wastes":[22,62],
+    "Siren's Grotto":[14,50]
+  },
+  Luclin: {
+    "The City of Shar Vahl":[35,16], "The Tenebrous Mountains":[58,15],
+    "The Paludal Caverns":[47,29], "The Bazaar":[56,34], "The Dawnshroud Peaks":[76,28],
+    "Ssraeshza Temple":[27,42], "The Scarlet Desert":[85,42], "The Umbral Plains":[88,53],
+    "The Fungus Grove":[67,59], "The Twilight Sea":[72,78]
+  },
+  /* Planes of Power topography map -- pins sit on each plane's own artwork. */
+  Planes: {
+    "The Plane of Time":[14,22], "The Plane of Sky":[10.5,47], "The Plane of Hate":[91,17],
+    "The Plane of Tranquility":[33,79], "The Plane of Knowledge":[11,80], "The Plane of Fear":[92,84]
+  }
+};
+
+let curCont=null, curSel=null;
+const img=document.getElementById('atm-img'), pinsBox=document.getElementById('atm-pins');
+const tip=document.getElementById('atm-tip');
+
+function renderContinent(name){
+  curCont=name; curSel=null; updateTravel();
+  const wps=Object.keys(DATA[name]).sort();
+  // map image (fade in on load)
+  img.classList.remove('show');
+  img.onload=function(){img.classList.add('show');};
+  img.src=MAPS[name]||'';
+  document.getElementById('atm-badge').textContent=LABELS[name]||name;
+  // pins at true positions (unmapped ones stack in the lower-left corner)
+  const pos=POSITIONS[name]||{};
+  let fallback=0, html='';
+  wps.forEach(function(w){
+    let p=pos[w];
+    if(!p){p=[6,92-6*fallback]; fallback++;}
+    html+='<div class="mpin" data-wp="'+w.replace(/"/g,'&quot;')+'" style="left:'+p[0]+'%;top:'+p[1]+'%">'
+        + '<span class="dot"></span><span class="x">&#10008;</span></div>';
+  });
+  pinsBox.innerHTML=html;
+  bindPins();
+  renderWpList(wps);
+  document.getElementById('atm-count').textContent=wps.length+' waypoints attuned';
+  document.querySelectorAll('.atm-cont').forEach(el=>el.classList.toggle('on',el.dataset.c===name));
+}
+
+function renderWpList(wps){
+  const box=document.getElementById('atm-wps');
+  box.innerHTML=wps.map(function(w){const d=DATA[curCont][w];
+    return '<div class="atm-wp" data-wp="'+w.replace(/"/g,'&quot;')+'"><span>'+w+'</span>'
+      + '<span class="co">'+d.y+', '+d.x+', '+d.z+'</span></div>';}).join('');
+  box.querySelectorAll('.atm-wp').forEach(function(el){
+    el.addEventListener('click',function(){select(el.dataset.wp);});
+    el.addEventListener('dblclick',travel);
+    el.addEventListener('mouseenter',function(){hoverPin(el.dataset.wp,true);});
+    el.addEventListener('mouseleave',function(){hoverPin(el.dataset.wp,false);});
+  });
+}
+function bindPins(){
+  pinsBox.querySelectorAll('.mpin').forEach(function(p){
+    p.addEventListener('click',function(){select(p.dataset.wp);});
+    p.addEventListener('dblclick',travel);
+    p.addEventListener('mousemove',function(e){const w=p.dataset.wp,d=DATA[curCont][w];
+      tip.innerHTML='<b>'+w+'</b><br><span class="co">/way '+d.y+', '+d.x+', '+d.z+'</span>';
+      tip.style.left=(e.clientX+14)+'px';tip.style.top=(e.clientY+12)+'px';tip.style.opacity=1;});
+    p.addEventListener('mouseleave',function(){tip.style.opacity=0;});
+  });
+}
+function hoverPin(w,on){
+  const p=[...pinsBox.querySelectorAll('.mpin')].find(x=>x.dataset.wp===w);
+  if(p){const d=p.querySelector('.dot');d.style.inset=on?'2px':'';d.style.boxShadow=on?'0 0 16px rgba(255,178,137,1)':'';}
+}
+function select(w){
+  curSel=w;
+  document.querySelectorAll('.atm-wp').forEach(el=>el.classList.toggle('on',el.dataset.wp===w));
+  pinsBox.querySelectorAll('.mpin').forEach(p=>p.classList.toggle('sel',p.dataset.wp===w));
+  updateTravel();
+}
+function updateTravel(){
+  const b=document.getElementById('atm-go'),a=document.getElementById('atm-ask');
+  if(curSel){b.classList.add('ready');b.textContent='Travel to '+curSel;
+    a.textContent='The path to '+curSel+' is attuned.';}
+  else{b.classList.remove('ready');b.textContent='Travel to Waypoint';
+    a.textContent='Which destination awaits you?';}
+}
+function travel(){if(curSel){window.location='/zone/detail/'+DATA[curCont][curSel].zone_id;}}
+document.getElementById('atm-go').addEventListener('click',travel);
+
+const contBox=document.getElementById('atm-conts');
+contBox.innerHTML=ORDER.map(c=>'<div class="atm-cont" data-c="'+c+'"><span>'+(LABELS[c]||c)+'</span>'
+  +'<span class="n">'+Object.keys(DATA[c]).length+'</span></div>').join('');
+contBox.querySelectorAll('.atm-cont').forEach(el=>el.addEventListener('click',function(){renderContinent(el.dataset.c);}));
+
+renderContinent(ORDER[0]);
+</script>
+{% endblock %}

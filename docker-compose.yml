@@ -1,0 +1,42 @@
+# Local development stack: the site plus a MariaDB loaded with a public PEQ dump.
+#
+#   1. cp configuration.ini.example configuration.ini   (then set [database] as below)
+#   2. Put a PEQ database dump (*.sql or *.sql.gz) in ./db/  -- not bundled; download it
+#      from the EQEmu project. MariaDB imports it on its first start.
+#   3. docker compose up    ->  http://localhost:5001
+#
+# [database] for this stack: driver = mysql+pymysql, host = db, port = 3306,
+# user = eqdb, password = eqdb, database = peq
+services:
+  db:
+    image: mariadb:10.11
+    environment:
+      MARIADB_ROOT_PASSWORD: change-me-local-only
+      MARIADB_DATABASE: peq
+      MARIADB_USER: eqdb
+      MARIADB_PASSWORD: eqdb
+    volumes:
+      - ./db:/docker-entrypoint-initdb.d:ro
+      - dbdata:/var/lib/mysql
+    ports:
+      - "127.0.0.1:3306:3306"
+
+  web:
+    build: .
+    depends_on:
+      - db
+    environment:
+      SITE_TYPE: Development
+      DB_HOST: db
+      DB_PORT: "3306"
+      DB_USER: eqdb
+      DB_PASSWORD: eqdb
+      DB_DATABASE: peq
+      GEAR_CALIBRATE_ON_BOOT: "0"
+    volumes:
+      - ./configuration.ini:/app/configuration.ini:ro
+    ports:
+      - "127.0.0.1:5001:5001"
+
+volumes:
+  dbdata:

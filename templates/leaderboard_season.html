@@ -1,0 +1,60 @@
+{#
+  Season strip for the leaderboard pages: which season you are looking at, the
+  others you can open, and what is about to happen.
+
+  Every leaderboard read defaults to the season running now, so on the day a new
+  season opens the whole site moves to it by itself; the previous season stays
+  reachable here, frozen. `season` / `seasons` come from routes/leaderboard.py
+  _season_ctx(). Links keep the current page and swap only ?season=.
+
+  Usage:  {% include 'leaderboard_season.html' %}
+#}
+{% if season %}
+{% set nxt = (seasons|selectattr('state', 'equalto', 'upcoming')|list|last) %}
+{% set cur = (seasons|selectattr('state', 'equalto', 'current')|list|first) %}
+<style>
+  .lbseason{--s-line:#1a2637;--s-line2:#25384f;--s-muted:#7f92a9;--s-dim:#55677d;
+    --s-ember:#ff8a4a;--s-ember-hi:#ffc08e;--s-gold:#e5cc80;--s-arc:#8fd0ff;
+    --s-mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+    margin:0 0 1.1rem;display:flex;flex-direction:column;gap:.6rem}
+  .lbseason .tabs{display:flex;gap:.35rem;flex-wrap:wrap;align-items:center}
+  .lbseason .tabs a,.lbseason .tabs span{font-family:var(--s-mono);font-size:.66rem;
+    letter-spacing:.12em;text-transform:uppercase;font-weight:700;text-decoration:none;
+    padding:.34rem .7rem;border-radius:.4rem;border:1px solid var(--s-line2);color:var(--s-muted)}
+  .lbseason .tabs a:hover{color:var(--s-arc);border-color:#1d4a75}
+  .lbseason .tabs .on{color:#1a1206;background:linear-gradient(90deg,var(--s-gold),var(--s-ember-hi));
+    border-color:transparent}
+  .lbseason .tabs .soon{border-style:dashed;color:var(--s-dim);font-weight:400}
+  .lbseason .tabs em{font-style:normal;font-weight:400;opacity:.75;letter-spacing:.06em}
+  .lbseason .note{border:1px solid var(--s-line2);border-left:3px solid var(--s-ember);
+    border-radius:0 .55rem .55rem 0;padding:.6rem .85rem;font-size:.86rem;line-height:1.5;
+    color:#dce7f5;background:rgba(255,138,74,.05)}
+  .lbseason .note b{color:var(--s-ember-hi)}
+  .lbseason .note a{color:var(--s-arc)}
+  .lbseason .note.frozen{border-left-color:var(--s-gold);background:rgba(229,204,128,.05)}
+  .lbseason .note.frozen b{color:var(--s-gold)}
+</style>
+<div class="lbseason">
+  <nav class="tabs" aria-label="Season">
+    {% for s in seasons|reverse %}
+      {% if s.state == 'upcoming' %}
+        <span class="soon">{{ s.name }} <em>&middot; opens {{ s.start_short }}</em></span>
+      {% elif s.id == season.id %}
+        <span class="on" aria-current="page">{{ s.name }}{% if s.state == 'closed' %} <em>&middot; final</em>{% endif %}</span>
+      {% else %}
+        <a href="{{ url_for(request.endpoint, **dict(request.view_args or {}, season=s.key)) }}">{{ s.name }}{% if s.state == 'closed' %} <em>&middot; final</em>{% endif %}</a>
+      {% endif %}
+    {% endfor %}
+  </nav>
+
+  {% if season.state == 'closed' %}
+    <div class="note frozen"><b>{{ season.name }} final standings.</b>
+      This season closed on {{ season.end_short }} and these rankings will never change.
+      {% if cur %}<a href="{{ url_for(request.endpoint, **dict(request.view_args or {}, season=cur.key)) }}">See {{ cur.name }} &rarr;</a>{% endif %}</div>
+  {% elif nxt %}
+    <div class="note"><b>{{ nxt.name }} opens {{ nxt.start_short }} with Lost Dungeons of Norrath.</b>
+      {{ season.name }} closes at the same moment and its standings are kept as final.
+      Every board starts empty for {{ nxt.name }}, and Monster Missions get boards of their own.</div>
+  {% endif %}
+</div>
+{% endif %}

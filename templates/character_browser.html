@@ -1,0 +1,265 @@
+{% extends "layout.html" %}
+{% block title %}PTDex :: Character Search{% endblock %}
+{% block body %}
+<style>
+  .chsrch{--void:#05080e;--panel:#0d1420;--panel2:#111b2b;--cell:#0c1420;
+    --line:#1a2637;--line2:#25384f;--arc:#4db2ff;--arc-hi:#8fd0ff;--arc-dp:#1d4a75;
+    --ember:#ff8a4a;--ember-hi:#ffc08e;--gold:#ffb289;--green:#5fe0a3;--green-dp:#2f6b52;
+    --ctext:#dce7f5;--muted:#7f92a9;--dim:#55677d;
+    --cserif:Georgia,"Iowan Old Style","Times New Roman",serif;
+    --cmono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+    position:relative;z-index:1;max-width:68rem;margin:1.4rem auto 4rem;padding:0 1.15rem;color:var(--ctext)}
+
+  .cs-sky{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden}
+  .cs-sky .aur{position:absolute;inset:-20%;filter:blur(70px);opacity:.26}
+  .cs-sky .aur i{position:absolute;border-radius:50%;mix-blend-mode:screen;animation:csAu 24s ease-in-out infinite}
+  .cs-sky .a1{width:440px;height:440px;left:3%;top:-10%;background:radial-gradient(circle,#1f6dd0,transparent 66%)}
+  .cs-sky .a2{width:460px;height:460px;right:-2%;top:-14%;background:radial-gradient(circle,#7b53d6,transparent 66%);animation-delay:-8s}
+  @keyframes csAu{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(22px,-16px) scale(1.08)}}
+  .cs-sky canvas{position:absolute;inset:-50px;opacity:.5}
+
+  .chsrch .eyebrow{font-family:var(--cmono);font-size:.66rem;letter-spacing:.26em;text-transform:uppercase;
+    color:var(--arc);display:flex;justify-content:space-between;align-items:center;gap:1rem;margin-bottom:.85rem;flex-wrap:wrap}
+  .chsrch .eyebrow a{color:var(--arc-hi);text-decoration:none;border-bottom:1px solid transparent}
+  .chsrch .eyebrow a:hover{border-color:currentColor}
+
+  /* ---- search panel ---- */
+  .cs-card{position:relative;border:1px solid var(--line2);border-radius:1.1rem;overflow:hidden;
+    background:linear-gradient(180deg,var(--panel),#080d16);box-shadow:0 28px 70px rgba(0,0,0,.6)}
+  .cs-card .aur2{position:absolute;inset:-60% -20% auto -20%;height:200%;pointer-events:none;
+    background:conic-gradient(from 210deg,rgba(77,178,255,0),rgba(77,178,255,.20),rgba(95,224,163,.12),
+      rgba(255,138,74,.16),rgba(77,178,255,0));filter:blur(58px);animation:csSpin 38s linear infinite}
+  @keyframes csSpin{to{transform:rotate(360deg)}}
+  .cs-card .in{position:relative;padding:1.5rem 1.5rem 1.4rem}
+  .chsrch .kicker{font-family:var(--cmono);font-size:.6rem;letter-spacing:.2em;text-transform:uppercase;color:var(--ember);margin-bottom:.3rem}
+  .chsrch h1{font-family:var(--cserif);margin:0 0 1.15rem;font-size:2.1rem;line-height:1.04;font-weight:700;
+    background:linear-gradient(92deg,#fff 15%,var(--arc-hi) 72%);-webkit-background-clip:text;background-clip:text;color:transparent}
+
+  .cs-grid{display:grid;gap:.9rem;grid-template-columns:repeat(auto-fit,minmax(11rem,1fr))}
+  .cs-f label,.cs-f .lab{display:block;font-family:var(--cmono);font-size:.58rem;letter-spacing:.14em;
+    text-transform:uppercase;color:var(--muted);margin-bottom:.35rem}
+  .cs-f input,.cs-f select{width:100%;background:#080d16;color:var(--ctext);border:1px solid var(--line2);
+    border-radius:.5rem;padding:.55rem .7rem;font-family:inherit;font-size:.92rem;appearance:none}
+  .cs-f select{background-image:linear-gradient(45deg,transparent 50%,var(--muted) 50%),
+    linear-gradient(135deg,var(--muted) 50%,transparent 50%);
+    background-position:calc(100% - 1.05rem) 55%,calc(100% - .72rem) 55%;
+    background-size:.33rem .33rem,.33rem .33rem;background-repeat:no-repeat;padding-right:2rem;cursor:pointer}
+  .cs-f input:focus,.cs-f select:focus{outline:none;border-color:var(--arc);
+    box-shadow:0 0 0 3px rgba(77,178,255,.14)}
+  .cs-f input::placeholder{color:var(--dim)}
+  .cs-f option{background:#0d1420;color:var(--ctext)}
+
+  .cs-adv{margin-top:1rem}
+  .cs-adv summary{list-style:none;cursor:pointer;display:inline-flex;align-items:center;gap:.4rem;
+    font-family:var(--cmono);font-size:.66rem;letter-spacing:.1em;text-transform:uppercase;color:var(--arc-hi)}
+  .cs-adv summary::-webkit-details-marker{display:none}
+  .cs-adv summary:focus-visible{outline:2px solid var(--arc-hi);outline-offset:3px;border-radius:.3rem}
+  .cs-adv summary .cv{transition:transform .18s;color:var(--dim)}
+  .cs-adv[open] summary .cv{transform:rotate(180deg)}
+  .cs-adv .body{margin-top:.85rem;padding-top:.9rem;border-top:1px solid var(--line)}
+
+  .cs-foot{display:flex;align-items:center;gap:.9rem;flex-wrap:wrap;margin-top:1.2rem;
+    padding-top:1rem;border-top:1px solid var(--line)}
+  .cs-hint{flex:1;min-width:14rem;font-size:.84rem;color:var(--muted);line-height:1.5}
+  .cs-btn{font-family:var(--cmono);font-size:.68rem;letter-spacing:.11em;text-transform:uppercase;font-weight:700;
+    padding:.55rem 1.1rem;border-radius:999px;cursor:pointer;text-decoration:none;transition:.15s;border:1px solid var(--line2)}
+  .cs-clear{color:var(--muted);background:#0a121d}
+  .cs-clear:hover{color:var(--ctext);border-color:var(--arc-dp)}
+  .cs-go{color:#04121f;background:linear-gradient(90deg,var(--arc-hi),var(--arc));border-color:transparent}
+  .cs-go:hover{filter:brightness(1.08)}
+  .cs-btn:focus-visible{outline:2px solid var(--arc-hi);outline-offset:3px}
+
+  /* ---- results ---- */
+  .cs-res{margin-top:1.2rem;border:1px solid var(--line2);border-radius:.9rem;overflow:hidden;
+    background:linear-gradient(180deg,var(--panel2),var(--cell))}
+  .cs-res .ph{padding:.85rem 1.05rem;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:.7rem;flex-wrap:wrap}
+  .cs-res .ph h2{font-family:var(--cserif);margin:0;font-size:1.1rem;font-weight:700}
+  .cs-res .ph .count{margin-left:auto;font-family:var(--cmono);font-size:.66rem;color:var(--arc-hi);
+    border:1px solid var(--arc-dp);background:rgba(77,178,255,.08);padding:.16rem .5rem;border-radius:999px}
+  .cs-tw{overflow-x:auto}
+  .chsrch table{border-collapse:collapse;width:100%;font-size:.88rem;min-width:44rem;margin:0}
+  .chsrch thead th{font-family:var(--cmono);font-size:.58rem;letter-spacing:.13em;text-transform:uppercase;
+    color:var(--muted);text-align:left;padding:.65rem 1.05rem;border-bottom:1px solid var(--line2);
+    background:#0a121d;white-space:nowrap}
+  .chsrch tbody td{padding:.55rem 1.05rem;border-bottom:1px solid var(--line);color:var(--muted);
+    font-variant-numeric:tabular-nums;vertical-align:middle}
+  .chsrch tbody tr:last-child td{border-bottom:none}
+  .chsrch tbody tr:hover{background:rgba(255,255,255,.024)}
+  .chsrch .nm a{color:var(--ctext);text-decoration:none;font-weight:600}
+  .chsrch .nm a:hover{color:var(--arc-hi)}
+  .chsrch .cmp{color:var(--arc);text-decoration:none;margin-left:.4rem;font-size:.9rem}
+  .chsrch .cmp:hover{color:var(--arc-hi)}
+  .chsrch .pill{display:inline-block;font-family:var(--cmono);font-size:.68rem;font-weight:700;
+    padding:.1rem .45rem;border-radius:.32rem;border:1px solid}
+  .chsrch .lvl{color:var(--arc-hi);border-color:var(--arc-dp);background:rgba(77,178,255,.09)}
+  .chsrch .score{color:var(--gold);border-color:rgba(255,178,137,.35);background:rgba(255,178,137,.08)}
+  .chsrch .rp{color:#c9b6ff;border-color:#7a5bd6;background:rgba(123,108,240,.15);font-size:.58rem}
+  .chsrch .guild{color:var(--green)}
+  .chsrch .dash{color:var(--dim)}
+  .chsrch .rank b{color:var(--ctext)}
+  .chsrch .empty{padding:2.4rem 1rem;text-align:center;color:var(--muted)}
+
+  /* DataTables sort headers -- make it obvious they're clickable */
+  .chsrch table.dataTable thead th.sorting,
+  .chsrch table.dataTable thead th.sorting_asc,
+  .chsrch table.dataTable thead th.sorting_desc{cursor:pointer;user-select:none}
+  .chsrch table.dataTable thead th.sorting:hover,
+  .chsrch table.dataTable thead th.sorting_asc:hover,
+  .chsrch table.dataTable thead th.sorting_desc:hover{color:var(--arc-hi)}
+
+  @media(prefers-reduced-motion:reduce){.cs-sky .aur i,.cs-card .aur2{animation:none}}
+  @media(max-width:34rem){.chsrch h1{font-size:1.7rem}}
+</style>
+
+<div class="cs-sky" aria-hidden="true">
+  <div class="aur"><i class="a1"></i><i class="a2"></i></div>
+  <canvas id="cs-stars"></canvas>
+</div>
+
+<div class="chsrch">
+  <div class="eyebrow">
+    <span>PTDex // character.search</span>
+    <a href="{{ url_for('characters.leaderboards') }}">Leaderboards &rarr;</a>
+  </div>
+
+  <section class="cs-card">
+    <div class="aur2"></div>
+    <div class="in">
+      <div class="kicker">Project Triune &middot; Find a Player</div>
+      <h1>Character Search</h1>
+
+      <form action="{{ url_for('characters.character_browser') }}" method="post">
+        <div class="cs-grid">
+          <div class="cs-f">
+            <label for="name">Character Name</label>
+            <input type="text" id="name" name="name" placeholder="Search by name&hellip;"
+                   value="{{ search_params.name if search_params else '' }}">
+          </div>
+          {% for i, slot in [('1', 'class_1'), ('2', 'class_2'), ('3', 'class_3')] %}
+          <div class="cs-f">
+            <label for="{{ slot }}">Class {{ i }}</label>
+            <select id="{{ slot }}" name="{{ slot }}">
+              <option value="All">Any Class</option>
+              {% for class_id, class_name in CLASSES.items() %}
+              <option value="{{ class_id }}"
+                {%- if search_params and search_params.get(slot)|string == class_id|string %} selected{% endif %}>{{ class_name }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          {% endfor %}
+        </div>
+
+        {% set adv_open = search_params and (search_params.get('race', 'All') != 'All'
+            or search_params.get('min_level') or search_params.get('max_level')) %}
+        <details class="cs-adv" {% if adv_open %}open{% endif %}>
+          <summary>&#9881; Advanced options <span class="cv">&#9662;</span></summary>
+          <div class="body">
+            <div class="cs-grid">
+              <div class="cs-f">
+                <label for="race">Race</label>
+                <select id="race" name="race">
+                  <option value="All">All Races</option>
+                  {% for race_id, race_name in RACES.items() %}
+                  <option value="{{ race_id }}"
+                    {%- if search_params and search_params.get('race')|string == race_id|string %} selected{% endif %}>{{ race_name }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+              <div class="cs-f">
+                <label for="min_level">Min Level</label>
+                <input type="number" id="min_level" name="min_level" min="1" max="65" placeholder="1"
+                       value="{{ search_params.min_level if search_params else '' }}">
+              </div>
+              <div class="cs-f">
+                <label for="max_level">Max Level</label>
+                <input type="number" id="max_level" name="max_level" min="1" max="65" placeholder="65"
+                       value="{{ search_params.max_level if search_params else '' }}">
+              </div>
+            </div>
+          </div>
+        </details>
+
+        <div class="cs-foot">
+          <div class="cs-hint">Search by name, or pick a trio to find every player running that exact
+            combination &mdash; then click a name to inspect their gear.</div>
+          <a class="cs-btn cs-clear" href="{{ url_for('characters.character_browser') }}">Clear</a>
+          <button class="cs-btn cs-go" type="submit">Search</button>
+        </div>
+      </form>
+    </div>
+  </section>
+
+  {% if results is not none %}
+  <section class="cs-res">
+    <div class="ph"><h2>Search Results</h2>
+      <span class="count">{{ results|length }} character{{ '' if results|length == 1 else 's' }}</span></div>
+    <div class="cs-tw">
+      <table id="charResults">
+        <thead>
+          <tr>
+            <th>Trio Rank</th><th>Name</th><th>Class</th><th>Level</th>
+            <th>Guild</th><th>Player Score</th><th>Overall Rank</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for char in results %}
+          <tr>
+            <td class="rank" data-order="{{ char.trio_rank if char.trio_rank else 999999 }}">
+              {%- if char.trio_rank %}<b>#{{ char.trio_rank }}</b>{% if char.trio_size %}
+                <span class="dash">of {{ char.trio_size }}</span>{% endif %}
+              {%- else %}<span class="dash">&mdash;</span>{% endif %}</td>
+            <td class="nm">
+              <a href="{{ url_for('characters.character_profile', char_id=char.id) }}">{{ char.name }}</a>
+              {%- if char.is_rp %} <span class="pill rp" title="Roleplaying">RP</span>{% endif %}
+              {%- if char.parse_trophy %} <span class="pill" style="color:{{ char.parse_trophy.color }};border-color:{{ char.parse_trophy.color }};background:transparent;font-size:.58rem"
+                title="Best parse tier: {{ char.parse_trophy.label }} ({{ char.parse_trophy.value }})">&#9733; {{ char.parse_trophy.label }}</span>{% endif %}
+              <a class="cmp" href="{{ url_for('characters.character_compare', a=char.id) }}"
+                 title="Compare this character">&#9878;</a>
+            </td>
+            <td>{{ char.class_name }}</td>
+            <td data-order="{{ char.level }}"><span class="pill lvl">{{ char.level }}</span></td>
+            <td class="guild">{{ char.guild_name }}</td>
+            <td data-order="{{ char.score if char.score is not none else -1 }}">
+              {%- if char.score is not none %}<span class="pill score">{{ char.score }}</span>
+              {%- else %}<span class="dash">&mdash;</span>{% endif %}</td>
+            <td class="rank" data-order="{{ char.overall_rank if char.overall_rank else 999999 }}">
+              {%- if char.overall_rank %}<b>#{{ char.overall_rank }}</b>
+              {%- else %}<span class="dash">&mdash;</span>{% endif %}</td>
+          </tr>
+          {% else %}
+          <tr><td colspan="7" class="empty">No characters matched your criteria.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+  {% endif %}
+</div>
+
+<script>
+$(function(){
+  var $t = $('#charResults');
+  if ($t.length && $t.find('tbody tr').length && $t.find('tbody td').length > 1) {
+    $t.DataTable({ order: [[5, 'desc']], paging: false, info: false, searching: false,
+      columnDefs: [{ orderable: false, targets: [1] }] });
+  }
+  var c = document.getElementById('cs-stars');
+  if (c) {
+    var PAL = ['#8fd0ff','#ffffff','#cfe6ff','#ff8a4a','#5fe0a3'];
+    var paint = function(){
+      var x=c.getContext('2d'), W=c.width=innerWidth+100, H=c.height=innerHeight+100;
+      x.clearRect(0,0,W,H);
+      var n=Math.round(W*H/3400);
+      for(var i=0;i<n;i++){
+        x.globalAlpha=.2+Math.random()*.5;
+        x.fillStyle=PAL[Math.floor(Math.random()*PAL.length)];
+        x.beginPath(); x.arc(Math.random()*W,Math.random()*H,.3+Math.random()*1.1,0,6.283); x.fill();
+      }
+      x.globalAlpha=1;
+    };
+    paint();
+    var t; addEventListener('resize',function(){clearTimeout(t);t=setTimeout(paint,180);});
+  }
+});
+</script>
+{% endblock %}

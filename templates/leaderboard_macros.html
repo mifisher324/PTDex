@@ -1,0 +1,48 @@
+{# Shared leaderboard rendering helpers. #}
+
+{# Render a decorated parse ({'value': float, 'color': '#hex'}) as a colored badge. #}
+{% macro parse_badge(p) %}
+    {% if p %}
+        <span class="lb-parse" style="color: {{ p.color }};">{{ '%.1f'|format(p.value) }}</span>
+    {% else %}
+        <span class="lb-parse lb-muted">&mdash;</span>
+    {% endif %}
+{% endmacro %}
+
+{# Render a list of group members as class-tagged, linked names. #}
+{% macro member_list(members) %}
+    {% for m in members %}
+        {% if m.character_name == 'Anonymous' %}<span class="lb-member lb-anon">Anonymous</span>{% else %}<a href="{{ url_for('leaderboard.character_profile', character_id=m.character_id) }}"
+           class="lb-member">{{ m.character_name }}</a>{% endif %}{% if m.class_name %}<span class="lb-class">({{ m.class_name }})</span>{% endif %}{% if not loop.last %}, {% endif %}
+    {% endfor %}
+{% endmacro %}
+
+{# Render a parse trophy tier ({'label','color','value'}) as a colored pill. #}
+{% macro trophy_badge(t) %}
+    {% if t %}<span class="lb-trophy" style="display:inline-block;padding:.08rem .55rem;border:1px solid {{ t.color }};border-radius:1rem;color:{{ t.color }};font-family:var(--mono,monospace);font-size:.68rem;font-weight:700;letter-spacing:.04em;white-space:nowrap;" title="Best parse tier">&#9733; {{ t.label }}</span>{% else %}<span class="lb-muted">&mdash;</span>{% endif %}
+{% endmacro %}
+
+{# Small status pill for validation state. #}
+{% macro status_pill(status) %}
+    {% if status == 'valid' %}
+        <span class="badge bg-success">Valid</span>
+    {% elif status == 'invalid' %}
+        <span class="badge bg-danger">Invalid</span>
+    {% elif status == 'flagged' %}
+        <span class="badge bg-warning text-dark">Flagged</span>
+    {% else %}
+        <span class="badge bg-secondary">{{ status|capitalize }}</span>
+    {% endif %}
+{% endmacro %}
+
+{# Tier note (Not Enough Data / Provisional / Official). #}
+{% macro tier_note(tier, count) %}
+    {% if tier == 'official' %}
+        <span class="lb-tier lb-tier-official">Official Parse</span>
+    {% elif tier == 'provisional' %}
+        <span class="lb-tier lb-tier-provisional">Provisional Parse</span>
+    {% else %}
+        <span class="lb-tier lb-tier-none">Not Enough Data</span>
+    {% endif %}
+    <span class="lb-muted">({{ count }} record{{ '' if count == 1 else 's' }} in scope)</span>
+{% endmacro %}

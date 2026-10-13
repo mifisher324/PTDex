@@ -1,0 +1,42 @@
+<style>
+    .item-card {
+        border: 1px solid transparent;
+        border-collapse: collapse;
+    }
+
+    .item-card td, item-card th {
+        border: 1px solid transparent;
+        vertical-align: top;
+        padding-top: 0.0625rem;
+    }
+
+    td > table {
+        width: 100%;
+        height: 100%;
+        border-collapse: collapse;
+    }
+
+    td > table td {
+        vertical-align: top;
+    }
+
+    table {
+        border-collapse: collapse;
+    }
+</style>
+<div class="" id="" style="width: 450px;">
+<table class="item_card">
+    {% if slots is none %}
+      <h6>Spell Data Does Not Exist</h6>
+    {% else %}
+    {% for entry in slots.keys() %}
+    {% if slots[entry]['desc'] is not none %}
+    <tr>
+        <td>{{entry.replace('_', '')}}</td>
+        <td>{{slots[entry]['desc']|safe}}</td>
+    </tr>
+    {% endif %}
+    {% endfor %}
+    {% endif %}
+</table>
+</div>

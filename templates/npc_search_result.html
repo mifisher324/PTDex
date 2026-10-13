@@ -1,0 +1,25 @@
+{% extends "layout.html" %}
+{% block title %}PTDex :: NPC Results{% endblock %}
+{% block body %}
+<div class="wp">
+  <div class="wp-eyebrow">PTDex // world.npcs</div>
+  <h1>NPC Results</h1>
+  <div class="wp-panel"><div class="wp-tw">
+    <table>
+      <thead><tr><th>Name</th><th>Zone</th><th>Level</th><th>HP</th></tr></thead>
+      <tbody>
+      {% for entry in data|sort(attribute='name') %}
+        <tr>
+          <td><a href="{{ url_for('npcs.npc_detail', npc_id=entry.npc_id) }}">{{ entry.name }}</a></td>
+          <td style="color:var(--w-muted)">{{ entry.zone }}</td>
+          <td style="font-variant-numeric:tabular-nums">{{ entry.level }}</td>
+          <td style="font-variant-numeric:tabular-nums;color:var(--w-green)">{{ entry.hp }}</td>
+        </tr>
+      {% else %}
+        <tr><td colspan="4" style="text-align:center;color:var(--w-muted)">No NPCs found.</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div></div>
+</div>
+{% endblock %}

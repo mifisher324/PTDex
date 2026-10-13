@@ -1,0 +1,35 @@
+{% extends "layout.html" %}
+{% from 'leaderboard_macros.html' import parse_badge, trophy_badge %}
+{% block title %}PTDex :: Leaderboard :: Character Rankings{% endblock %}
+{% block body %}
+{% include 'leaderboard_style.html' %}
+<div class="lb-wrap">
+    {% with lbtab = 'parses' %}{% include 'leaderboard_tabs.html' %}{% endwith %}
+    <h1 class="lb-h1">Character Rankings{% if season %} &middot; {{ season.name }}{% endif %}</h1>
+    <div class="lb-sub">Ranked by average best parse across all raid bosses and group sizes{% if season %} in {{ season.name }}{% endif %}.
+      Monster Missions are ranked on their own boards and do not count here.</div>
+
+    <div class="lb-scroll">
+    <table class="lb-table">
+        <thead><tr>
+            <th class="lb-rank">#</th><th>Character</th><th>Trophy</th><th>Average Parse</th><th>Best Parse</th><th>Total Clears</th>
+        </tr></thead>
+        <tbody>
+        {% for r in data %}
+        <tr>
+            <td class="lb-rank">{{ r.rank }}</td>
+            <td><a class="lb-member" href="{{ url_for('leaderboard.character_profile', character_id=r.character_id, season=season.key if season else None) }}">{{ r.character_name }}</a>{% if r.rank == 1 %} <span title="Server's #1 parse" style="display:inline-flex;align-items:center;gap:.25rem;font-family:var(--mono,monospace);font-size:.6rem;font-weight:700;letter-spacing:.05em;text-transform:uppercase;padding:.06rem .45rem;border-radius:1rem;color:#1a1206;background:linear-gradient(90deg,#ffd558,#ffb289);box-shadow:0 0 8px rgba(255,213,88,.4);vertical-align:middle;"><svg viewBox="0 0 24 20" width="11" height="9" fill="#1a1206" aria-hidden="true"><path d="M2.5 16.5 L4.5 6 L9 11.5 L12 3.5 L15 11.5 L19.5 6 L21.5 16.5 Z"/><rect x="2.5" y="17" width="19" height="2.4" rx="1"/></svg>#1</span>{% endif %}</td>
+            <td>{{ trophy_badge(r.trophy) }}</td>
+            <td>{{ parse_badge(r.avg_parse) }}</td>
+            <td>{{ parse_badge(r.best_parse) }}</td>
+            <td class="lb-num">{{ r.total_clears }}</td>
+        </tr>
+        {% else %}
+        <tr><td colspan="6" class="lb-muted">No ranked characters yet.</td></tr>
+        {% endfor %}
+        </tbody>
+    </table>
+    </div>
+    {% include 'parse_note.html' %}
+</div>
+{% endblock %}

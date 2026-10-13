@@ -1,0 +1,654 @@
+/* ============================================================
+   PTDex retheme - global shell + homepage.
+   Dark, atmospheric NMS brand (weathered gold + arcane-blue +
+   ember on deep slate). Loaded after bootstrap so the shell and
+   homepage override; inner content pages keep bootstrap styling.
+   ============================================================ */
+:root {
+  --ink: #0f1319; --ink-2: #0b0e13;
+  --surface: #171c24; --surface-2: #1e242e; --surface-3: #252c38;
+  --line: #2b3441; --line-2: #3a4552;
+  --gold: #ff8a4a; --gold-hi: #ffb289; --gold-deep: #b35422;
+  --arcane: #5aa0e0; --arcane-hi: #86c2ff;
+  --ember: #d9633a;
+  --text: #ece5d6; --text-2: #b3b0a4; --muted: #8a8f98;
+  --nms-sans: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --nms-serif: "Iowan Old Style", "Palatino Linotype", Palatino, "Book Antiqua", Georgia, serif;
+
+  /* ---- Spacing scale (4px-based, in rem so it tracks the reader's font size).
+     The shell previously used 12 ad-hoc padding values; these absorb them. ---- */
+  --s-1: 0.25rem;   /*  4px */
+  --s-2: 0.5rem;    /*  8px -- absorbs old 7/8/9 */
+  --s-3: 0.75rem;   /* 12px -- absorbs old 10/12/13 */
+  --s-4: 1rem;      /* 16px -- absorbs old 14/16 */
+  --s-5: 1.5rem;    /* 24px -- absorbs old 18/20/22/26 */
+  --s-6: 2rem;      /* 32px */
+  --s-7: 3rem;      /* 48px */
+
+  /* ---- Radii: eight distinct values collapsed to three + a pill ---- */
+  --r-sm: 0.375rem;
+  --r-md: 0.625rem;
+  --r-lg: 0.875rem;
+  --r-pill: 999px;          /* intentionally px -- it just needs to exceed the height */
+  --nms-radius: var(--r-md);
+
+  /* ---- Fluid type. Headings scale with the viewport between sane bounds
+     instead of stepping at breakpoints. ---- */
+  --t-lg: clamp(1.05rem, 1rem + 0.25vw, 1.2rem);
+  --t-h2: clamp(1.5rem, 1.15rem + 1.1vw, 2.25rem);
+  --t-h1: clamp(2.2rem, 1.6rem + 2.6vw, 3.5rem);
+
+  /* ---- Layout widths (rem so they widen with the reader's text size) ---- */
+  --w-content: 71.25rem;    /* was 1140px */
+  --w-header:  83.125rem;   /* was 1330px -- keeps the top bar to one row */
+
+  /* Hairlines stay in px on purpose: fractional rem borders land between
+     device pixels and render blurry. */
+  --line-w: 1px;
+}
+
+body { background: var(--ink) !important; color: var(--text);
+       font-family: var(--nms-sans); }
+.nms-wrap { max-width: var(--w-content); margin: 0 auto; padding: 0 var(--s-5); }
+.nms-eyebrow { font-size: .72rem; letter-spacing: .22em; text-transform: uppercase;
+               color: var(--gold); font-weight: 700; }
+
+/* ---------- Header / nav (global shell) ---------- */
+header.nms-site {
+  position: sticky; top: 0; z-index: 1040;
+  background: linear-gradient(180deg, rgba(11,14,19,.97), rgba(11,14,19,.90));
+  border-bottom: var(--line-w) solid var(--line);
+  backdrop-filter: blur(6px);
+}
+.nms-bar { display: flex; align-items: center; gap: 0.8125rem; height: 4.125rem; }
+/* the header row gets a slightly wider canvas than page content -- just enough for
+   one row, so the group stays tight instead of spreading across wide monitors */
+.nms-site .nms-wrap { max-width: var(--w-header); }
+
+/* Second header row: the online pill + Install/Discord chips, centred under the
+   nav. A hairline separates it from the top bar so the two rows read as one unit. */
+.nms-subbar { display: flex; align-items: center; justify-content: center;
+  gap: var(--s-3); flex-wrap: wrap; padding: var(--s-2) var(--s-5) 0.6875rem;
+  border-top: var(--line-w) solid rgba(43,52,65,.6); }
+.nms-subbar .nms-players, .nms-subbar .nms-install,
+.nms-subbar .nms-dsc, .nms-subbar .nms-acct { margin-left: 0; }
+/* Top row is a 3-column layout: brand and search are equal-width side columns
+   (flex:1 1 0), so the nav sitting between them lands at the true row centre
+   regardless of how wide the brand or search happen to be. */
+.nms-brand { display: flex; align-items: center; gap: var(--s-3); text-decoration: none;
+             flex: 1 1 0; min-width: 0; }
+.nms-crest { width: 2.875rem; height: 2.875rem; flex: none;
+             filter: drop-shadow(0 0 14px rgba(255,138,74,.35)); }
+.nms-wordmark { font-family: var(--nms-serif); font-size: 1.5rem; font-weight: 700;
+                letter-spacing: .01em; color: var(--gold-hi); line-height: 1; }
+.nms-wordmark small { display: block; font-family: var(--nms-sans); font-size: .58rem;
+                      letter-spacing: .18em; text-transform: uppercase; color: var(--muted);
+                      font-weight: 600; margin-top: .1875rem; }
+nav.nms-top { display: flex; align-items: center; justify-content: center; gap: .125rem;
+              flex: 0 1 auto; flex-wrap: nowrap; }
+.nms-nav-item { position: relative; }
+.nms-nav-link { display: inline-flex; align-items: center; gap: .3125rem; padding: .5625rem .5625rem;
+                border-radius: .4375rem; color: var(--text-2); font-weight: 600; font-size: .9rem;
+                cursor: pointer; text-decoration: none; white-space: nowrap; }
+.nms-nav-link:hover, .nms-nav-item:hover > .nms-nav-link { color: var(--gold-hi);
+                background: rgba(255,138,74,.08); }
+.nms-caret { border: solid var(--muted); border-width: 0 1.5px 1.5px 0; padding: 2.5px;
+             transform: rotate(45deg); margin-left: .125rem; }
+.nms-menu { position: absolute; top: 100%; left: 0; min-width: 13.5rem; background: var(--surface);
+            border: var(--line-w) solid var(--line-2); border-radius: var(--r-md); padding: var(--s-2);
+            margin-top: var(--s-1);
+            box-shadow: 0 16px 40px rgba(0,0,0,.55); opacity: 0; visibility: hidden;
+            transform: translateY(-6px); transition: .14s ease; z-index: 1050; }
+.nms-nav-item:hover .nms-menu, .nms-nav-item:focus-within .nms-menu {
+            opacity: 1; visibility: visible; transform: translateY(0); }
+.nms-menu a { display: block; padding: var(--s-2) var(--s-3); border-radius: var(--r-sm);
+              color: var(--text-2); font-size: .9rem; text-decoration: none; }
+.nms-menu a:hover { background: rgba(90,160,224,.12); color: var(--arcane-hi); }
+.nms-menu a small { display: block; color: var(--muted); font-size: .72rem; font-weight: 400; }
+/* right column of the top bar: search + the profile circle, pinned right.
+   This column is the equal-weight counterpart to .nms-brand so the nav stays centred. */
+.nms-right { flex: 1 1 0; display: flex; align-items: center; justify-content: flex-end; gap: .7rem; min-width: 0; }
+.nms-search { flex: 0 1 auto; display: flex; align-items: stretch; gap: 0; margin: 0; }
+/* input and button share one fixed height + box model so the widget is level with
+   the rest of the bar (was uneven: the button inherited a larger font than the input) */
+.nms-search input, .nms-search button { height: 2.25rem; box-sizing: border-box; line-height: 1;
+                    font-size: .88rem; padding-top: 0; padding-bottom: 0; }
+.nms-search input { background: var(--ink-2); border: var(--line-w) solid var(--line-2); color: var(--text);
+                    border-radius: var(--r-sm) 0 0 var(--r-sm); padding-left: var(--s-3); padding-right: var(--s-3);
+                    width: 10rem; }
+.nms-search input:focus { outline: none; border-color: var(--gold); }
+.nms-search button { background: linear-gradient(180deg, var(--gold), var(--gold-deep));
+                     color: #1a130a; border: var(--line-w) solid var(--gold-deep); border-left: 0;
+                     border-radius: 0 var(--r-sm) var(--r-sm) 0; padding-left: .875rem; padding-right: .875rem;
+                     font-weight: 700; cursor: pointer; }
+
+/* Mid widths: tighten spacing before anything is forced to wrap.
+   Breakpoints are in em, not px or rem: inside a media query em resolves against
+   the browser's default font size, so these honour reader zoom/text settings. */
+@media (max-width: 80em) {   /* 1280px */
+  .nms-bar { gap: var(--s-3); }
+  .nms-search input { width: 8.75rem; }
+  .nms-players { margin-left: var(--s-2); }
+}
+/* Mobile: let the bar wrap rather than overflow. */
+@media (max-width: 56.25em) {   /* 900px */
+  .nms-bar { height: auto; flex-wrap: wrap; padding-top: var(--s-3); padding-bottom: var(--s-3); }
+  /* drop the 3-column centring: brand keeps natural width, nav + search each take
+     their own full-width line so nothing is squeezed */
+  .nms-brand { flex: 0 1 auto; }
+  nav.nms-top { flex: 1 1 100%; justify-content: flex-start; flex-wrap: wrap; }
+  .nms-right { flex: 1 1 100%; justify-content: flex-start; }
+  .nms-search { flex: 1 1 auto; justify-content: flex-start; width: 100%; }
+  .nms-search input { flex: 1; width: auto; }
+}
+
+/* Phone widths. These only started applying once the viewport meta tag was added
+   (2026-09-16); before that a phone rendered the desktop layout scaled down. */
+@media (max-width: 30em) {   /* 480px */
+  /* The search line is what people reach for first, so give it the full width and
+     put it above the link rows. */
+  nav.nms-top { order: 3; gap: .25rem; row-gap: .25rem; }
+  .nms-right { order: 2; flex-wrap: wrap; gap: .5rem; }
+  .nms-search { width: 100%; }
+  .nms-search input { min-width: 0; }
+  .nms-nav-link { padding: .5rem .5rem; font-size: .85rem; }
+  /* A dropdown pinned to its item would otherwise run off the side of the screen. */
+  .nms-menu { left: 0; right: auto; min-width: 11rem; max-width: calc(100vw - 1.5rem); }
+  /* Wide tables scroll inside their own box rather than stretching the page. */
+  .srchres .tbl, .srchres table { max-width: 100%; }
+  .srchres { overflow-x: auto; }
+}
+
+/* ---------- Footer (global shell) ---------- */
+footer.nms-site { border-top: var(--line-w) solid var(--line); margin-top: var(--s-6);
+                  padding: var(--s-5) 0 var(--s-7); color: var(--muted); font-size: .84rem; }
+footer.nms-site .rule-gold { height: 2px; border: 0; margin: 0 0 var(--s-5);
+      background: linear-gradient(90deg, transparent, var(--gold-deep), var(--gold), var(--gold-deep), transparent); }
+footer.nms-site .fm { color: var(--gold-hi); font-family: var(--nms-serif); font-size: 1.05rem; }
+
+/* ============================================================
+   Homepage only (scoped under .nms-home)
+   ============================================================ */
+.nms-home a { color: var(--gold-hi); text-decoration: none; }
+.nms-home section { padding: var(--s-7) 0; }
+
+/* On the homepage the content column stays centered in the viewport. The
+   partner sidebar must not squeeze it off-center, so the main content is
+   always full-width (its inner .nms-wrap keeps the content centered).
+   Scoped to the homepage via :has() so other pages keep the side-by-side layout. */
+/* The hero runs edge to edge, so the home page does not use the shared grid: the wrapper is full
+   width and the rail is placed by hand. Below 74em the rail stacks under the rankings. From 74em the
+   cards and rankings sections narrow and move left so that they and the rail are centered TOGETHER
+   (even space both sides); the rail sits just right of them. --home-cw is the sections' width. */
+.layout-wrapper:has(.nms-home) { display: block; max-width: none; padding: 0; position: relative;
+    --home-cw: min(var(--w-content), calc(100% - var(--rail-w) - var(--rail-gap) - 2rem)); }
+.layout-wrapper:has(.nms-home) > .sidebar { max-width: var(--w-content); margin: 2rem auto 0; padding: 0 var(--s-5); }
+
+@media (min-width: 74em) {
+    .nms-home > section.nms-wrap {
+        width: var(--home-cw); max-width: none;
+        margin-left: calc((100% - var(--home-cw) - var(--rail-w) - var(--rail-gap)) / 2);
+        margin-right: 0;
+    }
+    /* Position + height are refined by a small script (see main.html) so the rail's top lines up
+       with the content cards and its bottom with the rankings table. These are the fallbacks. */
+    .layout-wrapper:has(.nms-home) .sidebar {
+        position: absolute; top: 25.375rem;
+        left: calc((100% - var(--home-cw) - var(--rail-w) - var(--rail-gap)) / 2 + var(--home-cw) + var(--rail-gap));
+        width: var(--rail-w); max-width: var(--rail-w); margin: 0; padding: 0;
+    }
+    .layout-wrapper:has(.nms-home) .sidebar .sidebar-widget {
+        margin: 0; height: 100%; display: flex; flex-direction: column;
+        box-sizing: border-box; overflow: hidden;
+    }
+    .layout-wrapper:has(.nms-home) .sidebar .sidebar-widget > h3 { flex: none; }
+    /* Games list takes the middle and scrolls internally only if it ever
+       exceeds the available height; the header and Visit link stay put. */
+    .layout-wrapper:has(.nms-home) .sidebar .sg-scroll {
+        flex: 1 1 auto; min-height: 0; overflow-y: auto;
+    }
+    .layout-wrapper:has(.nms-home) .sidebar .view-all-link { flex: none; margin: .85rem 0 0; }
+}
+
+.nms-home .hero { position: relative; overflow: hidden; border-bottom: var(--line-w) solid var(--line); }
+.nms-home .hero .bg { position: absolute; inset: 0; z-index: 0;
+  background:
+    radial-gradient(60% 90% at 15% 100%, rgba(217,99,58,.30), transparent 60%),
+    radial-gradient(60% 90% at 85% 100%, rgba(90,160,224,.30), transparent 60%),
+    radial-gradient(80% 120% at 50% -10%, rgba(255,138,74,.16), transparent 55%),
+    linear-gradient(180deg, #10151d, #0c1016); }
+.nms-home .hero .glow { position: absolute; inset: 0; z-index: 0; opacity: .5;
+  background: radial-gradient(40% 60% at 50% 40%, rgba(230,204,128,.10), transparent 70%);
+  animation: nmsPulse 7s ease-in-out infinite; }
+@keyframes nmsPulse { 0%,100%{opacity:.35} 50%{opacity:.6} }
+@media (prefers-reduced-motion: reduce){ .nms-home .hero .glow{ animation:none } }
+/* launcher-style hero layers: aurora + starfield + constellations + sigil */
+.nms-home .hero .aurora { position: absolute; inset: -20%; z-index: 0; filter: blur(70px); opacity: .5; pointer-events: none; }
+.nms-home .hero .aurora i { position: absolute; border-radius: 50%; mix-blend-mode: screen; animation: nmsDrift 22s ease-in-out infinite; }
+.nms-home .hero .aurora .a1 { width: 420px; height: 420px; left: 4%; top: -12%; background: radial-gradient(circle, #1f6dd0, transparent 66%); }
+.nms-home .hero .aurora .a2 { width: 470px; height: 470px; right: 0; top: -22%; background: radial-gradient(circle, #7b53d6, transparent 66%); animation-delay: -7s; }
+.nms-home .hero .aurora .a3 { width: 540px; height: 540px; left: 36%; bottom: -34%; background: radial-gradient(circle, #1f9c8a, transparent 66%); animation-delay: -13s; }
+@keyframes nmsDrift { 0%,100% { transform: translate(0,0) scale(1); } 50% { transform: translate(26px,-20px) scale(1.1); } }
+.nms-home .hero .stars { position: absolute; inset: 0; z-index: 0; pointer-events: none; }
+.nms-home .hero .stars i { position: absolute; border-radius: 50%; }
+@keyframes nmsTw { 0%,100% { opacity: .14; } 50% { opacity: .85; } }
+@keyframes nmsFloatA { 0%,100% { transform: translate(0,0); } 50% { transform: translate(42px,-26px); } }
+@keyframes nmsFloatB { 0%,100% { transform: translate(0,0); } 50% { transform: translate(-36px,22px); } }
+@keyframes nmsFloatC { 0%,100% { transform: translate(0,0); } 33% { transform: translate(26px,20px); } 66% { transform: translate(-28px,-16px); } }
+.nms-home .hero .consts { position: absolute; inset: 0; width: 100%; height: 100%; opacity: .5; }
+/* constellations wander slowly around the banner (no orbiting -- just drift) */
+.nms-home .hero .consts .cgroup { transform-box: fill-box; transform-origin: center; }
+.nms-home .hero .consts .c1 { animation: constWander1 38s ease-in-out infinite; }
+.nms-home .hero .consts .c2 { animation: constWander2 46s ease-in-out infinite; }
+.nms-home .hero .consts .c3 { animation: constWander3 42s ease-in-out infinite; }
+.nms-home .hero .consts .c4 { animation: constWander2 52s ease-in-out infinite reverse; }
+.nms-home .hero .consts text { font: 600 10px ui-monospace, Menlo, Consolas, monospace;
+  fill: #8fd0ff; opacity: .32; letter-spacing: .22em; }
+.nms-home .hero .consts .halo { fill: #8fd0ff; fill-opacity: .12; }
+.nms-home .hero .consts .tw { animation: constTw 5s ease-in-out infinite; }
+@keyframes constTw { 0%, 100% { fill-opacity: .55; } 50% { fill-opacity: 1; } }
+@keyframes constWander1 {
+  0%, 100% { transform: translate(0, 0) rotate(0deg); opacity: .9; }
+  30%      { transform: translate(26px, -12px) rotate(1.6deg); opacity: 1; }
+  62%      { transform: translate(-18px, 10px) rotate(-1.4deg); opacity: .75; } }
+@keyframes constWander2 {
+  0%, 100% { transform: translate(0, 0) rotate(0deg); opacity: .85; }
+  36%      { transform: translate(-30px, 14px) rotate(-1.8deg); opacity: 1; }
+  70%      { transform: translate(16px, -10px) rotate(1.2deg); opacity: .7; } }
+@keyframes constWander3 {
+  0%, 100% { transform: translate(0, 0) rotate(0deg); opacity: .8; }
+  28%      { transform: translate(20px, 10px) rotate(1.3deg); opacity: 1; }
+  64%      { transform: translate(-24px, -8px) rotate(-1.1deg); opacity: .7; } }
+.nms-home .hero .sigilmark { position: absolute; left: 50%; top: 50%; transform: translate(-50%,-50%);
+  width: 520px; height: 520px; z-index: 0; opacity: .13; pointer-events: none; }
+.nms-home .hero .sigilmark .sg-out { transform-origin: 100px 100px; animation: nmsSpin 90s linear infinite; }
+.nms-home .hero .sigilmark .sg-in { transform-origin: 100px 100px; animation: nmsSpin 70s linear infinite reverse; }
+@keyframes nmsSpin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) {
+  .nms-home .hero .aurora i, .nms-home .hero .stars i, .nms-home .hero .sigilmark g,
+  .nms-home .hero .consts .cgroup { animation: none; } }
+.nms-home .hero .content { position: relative; z-index: 1;
+  padding: clamp(2.5rem, 1.5rem + 3vw, 4.375rem) 0 clamp(2.25rem, 1.4rem + 2.6vw, 3.875rem);
+  text-align: center; }
+.nms-home .hero h1 { font-family: var(--nms-serif); font-weight: 700;
+  font-size: var(--t-h1); line-height: 1.08; margin: var(--s-4) auto var(--s-3);
+  min-height: 2.875rem; max-width: 18ch; text-wrap: balance; color: #f4ecda;
+  text-shadow: 0 2px 24px rgba(0,0,0,.6); }
+.nms-home .hero p.lede { color: var(--text-2); max-width: 62ch; margin: 0 auto var(--s-5);
+  font-size: var(--t-lg); }
+
+.nms-home .searchbar { display: flex; max-width: 38.75rem; margin: 0 auto;
+  box-shadow: 0 10px 40px rgba(0,0,0,.5); }
+.nms-home .searchbar input { flex: 1; background: rgba(15,19,25,.92); border: 1.5px solid var(--line-2);
+  border-right: 0; border-radius: var(--r-lg) 0 0 var(--r-lg); padding: var(--s-4) var(--s-5);
+  color: var(--text); font-size: 1.02rem; min-width: 0; }
+.nms-home .searchbar input:focus { outline: none; border-color: var(--gold); }
+.nms-home .searchbar button { background: linear-gradient(180deg, var(--gold-hi), var(--gold-deep));
+  color: #1a130a; border: 1.5px solid var(--gold-deep); border-radius: 0 var(--r-lg) var(--r-lg) 0;
+  padding: 0 var(--s-5); font-weight: 800; font-size: 1rem; cursor: pointer; letter-spacing: .02em; }
+.nms-home .chips { margin-top: var(--s-5); display: flex; gap: var(--s-2); justify-content: center; flex-wrap: wrap; }
+.nms-home .chip { border: var(--line-w) solid var(--line-2); background: rgba(37,44,56,.6); color: var(--text-2);
+  padding: .375rem .875rem; border-radius: var(--r-pill); font-size: .84rem; }
+.nms-home .chip:hover { border-color: var(--gold); color: var(--gold-hi); }
+
+.nms-home .sec-head { display: flex; align-items: baseline; justify-content: space-between;
+  margin-bottom: var(--s-5); gap: var(--s-4); flex-wrap: wrap; }
+.nms-home .sec-head h2 { font-family: var(--nms-serif); font-size: var(--t-h2); color: #f0e8d6;
+  margin: var(--s-1) 0 0; font-weight: 700; text-wrap: balance; }
+.nms-home .sec-head a { font-size: .88rem; }
+
+.nms-home .cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(20rem, 1fr)); gap: var(--s-4); }
+.nms-home .card { display: flex; gap: .875rem; padding: 1.25rem; border: var(--line-w) solid var(--line);
+  border-radius: var(--r-lg); background: linear-gradient(180deg, var(--surface), var(--surface-2));
+  transition: .16s ease; position: relative; overflow: hidden; }
+.nms-home .card::before { content:""; position:absolute; inset:0 auto 0 0; width:3px;
+  background: linear-gradient(180deg, var(--gold), transparent); opacity:.7; }
+.nms-home .card:hover { border-color: var(--gold-deep); transform: translateY(-3px);
+  box-shadow: 0 14px 34px rgba(0,0,0,.45), 0 0 0 1px rgba(90,160,224,.18); }
+.nms-home .card .ic { width: 2.875rem; height: 2.875rem; flex: none; display: grid; place-items: center;
+  font-size: 1.5rem; background: var(--ink-2); border: var(--line-w) solid var(--line-2);
+  border-radius: var(--r-md); }
+.nms-home .card h3 { margin: .125rem 0 var(--s-1); font-size: 1.12rem; color: var(--gold-hi);
+  font-family: var(--nms-serif); }
+.nms-home .card p { margin: 0; color: var(--text-2); font-size: .9rem; line-height: 1.5; }
+.nms-home .soon { font-size: .66rem; text-transform: uppercase; letter-spacing: .08em;
+  color: var(--arcane-hi); border: var(--line-w) solid var(--line-2); border-radius: var(--r-pill);
+  padding: .0625rem var(--s-2); margin-left: var(--s-2); vertical-align: middle; }
+
+.nms-home .panel { border: var(--line-w) solid var(--line); border-radius: var(--r-lg);
+  background: var(--surface); overflow: hidden; }
+.nms-home .panel .phead { padding: var(--s-4) var(--s-5); border-bottom: var(--line-w) solid var(--line);
+  display: flex; align-items: center; gap: var(--s-3); }
+.nms-home .panel .phead .t { font-family: var(--nms-serif); font-size: 1.15rem; color: #f0e8d6; }
+.nms-home .panel .phead .live { margin-left: auto; font-size: .72rem; color: var(--arcane-hi);
+  border: var(--line-w) solid var(--line-2); padding: .1875rem var(--s-3); border-radius: var(--r-pill); }
+.nms-home table { width: 100%; border-collapse: collapse; font-size: .92rem; }
+.nms-home th, .nms-home td { padding: .6875rem 1.125rem; text-align: left;
+  border-bottom: var(--line-w) solid var(--line); }
+.nms-home thead th { color: var(--gold); font-family: var(--nms-sans); font-size: .72rem;
+  text-transform: uppercase; letter-spacing: .06em; background: var(--ink-2); }
+.nms-home tbody tr:last-child td { border-bottom: 0; }
+.nms-home tbody tr:hover { background: rgba(90,160,224,.06); }
+.nms-home .rank { color: var(--muted); font-variant-numeric: tabular-nums; width: 2.875rem;
+  font-family: var(--nms-serif); font-size: 1.05rem; }
+/* top-3 carry the seal's metal palette so the ranking theme reads in tables too */
+.nms-home .rank.r1 { color: #ffe9a8; font-weight: 800; text-shadow: 0 0 10px rgba(255,213,88,.4); }
+.nms-home .rank.r2 { color: #eef4fb; font-weight: 800; }
+.nms-home .rank.r3 { color: #f0c49a; font-weight: 800; }
+.nms-home td.players a { color: var(--arcane-hi); }
+.nms-home .trio { color: var(--muted); font-size: .8rem; }
+/* ---- Top Players panel: matched to the leaderboard boards ----------------
+   Scoped to .panel.tp so the rest of the homepage keeps its own treatment.
+   The gold sans column headers and serif rank numerals were the last thing on
+   the homepage that didn't match /leaderboards; these bring it in line with the
+   race board and boss pages (mono uppercase labels, medal discs for the top
+   three, tabular figures throughout). */
+.nms-home .panel.tp thead th {
+  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  font-size: .58rem; letter-spacing: .13em; text-transform: uppercase;
+  color: #55677d; font-weight: 700; background: #111b2b;
+  border-bottom: var(--line-w) solid var(--line); }
+.nms-home .panel.tp tbody td { border-bottom: var(--line-w) solid rgba(255,255,255,.035); }
+.nms-home .panel.tp tbody tr:hover { background: rgba(143,208,255,.045); }
+.nms-home .panel.tp .num,
+.nms-home .panel.tp .rank { font-variant-numeric: tabular-nums;
+  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; }
+.nms-home .panel.tp .rank { font-size: .82rem; color: #55677d; font-weight: 400;
+  text-shadow: none; }
+/* medal discs, same metals as the guild heraldry and the ranking plaques */
+.nms-home .panel.tp .medal { display: inline-grid; place-items: center;
+  width: 1.45rem; height: 1.45rem; border-radius: 50%; color: #0a0f18;
+  font-size: .62rem; font-weight: 700; }
+.nms-home .panel.tp .medal.m1 { background: linear-gradient(145deg,#fff2cd,#e5cc80);
+  box-shadow: 0 0 10px rgba(229,204,128,.3); }
+.nms-home .panel.tp .medal.m2 { background: linear-gradient(145deg,#f2f7fc,#d7e0ea); }
+.nms-home .panel.tp .medal.m3 { background: linear-gradient(145deg,#e8b075,#c8873f); }
+.nms-home .panel.tp .gs { background: rgba(255,138,74,.12); color: #ffc08e;
+  border-color: rgba(255,138,74,.3);
+  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; }
+.nms-home .panel.tp .trio { font-size: .82rem; }
+
+/* Guild on the Top Players board. Deliberately quieter than the character link:
+   the row is about the player, and the guild is context you can follow, not the
+   thing being ranked. */
+.nms-home td.gld { font-size: .82rem; }
+.nms-home td.gld a { color: var(--muted); border-bottom: 1px dotted rgba(255,255,255,.18); }
+.nms-home td.gld a:hover, .nms-home td.gld a:focus-visible {
+  color: var(--arcane-hi); border-bottom-color: currentColor; }
+.nms-home td.gld .none { color: rgba(255,255,255,.22); }
+.nms-home .num { font-variant-numeric: tabular-nums; }
+.nms-home .gs { display:inline-block; background: rgba(255,138,74,.14); color: var(--gold-hi);
+  border:var(--line-w) solid var(--gold-deep); border-radius: var(--r-sm); padding: .125rem var(--s-3);
+  font-weight:800; font-variant-numeric: tabular-nums; }
+.nms-home .guild { color: var(--arcane); }
+
+/* ============================================================
+   World section pages (NPCs / Zones / Waypoints / Factions /
+   Tradeskills / Pets) - arcane theme, matching the item/spell pages.
+   ============================================================ */
+.wp { --w-ink:#080b11; --w-ink2:#0b101a; --w-panel:#0f1622; --w-panel2:#132033; --w-cell:#0f1826;
+  --w-line:#1b2838; --w-line2:#284058; --w-arc:#4db2ff; --w-arc-hi:#8fd0ff; --w-ember:#ff7a45;
+  --w-gold:#ffb289; --w-gold2:#ff8a4a; --w-green:#5fe0a3; --w-text:#d9e5f3; --w-muted:#7d8fa6;
+  --w-mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+  --w-serif:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif;
+  max-width:65rem; margin:var(--s-5) auto var(--s-7); padding:0 var(--s-4); color:var(--w-text); }
+.wp * { cursor:default; }
+.wp a { cursor:pointer; text-decoration:none; color:var(--w-arc-hi); }
+.wp a:hover { color:var(--w-gold); }
+.layout-wrapper:has(.wp) { --page-w: 65rem; }
+
+/* Forums pages: same centred, full-width treatment so the partner rail
+   stacks below instead of squeezing the content off-centre. */
+.layout-wrapper:has(.forums) { --page-w: 78rem; }
+@media (min-width: 74em) {
+    .layout-wrapper:has(.forum) { grid-template-columns: minmax(0, 1fr); max-width: calc(var(--page-w) + 2rem); }
+}
+.wp-eyebrow { font-family:var(--w-mono); font-size:.7rem; letter-spacing:.24em; text-transform:uppercase; color:var(--w-arc); opacity:.9; margin-bottom:var(--s-2); }
+.wp h1 { font-family:var(--w-serif); font-size:var(--t-h2); font-weight:800; color:#f4ecda;
+  margin:.125rem 0 var(--s-5); text-wrap:balance; }
+/* search card */
+.wp-search { display:flex; gap:0; max-width:35rem; box-shadow:0 12px 40px rgba(0,0,0,.4); border-radius:var(--r-lg); }
+.wp-search input { flex:1; min-width:0; background:var(--w-panel2); border:1.5px solid var(--w-line2); border-right:0;
+  border-radius:var(--r-lg) 0 0 var(--r-lg); padding:var(--s-4) var(--s-4); color:var(--w-text); font-size:1rem; }
+.wp-search input:focus { outline:none; border-color:var(--w-arc); }
+.wp-search button { background:linear-gradient(180deg,var(--w-gold),var(--w-gold2)); color:#1a130a; border:1.5px solid var(--w-gold2);
+  border-radius:0 var(--r-lg) var(--r-lg) 0; padding:0 var(--s-5); font-weight:800; cursor:pointer; letter-spacing:.02em; }
+.wp-hint { color:var(--w-muted); font-size:.86rem; margin-top:var(--s-3); }
+/* jump nav (waypoints / grouped) */
+.wp-nav { position:sticky; top:0; z-index:20; display:flex; flex-wrap:wrap; gap:var(--s-2); padding:var(--s-3); margin-bottom:var(--s-5);
+  border-radius:var(--r-lg); background:linear-gradient(180deg,rgba(11,16,26,.97),rgba(11,16,26,.9)); border:var(--line-w) solid var(--w-line2); backdrop-filter:blur(6px); }
+.wp-nav a { font-family:var(--w-mono); font-size:.78rem; padding:var(--s-1) var(--s-3); border-radius:var(--r-sm); color:var(--w-muted); border:var(--line-w) solid var(--w-line); }
+.wp-nav a:hover { color:var(--w-arc-hi); border-color:var(--w-arc); background:rgba(77,178,255,.08); }
+/* panel / section */
+.wp-panel { background:linear-gradient(180deg,var(--w-panel),var(--w-ink2)); border:var(--line-w) solid var(--w-line2); border-radius:var(--r-lg);
+  overflow:hidden; margin-bottom:var(--s-4); box-shadow:0 16px 40px rgba(0,0,0,.4); }
+.wp-panel > h2 { display:flex; align-items:baseline; gap:var(--s-3); margin:0; padding:var(--s-3) var(--s-5); border-bottom:var(--line-w) solid var(--w-line);
+  font-family:var(--w-serif); font-size:1.25rem; font-weight:700; color:var(--w-gold); background:rgba(0,0,0,.16); }
+.wp-panel > h2 .top { margin-left:auto; font-family:var(--w-mono); font-size:.7rem; color:var(--w-arc-hi); }
+.wp-pb { padding:var(--s-4) var(--s-5); }
+/* card grid */
+.wp-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(13.125rem,1fr)); gap:var(--s-3); padding:var(--s-4); }
+.wp-card { display:block; background:linear-gradient(180deg,var(--w-panel2),var(--w-cell)); border:var(--line-w) solid var(--w-line2);
+  border-radius:var(--r-md); padding:var(--s-3) var(--s-4); transition:.14s; }
+.wp-card:hover { border-color:var(--w-arc); transform:translateY(-2px); box-shadow:0 8px 20px rgba(0,0,0,.4); }
+.wp-card .nm { color:var(--w-arc-hi); font-weight:600; font-size:.95rem; }
+.wp-card:hover .nm { color:var(--w-gold); }
+.wp-card .meta { color:var(--w-muted); font-family:var(--w-mono); font-size:.72rem; margin-top:var(--s-1); }
+/* plain list */
+.wp-list { padding:var(--s-2) var(--s-3); }
+.wp-list .li { display:flex; justify-content:space-between; gap:var(--s-3); padding:var(--s-2) var(--s-3); border-radius:var(--r-sm); font-size:.9rem; }
+.wp-list .li:hover { background:rgba(77,178,255,.05); }
+.wp-list .li .co { color:var(--w-muted); font-family:var(--w-mono); font-size:.8rem; }
+/* table */
+.wp-tw { overflow-x:auto; }
+.wp table { width:100%; border-collapse:collapse; font-size:.9rem; }
+.wp thead th { text-align:left; font-family:var(--w-mono); font-size:.6rem; letter-spacing:.1em; text-transform:uppercase;
+  color:var(--w-arc); padding:var(--s-2) var(--s-4); border-bottom:var(--line-w) solid var(--w-line2); background:var(--w-ink2); }
+.wp tbody td { padding:var(--s-2) var(--s-4); border-bottom:var(--line-w) solid var(--w-line); }
+.wp tbody tr:last-child td { border-bottom:0; }
+.wp tbody tr:hover { background:rgba(77,178,255,.05); }
+/* class monogram grid (pets) */
+.wp-mono { display:grid; grid-template-columns:repeat(auto-fill,minmax(7.5rem,1fr)); gap:var(--s-3); }
+.wp-mono a { display:flex; flex-direction:column; align-items:center; gap:8px; background:linear-gradient(180deg,var(--w-panel2),var(--w-cell));
+  border:var(--line-w) solid var(--w-line2); border-radius:var(--r-lg); padding:var(--s-4) var(--s-2); color:var(--w-text); font-family:var(--w-mono); font-size:.82rem; transition:.14s; }
+.wp-mono a:hover { border-color:var(--w-gold2); transform:translateY(-3px); box-shadow:0 10px 26px rgba(0,0,0,.4); color:var(--w-gold); }
+.wp-mono img { width:3.25rem; height:3.25rem; }
+
+/* ---- Themed search forms (Item / Armor / Weapon / Clickie / Spell) --
+   Colours matched to the Search-by-Stats window (the .wp arcane palette):
+   blue-tinted panels, arcane-blue eyebrow + focus glow, gold action button. ---- */
+.srch { max-width:65rem; margin:1.5rem auto 4rem; padding:0 1rem; color:#d9e5f3; }
+/* same centred, full-width layout as the .wp pages so the sidebar stacks below */
+.layout-wrapper:has(.srch) { --page-w: 65rem; }
+
+/* ---- Centred page shell (shared) --------------------------------------------
+   A page whose own container already centres itself must not ALSO be squeezed by
+   the partner rail: the rail steals width from the flex row, so the whole
+   page slides left and nothing lines up with the header. Here the rail stacks
+   underneath instead and the content stays centred in the viewport.
+
+   The four blocks above (.nms-home, .wp, .forums, .srch) are the same rule
+   copy-pasted, which is why every new page since has quietly shipped off-centre.
+   ADD NEW PAGE CLASSES TO THIS LIST rather than pasting a fifth copy. */
+/* these pages use the default --page-w (71.25rem); the character profile's own column is 62.5rem */
+.layout-wrapper:has(.cprofile) { --page-w: 62.5rem; }
+.srch .srch-head { padding-bottom:1rem; border-bottom:1px solid #1b2838; margin-bottom:1.5rem; }
+.srch .srch-eyebrow { font-family:ui-monospace,Consolas,monospace; font-size:.7rem; letter-spacing:.24em;
+  text-transform:uppercase; color:#4db2ff; font-weight:700; margin:0 0 .5rem; opacity:.9; }
+.srch h1 { font-family:var(--nms-serif); font-size:2rem; font-weight:800; color:#f4ecda; margin:0; line-height:1.1; }
+.srch h3, .srch h4 { font-family:var(--nms-serif); font-size:1.4rem; color:#f4ecda; margin:0 0 1rem; font-weight:700; }
+.srch center { text-align:left; }
+.srch > form { display:block; width:100%; box-sizing:border-box;   /* beats the global form{display:inline} */
+  background:linear-gradient(180deg,#0f1622,#0b101a); border:1px solid #284058; border-radius:.875rem;
+  padding:1.4rem 1.5rem; box-shadow:0 16px 40px rgba(0,0,0,.4); overflow-x:auto; }
+.srch > form > table { width:100%; }
+.srch > form > table > tbody > tr > td:first-child { color:#7d8fa6; white-space:nowrap; padding-right:1.25rem;
+  width:1%; font-family:ui-monospace,Consolas,monospace; font-size:.8rem; }
+.srch table { border-collapse:collapse; }
+.srch td { padding:.4rem .5rem; vertical-align:middle; font-size:.9rem; color:#d9e5f3; }
+.srch td b { color:#fff; }
+.srch input[type=text], .srch input[type=number], .srch select, .srch textarea {
+  background:#0f1826; border:1px solid #284058; color:#d9e5f3;
+  border-radius:.5rem; padding:.5rem .7rem; font-size:.88rem; font-family:inherit; }
+.srch input[type=text]:focus, .srch input[type=number]:focus, .srch select:focus, .srch textarea:focus {
+  outline:none; border-color:#4db2ff; box-shadow:0 0 0 3px rgba(77,178,255,.15); }
+.srch input.nameentry { width:20rem; max-width:100%; min-width:0; height:auto; }
+.srch select[multiple] { padding:.2rem; }
+.srch input[type=checkbox], .srch input[type=radio] { accent-color:#4db2ff; width:1rem; height:1rem;
+  vertical-align:middle; margin:0 .3rem 0 0; }
+.srch abbr { color:#8fd0ff; cursor:help; text-decoration:underline dotted; text-underline-offset:2px; }
+.srch input[type=submit] { font-family:ui-monospace,Consolas,monospace; font-size:.85rem; font-weight:700;
+  color:#1a1206; background:linear-gradient(180deg,#ffb289,#ff8a4a); border:0; border-radius:.5rem;
+  padding:.6rem 1.6rem; cursor:pointer; margin:.5rem 0; letter-spacing:.02em; }
+.srch input[type=submit]:hover { filter:brightness(1.06); }
+.srch input[type=button] { font-family:ui-monospace,Consolas,monospace; font-size:.78rem; color:#8fd0ff;
+  background:none; border:1px dashed #284058; border-radius:.5rem; padding:.35rem .9rem; cursor:pointer; }
+.srch input[type=button]:hover { border-color:#4db2ff; background:rgba(77,178,255,.06); }
+.srch input.removerow { padding:.1rem .55rem; color:#ff7a45; border-style:solid; }
+.srch a { color:#8fd0ff; }
+
+/* ---- Live players-online pill (header) ---- */
+.nms-players { display:inline-flex; align-items:center; gap:.4375rem; margin-left:var(--s-3); padding:.375rem .8125rem;
+  border-radius:var(--r-sm); border:var(--line-w) solid rgba(95,224,163,.38); background:rgba(95,224,163,.09);
+  font-family:ui-monospace,Menlo,Consolas,monospace; font-size:.82rem; color:#d9e5f3; white-space:nowrap;
+  transition:border-color .2s, background .2s; }
+.nms-players-tri { width:1.1rem; height:1.1rem; flex:none; display:inline-flex;
+  filter:drop-shadow(0 0 4px rgba(95,224,163,.45)); }
+.nms-players-tri svg { width:100%; height:100%; display:block; }
+.nms-players-tri .nms-tri-spin { transform-origin:50px 50px; animation:nmsTriSpin 9s linear infinite; }
+.nms-players-num { color:#fff; font-weight:700; }
+.nms-players-lab { color:#7d8fa6; }
+.nms-players.off { border-color:rgba(125,143,166,.32); background:rgba(125,143,166,.08); }
+.nms-players.off .nms-players-tri { filter:grayscale(1) opacity(.5); }
+.nms-players.off .nms-players-tri .nms-tri-spin { animation:none; }
+/* Signed out: the pill becomes a sign-in prompt. Muted, so it reads as
+   unavailable rather than as a population of zero. */
+.nms-players-locked { border-color:rgba(125,143,166,.3); background:rgba(125,143,166,.07);
+  text-decoration:none; cursor:pointer; }
+.nms-players-locked:hover, .nms-players-locked:focus-visible {
+  border-color:rgba(255,138,74,.5); background:rgba(255,138,74,.1); }
+.nms-players-locked .nms-players-tri { filter:grayscale(1) opacity(.45); }
+.nms-players-locked .nms-players-num { color:#7d8fa6; letter-spacing:.08em; }
+.nms-players-locked:hover .nms-players-lab { color:#ffb184; }
+@keyframes nmsTriSpin { to { transform:rotate(360deg); } }
+@keyframes nmsPlayersPulse { 0%,100%{opacity:.45} 50%{opacity:1} }  /* still used by the Discord status dot (.nms-dsc .dsc-dot) */
+@media (prefers-reduced-motion:reduce){ .nms-players-tri .nms-tri-spin { animation:none; } }
+@media (max-width:56.25em){ .nms-players-lab{display:none} .nms-players{margin-left:var(--s-2);padding:.375rem var(--s-3)}
+  /* the locked pill is nothing but its label -- hiding it would leave a bare '...' */
+  .nms-players-locked .nms-players-lab{display:inline} .nms-players-locked .nms-players-num{display:none} }
+
+/* ---- Install Guide action chip (pairs with the online pill, squared = button) ---- */
+.nms-install { display:inline-flex; align-items:center; gap:var(--s-2); margin-left:var(--s-2); padding:.375rem var(--s-3);
+  border-radius:var(--r-sm); border:var(--line-w) solid rgba(255,178,137,.5); background:rgba(255,178,137,.09);
+  font-family:ui-monospace,Menlo,Consolas,monospace; font-size:.8rem; font-weight:600; color:#f3e6c4;
+  text-decoration:none; white-space:nowrap; transition:background .18s, box-shadow .18s, color .18s; }
+.nms-install:hover { background:rgba(255,178,137,.2); color:#fff;
+  box-shadow:0 0 14px rgba(255,178,137,.3); text-decoration:none; }
+.nms-install .ig-ic { width:1.0625rem; height:1.0625rem; flex:none; filter:drop-shadow(0 0 3px rgba(77,178,255,.4)); }
+/* Launcher Rules chip -- same shape as Install Guide but arcane-blue so the pair reads distinct */
+.nms-enforce { border-color:rgba(77,178,255,.5); background:rgba(77,178,255,.09); color:#cfe6ff; }
+.nms-enforce:hover { background:rgba(77,178,255,.2); box-shadow:0 0 14px rgba(77,178,255,.3); color:#fff; }
+.nms-enforce .ig-ic { width:1.05rem; height:1.05rem; filter:drop-shadow(0 0 3px rgba(73,208,160,.45)); }
+/* Our Discord chip -- same shell as the others but Discord blurple */
+.nms-discord { border-color:rgba(126,138,235,.55); background:rgba(126,138,235,.11); color:#cdd3f7; }
+.nms-discord:hover { background:rgba(126,138,235,.24); box-shadow:0 0 14px rgba(126,138,235,.32); color:#fff; }
+.nms-discord .ig-ic { width:1.1rem; height:.85rem; color:#7e8aeb; filter:drop-shadow(0 0 3px rgba(126,138,235,.5)); }
+.nms-discord:hover .ig-ic { color:#aeb6ff; }
+@media (max-width:56.25em){ .nms-install .ig-lab{display:none} .nms-install{margin-left:var(--s-2);padding:.375rem var(--s-3)} }
+
+/* ---- Discord sign-in chip (same shell as the Install chip, blurple so the two
+       read as siblings rather than duplicates) ---- */
+.nms-dsc { display:inline-flex; align-items:center; gap:var(--s-2); margin-left:var(--s-2); padding:.375rem var(--s-3);
+  border-radius:var(--r-sm); border:var(--line-w) solid rgba(126,138,235,.55); background:rgba(126,138,235,.11);
+  font-family:ui-monospace,Menlo,Consolas,monospace; font-size:.8rem; font-weight:600; color:#cdd3f7;
+  text-decoration:none; white-space:nowrap; transition:background .18s, box-shadow .18s, color .18s; }
+.nms-dsc:hover { background:rgba(126,138,235,.24); color:#fff;
+  box-shadow:0 0 14px rgba(126,138,235,.32); text-decoration:none; }
+.nms-dsc .dsc-ic { width:1.0625rem; height:.8125rem; flex:none; color:#7e8aeb; }
+.nms-dsc:hover .dsc-ic { color:#aeb6ff; }
+/* signed-in state: avatar + "Signed in", with the sign-out x sharing the chip's
+   frame. Tinted teal (not blurple) with a live status dot so it reads as an
+   active session rather than a prompt to log in. */
+.nms-acct { display:inline-flex; align-items:center; margin-left:var(--s-2); }
+.nms-acct .nms-dsc { margin-left:0; border-radius:var(--r-sm) 0 0 var(--r-sm); border-right:0; }
+.nms-dsc.is-in { border-color:rgba(73,208,160,.5); background:rgba(73,208,160,.10); color:#bfeeda; }
+.nms-dsc.is-in:hover { background:rgba(73,208,160,.22); color:#fff; box-shadow:0 0 14px rgba(73,208,160,.3); }
+.nms-dsc .dsc-dot { width:.4375rem; height:.4375rem; flex:none; border-radius:50%;
+  background:#49d0a0; box-shadow:0 0 8px #49d0a0; animation:nmsPlayersPulse 2.2s ease-in-out infinite; }
+.nms-dsc .dsc-av { width:1.125rem; height:1.125rem; flex:none; border-radius:50%;
+  object-fit:cover; border:var(--line-w) solid rgba(126,138,235,.6); }
+.nms-dsc.is-in .dsc-av { border-color:rgba(73,208,160,.6); }
+.nms-dsc .dsc-av-ph { background:linear-gradient(180deg,#7e8aeb,#4c56b8); }
+.nms-dsc .dsc-lab { max-width:16ch; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.nms-signout { display:inline-flex; align-items:center; padding:.375rem var(--s-2); font-size:.72rem;
+  border-radius:0 var(--r-sm) var(--r-sm) 0; border:var(--line-w) solid rgba(73,208,160,.5);
+  background:rgba(73,208,160,.10);
+  color:#9aa3d8; text-decoration:none; transition:background .18s, color .18s; }
+.nms-signout:hover { background:rgba(255,138,74,.22); color:#ffd9c2; text-decoration:none; }
+@media (max-width:56.25em){ .nms-dsc .ig-lab{display:none} .nms-dsc{margin-left:var(--s-2);padding:.375rem var(--s-3)}
+  .nms-dsc .dsc-lab{display:none} }
+
+/* ---- Profile avatar circle + account dropdown (top-right of the bar) ---- */
+.nms-acct { position: relative; display: inline-flex; align-items: center; }
+.nms-avatar { width: 2.3rem; height: 2.3rem; border-radius: 50%; padding: 0; flex: none; cursor: pointer;
+  position: relative; display: grid; place-items: center; overflow: visible;
+  background: linear-gradient(135deg,#37507a,#22314d); border: 2px solid rgba(73,208,160,.6);
+  font-family: var(--nms-serif); font-weight: 800; color: #cfe7ff; font-size: 1rem;
+  transition: border-color .18s, box-shadow .18s; }
+.nms-avatar:hover, .nms-acct:hover .nms-avatar, .nms-acct:focus-within .nms-avatar {
+  border-color: var(--teal, #49d0a0); box-shadow: 0 0 .8rem rgba(73,208,160,.45); }
+.nms-avatar img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; }
+.nms-avatar .av-dot { position: absolute; right: -1px; bottom: -1px; width: .6rem; height: .6rem;
+  border-radius: 50%; background: #49d0a0; border: 2px solid var(--ink); box-shadow: 0 0 .35rem #49d0a0; }
+/* dropdown -- right-aligned under the circle; reuses .nms-menu reveal behaviour */
+.nms-acct .nms-acct-menu { left: auto; right: 0; min-width: 12.5rem; }
+.nms-acct-menu .acct-who { display: flex; align-items: center; gap: .55rem; padding: .5rem .6rem .6rem;
+  border-bottom: var(--line-w) solid var(--line); margin-bottom: .35rem; }
+.nms-acct-menu .acct-av { width: 1.9rem; height: 1.9rem; border-radius: 50%; flex: none; object-fit: cover;
+  display: grid; place-items: center; background: linear-gradient(135deg,#37507a,#22314d);
+  border: var(--line-w) solid rgba(73,208,160,.5); font-family: var(--nms-serif); font-weight: 800;
+  color: #cfe7ff; font-size: .85rem; }
+.nms-acct-menu .acct-nm { display: block; font-size: .82rem; color: var(--text); font-weight: 600; line-height: 1.1;
+  max-width: 9rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.nms-acct-menu .acct-st { font-family: ui-monospace,Menlo,Consolas,monospace; font-size: .6rem; color: #49d0a0; letter-spacing: .04em; }
+.nms-acct-menu a { display: flex; align-items: center; gap: .55rem; }
+.nms-acct-menu a .mi { width: 1.1rem; text-align: center; opacity: .9; }
+.nms-acct-menu a.acct-out:hover { background: rgba(255,138,74,.14); color: var(--gold-hi); }
+.nms-acct-menu .acct-sep { height: var(--line-w); background: var(--line); margin: .35rem .2rem; }
+
+/* ============================================================
+   partner partner rail -- retheme to the arcane/ember panel
+   language (was an emerald widget that clashed with everything).
+   Overrides the legacy .game-* rules in style.css; nms.css loads
+   after it, and these compound selectors also out-specify it.
+   ============================================================ */
+.partner-feed-widget { background: linear-gradient(180deg,#141a24,#0f1319);
+  border: 1px solid #284058; border-radius: .9rem; overflow: hidden;
+  box-shadow: 0 1rem 2.2rem rgba(0,0,0,.32); }
+/* title becomes an edge-to-edge header bar with the ember->teal accent stripe
+   (the -1.5rem margins cancel the widget's inherited 1.5rem padding) */
+.partner-feed-widget > h3 { margin: -1.5rem -1.5rem 1rem; padding: .8rem 1.15rem .72rem 1.3rem;
+  color: #f4ecda; font-family: var(--nms-serif, Georgia, serif); font-weight: 700;
+  font-size: 1.05rem; letter-spacing: .01em; position: relative;
+  border-bottom: 1px solid #1b2838;
+  background: linear-gradient(180deg, rgba(255,138,74,.09), transparent); }
+.partner-feed-widget > h3::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0;
+  width: .22rem; background: linear-gradient(180deg,#ff8a4a,#49d0a0); }
+.partner-feed-widget .game-category-section { margin-bottom: 1rem; }
+.partner-feed-widget .game-category-title { color: #4db2ff; font-weight: 700;
+  font-family: ui-monospace,"Cascadia Code",Consolas,monospace; font-size: .62rem;
+  letter-spacing: .14em; border-bottom: 1px solid #1b2838; padding-bottom: .3rem; margin-bottom: .55rem; }
+.partner-feed-widget .game-row { color: #c6d3e2; border: 1px solid transparent; border-radius: .5rem;
+  padding: .45rem .5rem; transition: background .14s, border-color .14s, color .14s; }
+.partner-feed-widget .game-row:hover { background: rgba(77,178,255,.07);
+  border-color: rgba(77,178,255,.22); color: #fff; }
+.partner-feed-widget .game-name { font-size: .85rem; }
+.partner-feed-widget .game-icon { width: 1.7rem; height: 1.7rem; border-radius: .35rem;
+  border: 1px solid #284058; background: #0b1220; }
+/* Visit link -> gold ember chip, matching the site's primary action buttons */
+.partner-feed-widget .view-all-link { color: #0b1220;
+  background: linear-gradient(180deg,#ffb289,#ff8a4a); font-weight: 700; font-size: .74rem;
+  letter-spacing: .03em; font-family: ui-monospace,"Cascadia Code",Consolas,monospace;
+  border-radius: .5rem; padding: .55rem; margin-top: 1rem;
+  box-shadow: 0 6px 16px rgba(255,138,74,.18); }
+.partner-feed-widget .view-all-link:hover { filter: brightness(1.06); color: #0b1220; text-decoration: none; }

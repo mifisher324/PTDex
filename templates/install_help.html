@@ -1,0 +1,216 @@
+{% extends "layout.html" %}
+{% block title %}PTDex :: Install Help{% endblock %}
+{% block body %}
+<style>
+  .ih-lede{color:var(--w-muted);max-width:41.25rem;margin:0 0 1.125rem;font-size:.95rem;line-height:1.6}
+  /* download / quick install */
+  .ih-dl{display:flex;flex-wrap:wrap;align-items:center;gap:1.125rem;padding:1.125rem}
+  .ih-dl-btn{display:inline-flex;align-items:center;gap:0.625rem;padding:0.8125rem 1.625rem;border-radius:0.625rem;
+    background:linear-gradient(180deg,#1b2438,#101827);border:1.5px solid var(--w-gold);
+    color:#ffd9c2;font-weight:800;font-size:1.02rem;text-decoration:none;
+    box-shadow:0 0 18px rgba(255,178,137,.22), inset 0 0 22px rgba(255,178,137,.05);
+    transition:.15s;white-space:nowrap}
+  .ih-dl-btn:hover{color:#fff;border-color:#ffd9c2;background:linear-gradient(180deg,#24304a,#141d30);
+    box-shadow:0 0 26px rgba(255,178,137,.4)}
+  .ih-dl-btn small{display:block;font-weight:600;font-size:.68rem;color:var(--w-gold);opacity:.9}
+  .ih-dl ol{margin:0 0 0 1.125rem;padding:0;font-size:.9rem;line-height:1.8;color:var(--w-text);min-width:16.25rem;flex:1}
+  .ih-dl code{font-family:var(--w-mono);font-size:.8rem;background:rgba(77,178,255,.1);
+    border:1px solid var(--w-line2);border-radius:0.3125rem;padding:0.0625rem 0.4375rem;color:var(--w-arc-hi);white-space:nowrap}
+  /* "try this first" callout */
+  .ih-first{margin:0 0 1rem;padding:1rem 1.125rem;border-radius:0.75rem;border:1px solid rgba(95,224,163,.45);
+    background:linear-gradient(180deg,rgba(95,224,163,.1),rgba(95,224,163,.03));box-shadow:0 0 24px rgba(95,224,163,.08)}
+  .ih-first h2{margin:0 0 0.375rem;font-size:1.02rem;color:var(--w-green)}
+  .ih-first p{margin:0.25rem 0;font-size:.9rem;line-height:1.6;color:var(--w-text)}
+  .ih-first .crumb{font-family:var(--w-mono);font-size:.8rem;background:rgba(95,224,163,.12);
+    border:1px solid rgba(95,224,163,.4);border-radius:0.375rem;padding:0.125rem 0.5625rem;color:#c9f4de;white-space:nowrap}
+  /* install-location callout */
+  .ih-paths{display:grid;gap:0.5rem;padding:0.875rem 1rem 1rem}
+  .ih-path{display:flex;align-items:center;gap:0.75rem;padding:0.625rem 0.875rem;border-radius:0.5625rem;font-size:.9rem;
+    border:1px solid var(--w-line)}
+  .ih-path code{font-family:var(--w-mono);font-size:.82rem}
+  .ih-path.bad{background:rgba(255,86,74,.06);border-color:rgba(255,86,74,.35)}
+  .ih-path.bad .m{color:#ff8a7d;font-weight:800}
+  .ih-path.good{background:rgba(95,224,163,.07);border-color:rgba(95,224,163,.4)}
+  .ih-path.good .m{color:var(--w-green);font-weight:800}
+  .ih-path .m{flex:none;width:1.25rem;text-align:center}
+  .ih-path small{color:var(--w-muted);display:block;margin-top:0.125rem}
+  /* symptom cards */
+  .ih-step{display:flex;gap:0.875rem;padding:1rem;border-bottom:1px solid var(--w-line)}
+  .ih-step:last-child{border-bottom:0}
+  .ih-num{flex:none;width:2.125rem;height:2.125rem;border-radius:50%;display:grid;place-items:center;
+    font-family:var(--w-mono);font-weight:700;font-size:.95rem;color:#1a1206;
+    background:linear-gradient(180deg,var(--w-gold),var(--w-gold2));box-shadow:0 0 10px rgba(255,178,137,.25)}
+  .ih-step h3{margin:0.125rem 0 0.375rem;font-size:1rem;color:#ffcaa8}
+  .ih-step h3 .fix{color:var(--w-text)}
+  .ih-step ul,.ih-step ol{margin:0.375rem 0 0 1.125rem;padding:0;font-size:.88rem;line-height:1.65;color:var(--w-text)}
+  .ih-step li{margin:0.1875rem 0}
+  .ih-step p{margin:0.25rem 0;font-size:.88rem;line-height:1.6;color:var(--w-text)}
+  .ih-step code,.ih-step kbd{font-family:var(--w-mono);font-size:.8rem;background:rgba(77,178,255,.1);
+    border:1px solid var(--w-line2);border-radius:0.3125rem;padding:0.0625rem 0.4375rem;color:var(--w-arc-hi);white-space:nowrap}
+  .ih-step .scan{color:var(--w-green);font-weight:700}
+  .ih-note{margin:0 1rem 0.875rem;padding:0.625rem 0.875rem;border-radius:0.5rem;font-size:.84rem;line-height:1.55;
+    background:rgba(77,178,255,.06);border:1px dashed var(--w-line2);color:var(--w-muted)}
+  .ih-note b{color:var(--w-arc-hi)}
+  .ih-note a{color:var(--w-green)}
+  /* Requirement callout -- stronger than .ih-note because this is a blocker,
+     not a tip: without a RoF2 client of their own the patcher cannot help. */
+  .ih-req{margin:0 0 1rem;padding:0.875rem 1rem;border-radius:0.6rem;
+    background:rgba(255,138,74,.08);border:1px solid rgba(255,138,74,.42);
+    border-left:3px solid var(--w-gold);font-size:.9rem;line-height:1.6;color:var(--w-text)}
+  .ih-req h3{margin:0 0 .35rem;font-size:.95rem;color:#ffcaa8;
+    display:flex;align-items:center;gap:.45rem}
+  .ih-req p{margin:.25rem 0}
+  .ih-req b{color:#ffcaa8}
+</style>
+
+<div class="wp" id="top">
+  <div class="wp-eyebrow">PTDex // support.install</div>
+  <h1>Client Installation &amp; Troubleshooting</h1>
+  <p class="ih-lede">Setup best practices and fixes for the most common problems. Once you have your
+    own <b>RoF2 client</b>, the patcher handles nearly everything else &mdash; installing the server
+    files, updating, and repairing them. Most issues are one <b>File Integrity Scan</b> away from
+    fixed.</p>
+
+  <div class="wp-panel" id="ih-dl">
+    <h2>&#11015;&#65039; Get the Game &mdash; Install with the Patcher</h2>
+
+    <div class="ih-req">
+      <h3>&#9888;&#65039; You need your own RoF2 client first</h3>
+      <p><b>We do not provide the EverQuest RoF2 (Rain of Fear) client, and we are not able to.</b>
+        You must source your own copy before any of the steps below will work.</p>
+      <p>The patcher updates and repairs an existing RoF2 installation &mdash; it does
+        not download the base game.</p>
+    </div>
+
+    <div class="ih-dl">
+      <a class="ih-dl-btn" href="{{ site.patcher_url or '#' }}">
+        &#9889; Download PTPatcher<small>Windows &middot; .zip</small></a>
+      <ol>
+        <li>Get a <b>RoF2 client</b> of your own &mdash; we cannot supply one.</li>
+        <li>Create a folder inside your user directory, e.g. <code>C:\Users\&lt;YourUsername&gt;\Project Triune\</code>, and put your RoF2 client in it.</li>
+        <li>Unzip the download into that same folder, then run <code>PTPatcher.exe</code>.</li>
+        <li>Pick your server, hit <b>PATCH</b> &mdash; it downloads and installs the
+          <b>server files</b> on top of your client &mdash; then <b>PLAY</b>.</li>
+      </ol>
+    </div>
+  </div>
+
+  <div class="ih-first">
+    <h2>&#9989; Try this first &mdash; for almost anything</h2>
+    <p><span class="crumb">Patcher &rarr; Extras &rarr; File Integrity Scan</span></p>
+    <p>It re-checks every file, finds anything corrupt or missing, and turns the button into
+      <b>PATCH</b> to fix exactly those files. This solves most problems on its own.</p>
+  </div>
+
+  <div class="wp-nav">
+    <a href="#ih-setup">Install Location</a>
+    <a href="#ih-fixes">Troubleshooting</a>
+    <a href="#ih-loot">Looting &amp; UI</a>
+    <a href="#ih-help">Still Stuck?</a>
+  </div>
+
+  <!-- ============ INSTALL LOCATION ============ -->
+  <div class="wp-panel" id="ih-setup">
+    <h2>&#128736; Essential Setup &mdash; Pick the Right Install Folder<a class="top" href="#top">&uarr; Top</a></h2>
+    <div class="ih-note"><b>Why this matters:</b> Windows protects system folders and many root-level
+      directories, silently blocking custom files or forcing them read-only. Installing somewhere you have
+      full, native ownership prevents most write errors before they happen.</div>
+    <div class="ih-paths">
+      <div class="ih-path bad"><span class="m">&#10008;</span>
+        <div><code>C:\Program Files\</code> &nbsp;or&nbsp; <code>C:\Program Files (x86)\</code>
+          <small>Restricted system folders &mdash; Windows will block or sandbox custom files.</small></div>
+      </div>
+      <div class="ih-path bad"><span class="m">&#10008;</span>
+        <div><code>C:\Games\NMS Client\</code> <small>Root-level custom folders are often protected too,
+          and can end up read-only.</small></div>
+      </div>
+      <div class="ih-path good"><span class="m">&#10004;</span>
+        <div><code>C:\Users\&lt;YourUsername&gt;\NMS Client\</code> &nbsp;or&nbsp;
+          <code>C:\Users\&lt;YourUsername&gt;\Documents\NMS Client\</code>
+          <small>Inside your personal user directory, where you have full unrestricted permissions.</small></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ TROUBLESHOOTING ============ -->
+  <div class="wp-panel" id="ih-fixes">
+    <h2>&#128269; Troubleshooting by Symptom<a class="top" href="#top">&uarr; Top</a></h2>
+
+    <div class="ih-step"><div class="ih-num">1</div><div>
+      <h3>Game won't start / crashes instantly</h3>
+      <p>Run the <span class="scan">File Integrity Scan</span>. If Windows blocked your
+        <code>dinput8.dll</code> (common when installing from a downloaded zip), just running the
+        patcher clears it &mdash; <b>no admin needed</b>.</p>
+    </div></div>
+
+    <div class="ih-step"><div class="ih-num">2</div><div>
+      <h3>&ldquo;Shortcut doesn't work&rdquo; / launches then dies</h3>
+      <p>You made a shortcut to <code>eqgame.exe</code>. <b class="fix">Launch from the patcher instead.</b></p>
+    </div></div>
+
+    <div class="ih-step"><div class="ih-num">3</div><div>
+      <h3>Patcher says it can't write a file</h3>
+      <p>It will tell you the reason. Usually one of:</p>
+      <ul>
+        <li><b>Windows Controlled Folder Access</b> (Defender ransomware protection)</li>
+        <li><b>Your antivirus</b></li>
+        <li><b>Client is in a protected folder</b> &rarr; move it to <code>C:\Users\&lt;YourUsername&gt;\...</code></li>
+        <li><b>Game still running</b> &rarr; close it fully</li>
+      </ul>
+    </div></div>
+
+    <div class="ih-step"><div class="ih-num">4</div><div>
+      <h3>Antivirus flagged the patcher or <code>dinput8.dll</code></h3>
+      <p><b>False positive.</b> The patcher downloads files and modifies <code>eqgame.exe</code>, which
+        looks like malware to heuristics. Add an exclusion for your client folder.</p>
+      <p style="color:var(--w-muted)">We will never ship anything that touches your antivirus settings for you.</p>
+    </div></div>
+
+    <div class="ih-step"><div class="ih-num">5</div><div>
+      <h3>Patch got interrupted</h3>
+      <p>Just run it again. It <b>resumes where it left off</b> &mdash; it does not restart.</p>
+    </div></div>
+
+    <div class="ih-step"><div class="ih-num">6</div><div>
+      <h3>Wrong zone loading / broken graphics</h3>
+      <p><span class="scan">File Integrity Scan.</span></p>
+    </div></div>
+
+    <div class="ih-step"><div class="ih-num">7</div><div>
+      <h3>Game loads but strange things happen</h3>
+      <p><b class="fix">Are you patched to the correct server?</b> You can't patch to Test and play on
+        Live. Open the patcher and check whether the server you want to play on has an available patch
+        &mdash; if it does, you were patched to the wrong server.</p>
+    </div></div>
+  </div>
+
+  <!-- ============ LOOTING & UI ============ -->
+  <div class="wp-panel" id="ih-loot">
+    <h2>&#127890; Looting &amp; UI<a class="top" href="#top">&uarr; Top</a></h2>
+
+    <div class="ih-step"><div class="ih-num">8</div><div>
+      <h3>Can't loot / bard instrument in the center of your inventory</h3>
+      <p>A client version mismatch or incomplete patch. Run the
+        <span class="scan">File Integrity Scan</span> to repair your asset files.</p>
+    </div></div>
+
+    <div class="ih-step"><div class="ih-num">9</div><div>
+      <h3>Loot window missing or off-screen</h3>
+      <p>Items drop but the loot window is nowhere to be seen &mdash; it was dragged off-screen or scaled
+        incorrectly. In the in-game chat, type:</p>
+      <p><kbd>/nmsloot reset</kbd></p>
+      <p>This instantly returns the NMSloot window to its default position.</p>
+    </div></div>
+  </div>
+
+  <!-- ============ STILL STUCK ============ -->
+  <div class="wp-panel" id="ih-help">
+    <h2>&#128172; Still Stuck?<a class="top" href="#top">&uarr; Top</a></h2>
+    <div class="ih-note" style="margin-top:14px">
+      Post in the {% if site.support_url %}<a href="{{ site.support_url }}"
+      target="_blank" rel="noopener"><b>#support channel on Discord</b></a>{% else %}<b>#support channel on Discord</b>{% endif %} with:
+      <b>what you clicked</b>, <b>the exact error message</b>, and <b>your client folder path</b>.
+    </div>
+  </div>
+</div>
+{% endblock %}

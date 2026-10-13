@@ -1,0 +1,35 @@
+{% extends "layout.html" %}
+{% block body %}
+<script>
+window.onload = doStuff;
+
+function doStuff() {
+    var form = document.getElementById("demoForm");
+    form.addEventListener('keypress', (event) => {
+        if (event.key === 'Enter') {
+            event.preventDefault(); // Prevent default form submission
+            form.submit(); // Manually submit the form
+        }
+    });
+}
+</script>
+<script>
+$(document).ready(function() {
+
+    $('textarea').keypress(function(event) {
+
+        if (event.keyCode == 13) {
+            event.preventDefault();
+        }
+    });
+});
+</script>
+<div class="srch">
+<div class="srch-head"><p class="srch-eyebrow">Spells</p><h1>Spell Search</h1></div>
+<form actions="{{ url_for('spells.spell_search') }}" method="post" class="add-entry" id="demoForm">
+    <table><tr><td>Spell Name <span style="color:var(--muted)">(partial allowed)</span>:</td>
+    <td><input type="text" class="nameentry" name="spell_name"></td></tr></table>
+    <input type="submit" value="Search">
+</form>
+</div>
+{% endblock %}

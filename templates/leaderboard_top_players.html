@@ -1,0 +1,89 @@
+{% extends "layout.html" %}
+{% block title %}PTDex :: Season Standings{% endblock %}
+{% block body %}
+<style>
+  .lbtop{--panel:#0d1420;--line:#1a2637;--arc-hi:#8fd0ff;--ember:#ff8a4a;--ember-hi:#ffc08e;
+    --gold:#e5cc80;--silver:#d7e0ea;--bronze:#c8873f;--ctext:#dce7f5;--muted:#7f92a9;--dim:#55677d;
+    --lserif:Georgia,"Iowan Old Style","Times New Roman",serif;
+    --lmono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+    max-width:72rem;margin:1.4rem auto 4rem;padding:0 1.15rem;color:var(--ctext)}
+  .lbtop .eyebrow{font-family:var(--lmono);font-size:.66rem;letter-spacing:.2em;color:var(--ember);margin-bottom:.8rem}
+  .lbtop h1{font-family:var(--lserif);font-size:1.7rem;margin:.2rem 0 .3rem}
+  .lbtop .lede{color:var(--muted);font-size:.9rem;max-width:66ch;margin:0 0 .9rem}
+  .lbtop .frozen{display:inline-block;font-family:var(--lmono);font-size:.66rem;letter-spacing:.12em;
+    text-transform:uppercase;color:var(--gold);border:1px solid rgba(229,204,128,.4);border-radius:.4rem;
+    padding:.25rem .55rem;margin:0 0 1rem}
+  .lbtop .wts{display:flex;gap:.5rem;flex-wrap:wrap;margin:0 0 1.2rem}
+  .lbtop .wts span{font-family:var(--lmono);font-size:.68rem;color:var(--muted);border:1px solid var(--line);
+    border-radius:.4rem;padding:.25rem .5rem}
+  .lbtop .wts b{color:var(--ctext)}
+  .lbtop .tbl{overflow-x:auto;background:var(--panel);border:1px solid var(--line);border-radius:.5rem}
+  .lbtop table{width:100%;border-collapse:collapse;font-size:.85rem}
+  .lbtop th{text-align:left;font-family:var(--lmono);font-size:.64rem;letter-spacing:.12em;
+    text-transform:uppercase;color:var(--dim);font-weight:600;padding:.6rem .7rem;border-bottom:1px solid var(--line)}
+  .lbtop td{padding:.5rem .7rem;border-bottom:1px solid #142334}
+  .lbtop tr:last-child td{border-bottom:0}
+  .lbtop .num{text-align:right;font-variant-numeric:tabular-nums;font-family:var(--lmono)}
+  .lbtop .rk{font-family:var(--lmono);color:var(--dim)}
+  .lbtop tr:nth-child(1) .rk{color:var(--gold)} .lbtop tr:nth-child(2) .rk{color:var(--silver)}
+  .lbtop tr:nth-child(3) .rk{color:var(--bronze)}
+  .lbtop a{color:var(--arc-hi);text-decoration:none}
+  .lbtop .score{color:var(--ember-hi);font-weight:700}
+  .lbtop .none{color:var(--dim)}
+  .lbtop .empty{padding:1rem;color:var(--muted)}
+</style>
+<div class="lbtop">
+  <div class="eyebrow">PTDEX // SEASON.STANDINGS</div>
+  {% with lbtab = 'top' %}{% include 'leaderboard_tabs.html' %}{% endwith %}
+
+  <h1>Season Standings{% if season %} <span style="color:var(--muted);font-size:1rem">&middot; {{ season.name }}</span>{% endif %}</h1>
+  <p class="lede">Player Score for {{ season.name if season else 'this season' }}, out of 1,000. Parse comes from this
+    season's raid kills only.{% if data.weights.speed %} Speed is your average over every board (raid bosses, the
+    Plane of Time, LDoN raids, Monster Missions and every LDoN adventure board): on each, the record time over your
+    best time, times 100, and 0 for a board you have not cleared.{% endif %} The live, season-less ranking is on the
+    Players tab.</p>
+  {% if data.frozen %}
+  <div class="frozen">Final &middot; frozen {{ data.frozen_at.strftime('%Y-%m-%d') if data.frozen_at else '' }}</div>
+  {% endif %}
+  {% if data.weights %}
+  <div class="wts">
+    {% if data.weights.speed %}<span>Speedruns <b>{{ data.weights.speed|int }}</b></span>{% endif %}
+    <span>Gear <b>{{ data.weights.gear|int }}</b></span>
+    {% if data.weights.progression %}<span>Progression <b>{{ data.weights.progression|int }}</b></span>{% endif %}
+    <span>AA spent <b>{{ data.weights.aa|int }}</b></span>
+    <span>Parse <b>{{ data.weights.parse|int }}</b></span>
+    <span>Level <b>{{ data.weights.level|int }}</b></span>
+  </div>
+  {% endif %}
+
+  <div class="tbl">
+  {% if data.players %}
+  <table>
+    <thead><tr><th>#</th><th>Name</th><th>Guild</th><th>Class</th><th class="num">Level</th>
+      <th class="num">AA spent</th><th class="num">Gear</th><th class="num">Parse</th>{% if data.weights.speed %}<th class="num">Speed</th>{% endif %}{% if data.weights.progression %}<th class="num">Progress</th>{% endif %}<th class="num">Player Score</th></tr></thead>
+    <tbody>
+    {% for p in data.players %}
+    <tr>
+      <td class="rk">{{ p.rank }}</td>
+      <td><a href="{{ url_for('characters.character_profile', char_id=p.id) }}">{{ p.name }}</a></td>
+      <td>{% if p.guild_id %}<a href="{{ url_for('guilds.guild_detail', guild_id=p.guild_id) }}">{{ p.guild_name }}</a>{% else %}<span class="none">&mdash;</span>{% endif %}</td>
+      <td>{{ p.class_name }}</td>
+      <td class="num">{{ p.level }}</td>
+      <td class="num">{{ '{:,}'.format(p.aa|int) }}</td>
+      <td class="num">{{ p.gear_score|int }}</td>
+      <td class="num">{% if p.parse_score %}{{ '%.0f'|format(p.parse_score) }}{% else %}<span class="none">&mdash;</span>{% endif %}</td>
+      {% if data.weights.speed %}<td class="num">{% if p.speed_score %}{{ '%.1f'|format(p.speed_score) }}{% else %}<span class="none">&mdash;</span>{% endif %}</td>{% endif %}
+      {% if data.weights.progression %}<td class="num">{% if p.progression_score %}{{ '%.0f'|format(p.progression_score) }}{% else %}<span class="none">&mdash;</span>{% endif %}</td>{% endif %}
+      <td class="num score">{{ p.score }}</td>
+    </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  {% elif data.upcoming %}
+  <div class="empty">{{ season.name }} opens {{ season.start_short }}.</div>
+  {% else %}
+  <div class="empty">No ranked players for this season yet.</div>
+  {% endif %}
+  </div>
+</div>
+{% endblock %}

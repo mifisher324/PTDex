@@ -1,0 +1,283 @@
+{% extends "layout.html" %}
+{% block title %}PTDex :: Item{% if item %} :: {{ item.Name }}{% endif %}{% endblock %}
+{% block body %}
+{% if item is none %}
+<div style="max-width:700px;margin:40px auto;color:#d9e5f3;"><h3>Item not found</h3><p>This item does not exist or has no data.</p></div>
+{% else %}
+
+{% set classes = (item.class_str or '').replace(',', ' ').split() %}
+{% set slots = (item.slot_str or '').replace(',', ' ').split() %}
+{% set rarity = 'Base' %}
+{% if item.triune_enabled %}
+  {% if item.id >= 2000000 %}{% set rarity = 'Legendary' %}
+  {% elif item.id >= 1000000 %}{% set rarity = 'Enchanted' %}{% endif %}
+{% endif %}
+
+{% macro statrow(label, base, heroic) %}
+  {% if base or heroic %}
+  <div class="r"><span class="k">{{ label }}</span><span class="v">{{ base }}{% if heroic %}<span class="h">+{{ heroic }}</span>{% endif %}</span></div>
+  {% endif %}
+{% endmacro %}
+{% macro modpill(label, val, suffix='') %}{% if val %}<span class="mod">{{ label }} <b>{{ val }}{{ suffix }}</b></span>{% endif %}{% endmacro %}
+{% macro effect(label, sid, name, lines) %}
+  {% if sid and sid > 0 %}
+  <div class="effect">
+    <div class="ei">&#10022;</div>
+    <div class="ec">
+      <a class="elink spell-tooltip-link" href="{{ url_for('spells.spell_detail', spell_id=sid) }}" data-url="{{ sid }}">{{ name }}</a>
+      {% if lines %}
+      <div class="edesc">{% for line in lines %}<span>{{ line|safe }}</span>{% endfor %}</div>
+      {% endif %}
+    </div>
+    <span class="ty">{{ label }}</span>
+  </div>
+  {% endif %}
+{% endmacro %}
+
+<style>
+  .ip{--ink:#080b11;--ink-2:#0b101a;--panel:#0f1622;--panel-2:#132033;--cell:#0f1826;
+    --line:#1b2838;--line-2:#284058;--arcane:#4db2ff;--arcane-hi:#8fd0ff;--ember:#ff7a45;
+    --gold:#ffb289;--gold-2:#ff8a4a;--green:#5fe0a3;--violet:#b79bff;--ctext:#d9e5f3;--muted:#7d8fa6;
+    --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+    max-width:62.5rem;margin:1.375rem auto 3.75rem;padding:0 1rem;color:var(--ctext)}
+  .ip *{cursor:default}
+  .ip a{cursor:pointer;text-decoration:none}
+  /* Center the item window in the viewport: don't let the global partner
+     sidebar squeeze it. Stack that sidebar full-width below instead. */
+  .layout-wrapper:has(.ip){--page-w:62.5rem}
+  .ip .eyebrow{font-family:var(--mono);font-size:.7rem;letter-spacing:.24em;text-transform:uppercase;color:var(--arcane);opacity:.9;margin-bottom:0.875rem}
+  .ip .cols{display:grid;grid-template-columns:1fr 20rem;gap:1rem;align-items:start}
+  @media(max-width:51.25em){.ip .cols{grid-template-columns:1fr}}
+  .ip .card{background:linear-gradient(180deg,var(--panel),var(--ink-2));border:1px solid var(--line-2);border-radius:1rem;
+    box-shadow:0 24px 60px rgba(0,0,0,.5);overflow:hidden}
+  .ip .card.leg{border-color:#5e3018;box-shadow:0 24px 60px rgba(0,0,0,.5),0 0 0 1px rgba(255,178,137,.15)}
+  .ip .head{display:flex;gap:1rem;align-items:flex-start;padding:1.25rem 1.375rem;position:relative;
+    background:radial-gradient(120% 140% at 100% 0%,rgba(255,178,137,.10),transparent 60%),rgba(0,0,0,.14);border-bottom:1px solid var(--line)}
+  .ip .icon{width:4rem;height:4rem;flex:none;border-radius:0.75rem;background:var(--ink-2);border:1px solid var(--gold-2);box-shadow:0 0 20px rgba(255,178,137,.22);display:grid;place-items:center}
+  .ip .icon img{width:3.25rem;height:3.25rem}
+  .ip .htext{flex:1;min-width:0}
+  .ip .rar{font-family:var(--mono);font-size:.64rem;letter-spacing:.18em;text-transform:uppercase;color:var(--gold);font-weight:700}
+  .ip h1{font-size:1.4rem;margin:0.1875rem 0 0.5rem;color:#f4ecda;font-weight:800;line-height:1.15}
+  .ip .chips{display:flex;flex-wrap:wrap;gap:0.375rem}
+  .ip .chip{font-family:var(--mono);font-size:.72rem;padding:0.1875rem 0.625rem;border-radius:0.375rem;border:1px solid var(--line-2);background:rgba(77,178,255,.07);color:var(--arcane-hi)}
+  .ip .chip.slot{color:var(--gold);border-color:rgba(255,178,137,.3);background:rgba(255,178,137,.07)}
+  .ip .seg{display:flex;width:20.625rem;max-width:calc(100% - 2.75rem);border:1px solid var(--line-2);border-radius:0.5625rem;overflow:hidden;font-family:var(--mono);font-size:.74rem;margin:0.75rem 1.375rem 0}
+  .ip .seg a{flex:1 1 0;text-align:center;padding:0.375rem 0;color:var(--muted);border-right:1px solid var(--line-2)}
+  .ip .seg a:last-child{border-right:0}.ip .seg a.on{background:linear-gradient(180deg,var(--gold),var(--gold-2));color:#1a130a;font-weight:700}
+  .ip .body{padding:0.875rem 1.375rem 0.5rem}
+  .ip .vit{display:flex;gap:0.625rem;margin-bottom:0.5rem;flex-wrap:wrap}
+  .ip .vit .b{flex:1;min-width:5.625rem;background:var(--panel-2);border:1px solid var(--line);border-radius:0.625rem;padding:0.5625rem 0.75rem;text-align:center}
+  .ip .vit .b .l{font-family:var(--mono);font-size:.6rem;letter-spacing:.1em;color:var(--muted)}
+  .ip .vit .b .n{font-size:1.2rem;font-weight:800;font-variant-numeric:tabular-nums}
+  .ip .vit .ac .n{color:var(--green)}.ip .vit .hp .n{color:#ff8a6a}.ip .vit .mp .n{color:#6ab8ff}.ip .vit .en .n{color:var(--gold)}.ip .vit .sh .n{color:var(--arcane-hi)}
+  .ip .sec{margin:0.875rem 0}
+  .ip .st{font-family:var(--mono);font-size:.64rem;letter-spacing:.14em;text-transform:uppercase;color:var(--arcane);margin-bottom:0.5rem}
+  .ip .grid2{display:grid;grid-template-columns:1fr 1fr;gap:0.25rem 1.5rem}
+  .ip .r{display:flex;justify-content:space-between;font-size:.9rem;padding:0.1875rem 0;border-bottom:1px dotted var(--line)}
+  .ip .r .k{color:var(--muted)}.ip .r .v{font-variant-numeric:tabular-nums;font-weight:600}.ip .r .v .h{color:var(--gold);font-weight:700;margin-left:0.375rem}
+  .ip .mods{display:flex;flex-wrap:wrap;gap:0.375rem}
+  .ip .mod{font-size:.82rem;background:var(--panel-2);border:1px solid var(--line);border-radius:0.4375rem;padding:0.3125rem 0.6875rem}.ip .mod b{color:var(--arcane-hi)}
+  .ip .sockets{display:flex;gap:0.625rem;flex-wrap:wrap}
+  .ip .sock{flex:1;min-width:8.125rem;display:flex;align-items:center;gap:0.625rem;background:var(--cell);border:1px dashed var(--line-2);border-radius:0.625rem;padding:0.5rem 0.6875rem}
+  .ip .sock .dot{width:1.5rem;height:1.5rem;border-radius:0.375rem;border:1px solid var(--gold-2);background:rgba(255,178,137,.08);display:grid;place-items:center;color:var(--gold);font-weight:800;flex:none}
+  .ip .sock .t{font-family:var(--mono);font-size:.6rem;color:var(--muted)}.ip .sock .t b{color:var(--ctext);display:block;font-family:inherit;font-size:.8rem}
+  .ip .effect{display:flex;align-items:flex-start;gap:0.625rem;background:linear-gradient(180deg,rgba(139,108,240,.12),rgba(139,108,240,.04));border:1px solid #3b3560;border-radius:0.625rem;padding:0.625rem 0.8125rem;margin-bottom:0.5rem}
+  .ip .effect .ei{width:1.75rem;height:1.75rem;border-radius:0.4375rem;background:#221d3a;border:1px solid #4a3f7a;display:grid;place-items:center;color:var(--violet);flex:none;margin-top:0.0625rem}
+  .ip .effect .ec{flex:1;min-width:0}
+  .ip .effect .elink{color:#c9bcff;font-weight:600}.ip .effect .elink:hover{text-decoration:underline}
+  .ip .effect .edesc{margin-top:0.1875rem;font-size:.82rem;color:var(--muted);line-height:1.45}
+  .ip .effect .edesc span{display:block}
+  .ip .effect .edesc a{color:var(--arcane-hi)}
+  .ip .effect .ty{font-family:var(--mono);font-size:.6rem;color:var(--muted);margin-left:auto;white-space:nowrap;padding-top:0.125rem}
+  .ip .lore{font-style:italic;color:var(--muted);font-size:.86rem;border-left:2px solid var(--line-2);padding-left:0.75rem;margin:0.75rem 0}
+  .ip .foot{display:flex;gap:0.875rem;align-items:center;padding:0.75rem 1.375rem 1.125rem;border-top:1px solid var(--line);flex-wrap:wrap}
+  .ip .tint{display:flex;align-items:center;gap:0.5rem;font-family:var(--mono);font-size:.72rem;color:var(--muted)}
+  .ip .swatch{width:1.625rem;height:1rem;border-radius:0.25rem;border:1px solid var(--line-2)}
+  .ip .foot a{color:var(--arcane-hi);font-size:.82rem}
+  .ip .side{display:flex;flex-direction:column;gap:0.875rem}
+  .ip .panel{background:var(--panel);border:1px solid var(--line-2);border-radius:0.875rem;overflow:hidden}
+  .ip .panel h4{font-family:var(--mono);font-size:.64rem;letter-spacing:.12em;text-transform:uppercase;color:var(--gold);margin:0;padding:0.8125rem 1rem 0.5625rem;border-bottom:1px solid var(--line)}
+  .ip .panel .pb{padding:0.375rem 0.5rem 0.625rem;max-height:21.25rem;overflow-y:auto}
+  .ip .srow{display:flex;justify-content:space-between;align-items:center;gap:0.5rem;padding:0.5rem 0.625rem;border-radius:0.5rem}
+  .ip .srow:hover{background:rgba(77,178,255,.05)}
+  .ip .srow .who a{color:var(--arcane-hi);font-size:.88rem;font-weight:600;display:block}
+  .ip .srow .who small{color:var(--muted);font-size:.74rem}
+  .ip .srow .pct{font-family:var(--mono);font-size:.82rem;color:var(--green);font-variant-numeric:tabular-nums}
+  .ip .facts{padding:0.25rem 0.375rem 0.5rem}
+  .ip .fact{display:flex;justify-content:space-between;font-size:.84rem;padding:0.4375rem 0.625rem;border-bottom:1px dotted var(--line)}
+  .ip .fact:last-child{border-bottom:0}.ip .fact .k{color:var(--muted)}.ip .fact .v{font-weight:600}
+</style>
+
+<div class="ip">
+  <div class="eyebrow">PTDex // item.detail</div>
+  <div class="cols">
+    <!-- LEFT: item card -->
+    <div class="card {% if rarity == 'Legendary' %}leg{% endif %}">
+      <div class="head">
+        <div class="icon"><img src="/static/item_icons/item_{{ item.icon }}.png" alt="" onerror="this.style.visibility='hidden'"></div>
+        <div class="htext">
+          {% if item.triune_enabled %}<div class="rar">{{ rarity }}</div>{% endif %}
+          <h1>{{ item.Name }}</h1>
+          <div class="chips">
+            {% for c in classes %}<span class="chip">{{ c }}</span>{% endfor %}
+            {% for sl in slots %}<span class="chip slot">{{ sl }}</span>{% endfor %}
+          </div>
+        </div>
+      </div>
+
+      {% if item.triune_enabled %}
+      <div class="seg">
+        {% if item.id < 1000000 %}
+          <a class="on" href="#">Base</a>
+          <a href="{{ url_for('items.item_detail', item_id=item.id+1000000) }}">Enchanted</a>
+          <a href="{{ url_for('items.item_detail', item_id=item.id+2000000) }}">Legendary</a>
+        {% elif item.id < 2000000 %}
+          <a href="{{ url_for('items.item_detail', item_id=item.id-1000000) }}">Base</a>
+          <a class="on" href="#">Enchanted</a>
+          <a href="{{ url_for('items.item_detail', item_id=item.id+1000000) }}">Legendary</a>
+        {% else %}
+          <a href="{{ url_for('items.item_detail', item_id=item.id-2000000) }}">Base</a>
+          <a href="{{ url_for('items.item_detail', item_id=item.id-1000000) }}">Enchanted</a>
+          <a class="on" href="#">Legendary</a>
+        {% endif %}
+      </div>
+      {% endif %}
+
+      <div class="body">
+        {% if item.ac or item.hp or item.mana or item.endur %}
+        <div class="vit">
+          {% if item.hp %}<div class="b hp"><div class="l">HP</div><div class="n">{{ item.hp }}</div></div>{% endif %}
+          {% if item.mana %}<div class="b mp"><div class="l">MANA</div><div class="n">{{ item.mana }}</div></div>{% endif %}
+          {% if item.ac %}<div class="b ac"><div class="l">AC</div><div class="n">{{ item.ac }}</div></div>{% endif %}
+          {% if item.endur %}<div class="b en"><div class="l">END</div><div class="n">{{ item.endur }}</div></div>{% endif %}
+        </div>
+        {% endif %}
+
+        {% if item.damage or item.delay %}
+        <div class="sec"><div class="st">Weapon</div><div class="mods">
+          {{ modpill('Base Dmg', item.damage) }}{{ modpill('Delay', item.delay) }}
+          {% if item.elem_dmg_name %}{{ modpill(item.elem_dmg_name ~ ' Dmg', item.elem_dmg_amount) }}{% endif %}
+          {{ modpill('Backstab', item.backstabdmg) }}
+        </div></div>
+        {% endif %}
+
+        {% set has_attr = item.astr or item.asta or item.adex or item.aagi or item.awis or item.aint or item.acha
+          or item.heroic_str or item.heroic_sta or item.heroic_dex or item.heroic_agi or item.heroic_wis or item.heroic_int or item.heroic_cha %}
+        {% if has_attr %}
+        <div class="sec"><div class="st">Attributes</div><div class="grid2">
+          {{ statrow('Strength', item.astr, item.heroic_str) }}
+          {{ statrow('Stamina', item.asta, item.heroic_sta) }}
+          {{ statrow('Dexterity', item.adex, item.heroic_dex) }}
+          {{ statrow('Agility', item.aagi, item.heroic_agi) }}
+          {{ statrow('Wisdom', item.awis, item.heroic_wis) }}
+          {{ statrow('Intelligence', item.aint, item.heroic_int) }}
+          {{ statrow('Charisma', item.acha, item.heroic_cha) }}
+        </div></div>
+        {% endif %}
+
+        {% set has_res = item.fr or item.cr or item.mr or item.dr or item.pr
+          or item.heroic_fr or item.heroic_cr or item.heroic_mr or item.heroic_dr or item.heroic_pr %}
+        {% if has_res %}
+        <div class="sec"><div class="st">Resists</div><div class="grid2">
+          {{ statrow('Fire', item.fr, item.heroic_fr) }}
+          {{ statrow('Cold', item.cr, item.heroic_cr) }}
+          {{ statrow('Magic', item.mr, item.heroic_mr) }}
+          {{ statrow('Disease', item.dr, item.heroic_dr) }}
+          {{ statrow('Poison', item.pr, item.heroic_pr) }}
+        </div></div>
+        {% endif %}
+
+        <div class="sec"><div class="st">Modifiers</div><div class="mods">
+          {{ modpill('Attack', item.attack) }}{{ modpill('Haste', item.haste, '%') }}
+          {{ modpill('HP Regen', item.regen) }}{{ modpill('Mana Regen', item.manaregen) }}
+          {{ modpill('Accuracy', item.accuracy) }}{{ modpill('Avoidance', item.avoidance) }}
+          {% if item.combateffects|int != 0 %}{{ modpill('Combat Effects', item.combateffects) }}{% endif %}
+          {{ modpill('Damage Shield', item.damageshield) }}{{ modpill('DoT Shielding', item.dotshielding) }}
+          {{ modpill('Shielding', item.shielding) }}{{ modpill('Spell Shield', item.spellshield) }}
+          {{ modpill('Strikethrough', item.strikethrough) }}{{ modpill('Stun Resist', item.stunresist) }}
+          {{ modpill('Spell Dmg', item.spelldmg) }}{{ modpill('Heal Amt', item.healamt) }}
+          {% if item.skillmodtype and item.skillmodtype > 0 %}<span class="mod">{{ item.skillmodname }} <b>{{ item.skillmodvalue }}%</b> <span style="color:var(--muted)">({{ item.skillmodmax }} max)</span></span>{% endif %}
+          {% if item.scrolleffect and item.scrolleffect > 0 %}<span class="mod">Teaches <b><a class="spell-tooltip-link" href="{{ url_for('spells.spell_detail', spell_id=item.scrolleffect) }}" data-url="{{ item.scrolleffect }}">{{ item.scrolleffectname }}</a></b></span>{% endif %}
+        </div></div>
+
+        {% if item.aug_slot_1 or item.aug_slot_2 or item.aug_slot_3 or item.aug_slot_4 or item.aug_slot_5 %}
+        <div class="sec"><div class="st">Augment Sockets</div><div class="sockets">
+          {% for n in range(1,6) %}{% set t = item['aug_slot_' ~ n] %}{% if t %}
+          <div class="sock"><div class="dot">{{ n }}</div><div class="t">Aug Slot<b>Type {{ t }}</b></div></div>
+          {% endif %}{% endfor %}
+        </div></div>
+        {% endif %}
+
+        {% if (item.worneffect and item.worneffect > 0) or (item.proceffect and item.proceffect > 0) or (item.clickeffect and item.clickeffect > 0) or (item.focuseffect and item.focuseffect > 0) or (item.bardeffect and item.bardeffect > 0) %}
+        <div class="sec"><div class="st">Effects</div>
+          {{ effect('Worn', item.worneffect, item.worn_name, item.effect_desc.get('worneffect')) }}
+          {{ effect('Combat Proc', item.proceffect, item.proc_name, item.effect_desc.get('proceffect')) }}
+          {{ effect('Clicky', item.clickeffect, item.click_name, item.effect_desc.get('clickeffect')) }}
+          {{ effect('Focus', item.focuseffect, item.focus_name, item.effect_desc.get('focuseffect')) }}
+          {{ effect('Bard', item.bardeffect, item.inst_name, item.effect_desc.get('bardeffect')) }}
+        </div>
+        {% endif %}
+
+        {% if item.bagtype and item.bagtype > 0 %}
+        <div class="sec"><div class="st">Container</div><div class="mods">
+          {{ modpill('Weight Red', item.bagwr, '%') }}{{ modpill('Capacity', item.bagslots) }}
+        </div></div>
+        {% endif %}
+
+        {% if item.lore %}<div class="lore">"{{ item.lore }}"</div>{% endif %}
+      </div>
+
+      <div class="foot">
+        <div class="tint">Item Tint <span class="swatch" style="background:rgb({{ item.red }}, {{ item.green }}, {{ item.blue }});"></span></div>
+        <a href="{{ url_for('items.item_compare', a=item.id) }}">&#9878; Compare &rarr;</a>
+        <a href="{{ url_for('items.item_raw', item_id=item.id) }}">Raw Item Data &rarr;</a>
+      </div>
+    </div>
+
+    <!-- RIGHT: sources sidebar -->
+    <div class="side">
+      {% if item.droppers %}
+      <div class="panel"><h4>Drops From</h4><div class="pb">
+        {% for e in item.droppers %}
+        <div class="srow"><div class="who"><a href="{{ url_for('npcs.npc_detail', npc_id=e.npc_id) }}">{{ e.npc_name }}</a><small>{{ e.zone_name }}</small></div><span class="pct">{{ e.chance }}%</span></div>
+        {% endfor %}
+      </div></div>
+      {% endif %}
+      {% if item.vendors %}
+      <div class="panel"><h4>Purchased From</h4><div class="pb">
+        {% for zone in item.vendors %}{% for e in item.vendors[zone] %}
+        <div class="srow"><div class="who"><a href="{{ url_for('npcs.npc_detail', npc_id=e.npc_id) }}">{{ e.npc_name }}</a><small>{{ zone }}</small></div></div>
+        {% endfor %}{% endfor %}
+      </div></div>
+      {% endif %}
+      {% if item.foraged %}
+      <div class="panel"><h4>Foraged In</h4><div class="pb">
+        {% for e in item.foraged %}<div class="srow"><div class="who"><a href="{{ url_for('zones.zone_detail', zone_id=e.zone_id) }}">{{ e.zone_name }}</a></div><span class="pct">{{ e.chance }}%</span></div>{% endfor %}
+      </div></div>
+      {% endif %}
+      {% if item.ground %}
+      <div class="panel"><h4>Ground Spawn</h4><div class="pb">
+        {% for e in item.ground %}<div class="srow"><div class="who"><a href="{{ url_for('zones.zone_detail', zone_id=e.zone_id) }}">{{ e.zone_name }}</a><small>({{ e.y }}, {{ e.x }})</small></div></div>{% endfor %}
+      </div></div>
+      {% endif %}
+      {% if item.ts_result %}
+      <div class="panel"><h4>Crafted By</h4><div class="pb">
+        {% for e in item.ts_result %}<div class="srow"><div class="who"><a href="{{ url_for('tradeskills.tradeskill_detail', ts_id=e.ts_id) }}">{{ e.ts_name }}</a></div></div>{% endfor %}
+      </div></div>
+      {% endif %}
+      {% if item.ts_component %}
+      <div class="panel"><h4>Component In</h4><div class="pb">
+        {% for e in item.ts_component %}<div class="srow"><div class="who"><a href="{{ url_for('tradeskills.tradeskill_detail', ts_id=e.ts_id) }}">{{ e.ts_name }}</a></div></div>{% endfor %}
+      </div></div>
+      {% endif %}
+
+      <div class="panel"><h4>Quick Facts</h4><div class="facts">
+        <div class="fact"><span class="k">Item ID</span><span class="v">{{ item.id }}</span></div>
+        {% if item.triune_enabled %}<div class="fact"><span class="k">Rarity</span><span class="v" style="color:var(--gold)">{{ rarity }}</span></div>{% endif %}
+        {% if item.type_str and item.type_str != '__na__' %}<div class="fact"><span class="k">Skill</span><span class="v">{{ item.type_str }}</span></div>{% endif %}
+      </div></div>
+    </div>
+  </div>
+</div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,13 @@
+{% extends "layout.html" %}
+{% block title %}PTDex :: Faction Search{% endblock %}
+{% block body %}
+<div class="wp">
+  <div class="wp-eyebrow">PTDex // world.factions</div>
+  <h1>Faction Search</h1>
+  <form class="wp-search" action="{{ url_for('factions.faction_search') }}" method="post">
+    <input type="text" name="faction_name" placeholder="Faction name (partial allowed)..." autofocus>
+    <button type="submit">Search</button>
+  </form>
+  <div class="wp-hint">Find factions by name. Partial names allowed (minimum 3 characters).</div>
+</div>
+{% endblock %}

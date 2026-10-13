@@ -1,0 +1,82 @@
+{% extends "layout.html" %}
+{% set game_class = data.pop('game_class') %}
+{% block title %}PTDex :: {{ game_class }} Spells{% endblock %}
+{% block body %}
+<style>
+  .sl{--ink:#080b11;--ink-2:#0b101a;--panel:#0f1622;--panel-2:#132033;--cell:#0f1826;
+    --line:#1b2838;--line-2:#284058;--arcane:#4db2ff;--arcane-hi:#8fd0ff;--ember:#ff7a45;
+    --gold:#ffb289;--gold-2:#ff8a4a;--green:#5fe0a3;--violet:#b79bff;--ctext:#d9e5f3;--muted:#7d8fa6;
+    --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+    max-width:71.25rem;margin:1.375rem auto 3.75rem;padding:0 1rem;color:var(--ctext)}
+  .sl *{cursor:default}.sl a{cursor:pointer;text-decoration:none}
+  .layout-wrapper:has(.sl){--page-w:71.25rem}
+  .sl .eyebrow{font-family:var(--mono);font-size:.7rem;letter-spacing:.24em;text-transform:uppercase;color:var(--arcane);opacity:.9}
+  .sl h1{font-family:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif;font-size:2rem;font-weight:800;color:#f4ecda;margin:0.25rem 0 1rem}
+  /* level jump nav */
+  .sl .lnav{position:sticky;top:0;z-index:20;display:flex;flex-wrap:wrap;gap:0.3125rem;padding:0.75rem;margin:0 0 1.125rem;border-radius:0.75rem;
+    background:linear-gradient(180deg,rgba(11,16,26,.97),rgba(11,16,26,.9));border:1px solid var(--line-2);backdrop-filter:blur(6px)}
+  .sl .lnav a{font-family:var(--mono);font-size:.76rem;min-width:1.875rem;text-align:center;padding:0.25rem 0.4375rem;border-radius:0.375rem;
+    color:var(--muted);border:1px solid var(--line)}
+  .sl .lnav a:hover{color:var(--arcane-hi);border-color:var(--arcane);background:rgba(77,178,255,.08)}
+  /* level section */
+  .sl .lvl{background:linear-gradient(180deg,var(--panel),var(--ink-2));border:1px solid var(--line-2);border-radius:0.875rem;overflow:hidden;margin-bottom:1rem;box-shadow:0 16px 40px rgba(0,0,0,.4)}
+  .sl .lvlh{display:flex;align-items:center;gap:0.625rem;padding:0.75rem 1.125rem;border-bottom:1px solid var(--line);background:rgba(0,0,0,.16)}
+  .sl .lvlh .lb{font-family:var(--mono);font-size:.66rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+  .sl .lvlh .n{font-family:"Iowan Old Style",Palatino,Georgia,serif;font-size:1.3rem;font-weight:700;color:var(--gold)}
+  .sl .lvlh .top{margin-left:auto;font-family:var(--mono);font-size:.7rem;color:var(--arcane-hi)}
+  .sl .tw{overflow-x:auto}
+  .sl table{width:100%;border-collapse:collapse;font-size:.9rem}
+  .sl thead th{text-align:left;font-family:var(--mono);font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;color:var(--arcane);padding:0.5625rem 0.875rem;border-bottom:1px solid var(--line-2);background:var(--ink-2);white-space:nowrap}
+  .sl tbody td{padding:0.625rem 0.875rem;border-bottom:1px solid var(--line);vertical-align:top}
+  .sl tbody tr:last-child td{border-bottom:0}
+  .sl tbody tr:hover{background:rgba(77,178,255,.05)}
+  .sl td.ic{width:2.75rem}.sl td.ic img{width:2rem;height:2rem;border-radius:0.3125rem;display:block}
+  .sl td.nm a{color:var(--arcane-hi);font-weight:600;white-space:nowrap}
+  .sl .school{font-family:var(--mono);font-size:.72rem;padding:0.125rem 0.5625rem;border-radius:0.375rem;border:1px solid var(--line-2);background:rgba(139,108,240,.10);color:#c9bcff;white-space:nowrap}
+  .sl td.tg{color:var(--muted);white-space:nowrap}
+  .sl .type{font-family:var(--mono);font-size:.7rem;font-weight:700;padding:0.125rem 0.5625rem;border-radius:0.375rem;white-space:nowrap}
+  .sl .type.buff{color:#0b0f16;background:var(--green)}
+  .sl .type.dot{color:#0b0f16;background:var(--ember)}
+  .sl .type.debuff{color:#0b0f16;background:var(--violet)}
+  .sl .type.instant{color:#0b0f16;background:var(--arcane-hi)}
+  .sl td.fx{color:var(--muted);font-size:.84rem;line-height:1.5;min-width:17.5rem}
+  .sl td.fx .sn{color:var(--gold-2)}.sl td.fx a{color:var(--arcane-hi)}
+</style>
+
+<div class="sl" id="top">
+  <div class="eyebrow">PTDex // spell.listing</div>
+  <h1>{{ game_class }} Spells</h1>
+
+  <div class="lnav">
+    {% for level in data|sort %}<a href="#level_{{ level }}">{{ level }}</a>{% endfor %}
+  </div>
+
+  {% for level in data|sort %}
+  <div class="lvl" id="level_{{ level }}">
+    <div class="lvlh"><span class="lb">Level</span><span class="n">{{ level }}</span><a class="top" href="#top">&uarr; Top</a></div>
+    <div class="tw">
+      <table>
+        <thead><tr><th></th><th>Spell</th><th>School</th><th>Target</th><th>Type</th><th>Effect</th></tr></thead>
+        <tbody>
+        {% for entry in data[level]|sort(attribute="spell_name") %}
+          {% set typ = 'Instant' if entry.instant else ('Buff' if entry.beneficial else ('DoT' if entry.dot else 'Debuff')) %}
+          <tr>
+            <td class="ic"><img src="/static/spell_icons/{{ entry.icon }}.png" onerror="this.style.visibility='hidden'"></td>
+            <td class="nm"><a href="{{ url_for('spells.spell_detail', spell_id=entry.spell_id) }}">{{ entry.spell_name }}</a></td>
+            <td>{% if entry.skill %}<span class="school">{{ entry.skill }}</span>{% endif %}</td>
+            <td class="tg">{{ entry.target }}</td>
+            <td><span class="type {{ typ|lower }}">{{ typ }}</span></td>
+            <td class="fx">
+              {% for sub in entry['slots'] %}{% if entry['slots'][sub]['desc'] is not none %}
+              <div><span class="sn">{{ sub.replace('slot_', 'slot ') }}:</span> {{ entry['slots'][sub]['desc']|safe }}</div>
+              {% endif %}{% endfor %}
+            </td>
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% endblock %}

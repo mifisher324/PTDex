@@ -1,0 +1,121 @@
+{% extends "layout.html" %}
+{% block title %}PTDex :: Search by Stats{% endblock %}
+{% block body %}
+<style>
+  .ss-form{display:flex;flex-direction:column;gap:1rem}
+  .ss-row{display:flex;flex-wrap:wrap;gap:0.75rem;align-items:flex-end}
+  .ss-field{display:flex;flex-direction:column;gap:0.3125rem}
+  .ss-field label{font-family:var(--w-mono);font-size:.68rem;letter-spacing:.1em;text-transform:uppercase;color:var(--w-muted)}
+  .ss-form select,.ss-form input[type=number]{
+    background:var(--w-cell);border:1px solid var(--w-line2);border-radius:0.5rem;color:var(--w-text);
+    padding:0.5625rem 0.6875rem;font-size:.9rem;font-family:inherit;min-width:9.375rem}
+  .ss-form select:focus,.ss-form input:focus{outline:none;border-color:var(--w-arc);box-shadow:0 0 0 3px rgba(77,178,255,.15)}
+  .ss-stat-rows{display:flex;flex-direction:column;gap:0.625rem}
+  .ss-stat{display:flex;gap:0.625rem;align-items:center;background:rgba(77,178,255,.04);
+    border:1px solid var(--w-line);border-radius:0.625rem;padding:0.625rem 0.75rem}
+  .ss-stat select{flex:1;min-width:0}
+  .ss-stat input[type=number]{width:6.875rem;min-width:0}
+  .ss-stat .rm{background:none;border:1px solid var(--w-line2);color:var(--w-muted);border-radius:0.4375rem;
+    width:2.125rem;height:2.125rem;cursor:pointer;flex:none;font-size:1.1rem;line-height:1}
+  .ss-stat .rm:hover{color:var(--w-ember);border-color:var(--w-ember)}
+  .ss-min{font-family:var(--w-mono);font-size:.7rem;color:var(--w-muted);white-space:nowrap}
+  .ss-btns{display:flex;gap:0.75rem;flex-wrap:wrap;margin-top:0.25rem}
+  .ss-add{background:none;border:1px dashed var(--w-line2);color:var(--w-arc-hi);border-radius:0.5rem;
+    padding:0.5625rem 1rem;cursor:pointer;font-size:.85rem;font-family:var(--w-mono)}
+  .ss-add:hover{border-color:var(--w-arc);background:rgba(77,178,255,.06)}
+  .ss-go{background:linear-gradient(180deg,var(--w-gold),var(--w-gold2));color:#1a1206;border:0;
+    border-radius:0.5rem;padding:0.6875rem 1.875rem;font-weight:700;cursor:pointer;font-size:.95rem;letter-spacing:.02em}
+  .ss-go:hover{filter:brightness(1.06)}
+  .ss-hint{color:var(--w-muted);font-size:.86rem;line-height:1.55;margin:0 0 0.25rem}
+</style>
+<div class="wp">
+  <div class="wp-eyebrow">PTDex // items.search-by-stats</div>
+  <h1>Search by Stats</h1>
+  <p class="ss-hint">Find gear by what it <em>does</em>, not what it's called. Pick a slot, then add the stats you
+    want &mdash; every result will have <strong>at least</strong> the minimum you set for <strong>all</strong> the stats listed.
+    Example: slot <em>Feet</em> + <em>Heroic STR&nbsp;&ge;&nbsp;1</em> + <em>Heroic DEX&nbsp;&ge;&nbsp;1</em>.</p>
+
+  <form class="ss-form" method="POST" action="{{ url_for('item_search') }}">
+    {# required backend fields kept at defaults #}
+    <input type="hidden" name="g_class_2" value="None">
+    <input type="hidden" name="g_class_3" value="None">
+    <input type="hidden" name="i_type" value="None">
+    <input type="hidden" name="spell_type" value="">
+    <input type="hidden" name="focus_type" value="None">
+    <input type="hidden" name="skillmodtype" value="None">
+    <input type="hidden" name="proc_type" value="None">
+    {# show only the stat columns we searched, so headers are sortable #}
+    <input type="hidden" name="show_full_detail" value="on">
+    <input type="hidden" name="reduce_restrict" value="on">
+
+    <div class="wp-panel"><div class="wp-pb">
+      <div class="ss-row">
+        <div class="ss-field">
+          <label>Slot</label>
+          <select name="g_slot">
+            <option value="None">-- Any Slot --</option>
+            {% for s in slots %}<option value="{{ s }}">{{ s }}</option>{% endfor %}
+          </select>
+        </div>
+        <div class="ss-field">
+          <label>Class (optional)</label>
+          <select name="g_class_1">
+            <option value="None">-- Any Class --</option>
+            {% for c in classes %}<option value="{{ c }}">{{ c }}</option>{% endfor %}
+          </select>
+        </div>
+        <div class="ss-field">
+          <label>Item Type</label>
+          <select name="aug_filter">
+            <option value="exclude">Equipment (no augments)</option>
+            <option value="only">Augments only</option>
+            <option value="all">Everything</option>
+          </select>
+        </div>
+      </div>
+    </div></div>
+
+    <div class="wp-panel">
+      <h2>Required Stats</h2>
+      <div class="wp-pb">
+        <div class="ss-stat-rows" id="statRows"></div>
+        <div class="ss-btns">
+          <button type="button" class="ss-add" id="addStat">+ Add another stat</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="ss-btns">
+      <button type="submit" class="ss-go">Search Items</button>
+    </div>
+  </form>
+</div>
+
+<script>
+(function(){
+  var STATS = {{ stat_options|tojson }};
+  var rows = document.getElementById('statRows');
+  var idx = 0;
+  function optionsHTML(){
+    return '<option value="none">-- Choose a stat --</option>' +
+      STATS.map(function(s){ return '<option value="'+s[0]+'">'+s[1]+'</option>'; }).join('');
+  }
+  function addRow(){
+    idx++;
+    var div = document.createElement('div');
+    div.className = 'ss-stat';
+    div.innerHTML =
+      '<select name="stat_'+idx+'">'+optionsHTML()+'</select>' +
+      '<span class="ss-min">min &ge;</span>' +
+      '<input type="number" name="stat_val_'+idx+'" value="1" step="1">' +
+      '<button type="button" class="rm" title="Remove">&times;</button>';
+    div.querySelector('.rm').addEventListener('click', function(){
+      if (rows.children.length > 1) div.remove();
+    });
+    rows.appendChild(div);
+  }
+  document.getElementById('addStat').addEventListener('click', addRow);
+  addRow(); // start with one
+})();
+</script>
+{% endblock %}

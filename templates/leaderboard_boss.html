@@ -1,0 +1,398 @@
+{% extends "layout.html" %}
+{% from 'leaderboard_macros.html' import parse_badge, member_list, tier_note %}
+{% block title %}PTDex :: {{ data.boss.name }} :: {{ data.group_label }}{% endblock %}
+{% block body %}
+{#
+  BOSS RANKINGS -- the page behind a boss header on the race board.
+
+  Top three of every RANKED board get a plaque; everyone else stays in the table.
+  Recent Valid Kills deliberately gets NO plaques: it is chronological, not
+  ranked, so a podium there would be claiming an order the data does not have.
+#}
+<style>
+  .lbboss{--void:#05080e;--panel:#0d1420;--panel2:#111b2b;--cell:#0c1420;
+    --line:#1a2637;--line2:#25384f;--arc:#4db2ff;--arc-hi:#8fd0ff;--arc-dp:#1d4a75;
+    --ember:#ff8a4a;--ember-hi:#ffc08e;--gold:#e5cc80;--green:#5fe0a3;
+    --silver:#d7e0ea;--bronze:#c8873f;
+    --ctext:#dce7f5;--muted:#7f92a9;--dim:#55677d;
+    --lserif:Georgia,"Iowan Old Style","Times New Roman",serif;
+    --lmono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+    position:relative;z-index:1;max-width:74rem;margin:1.4rem auto 4rem;
+    padding:0 1.15rem;color:var(--ctext)}
+
+  .lbb-sky{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden}
+  .lbb-sky .aur{position:absolute;inset:-20%;filter:blur(70px);opacity:.26}
+  .lbb-sky .aur i{position:absolute;border-radius:50%;mix-blend-mode:screen;
+    animation:lbbAu 26s ease-in-out infinite}
+  .lbb-sky .a1{width:460px;height:460px;left:-4%;top:-12%;
+    background:radial-gradient(circle,#1f6dd0,transparent 66%)}
+  .lbb-sky .a2{width:500px;height:500px;right:-8%;top:-18%;
+    background:radial-gradient(circle,var(--acc,#b3541e),transparent 66%);animation-delay:-9s}
+  @keyframes lbbAu{0%,100%{transform:translate(0,0) scale(1)}
+    50%{transform:translate(26px,-20px) scale(1.08)}}
+  .lbb-sky canvas{position:absolute;inset:-50px;opacity:.45;
+    animation:lbbDrift 50s ease-in-out infinite}
+  @keyframes lbbDrift{0%,100%{transform:translate(0,0)}50%{transform:translate(24px,-16px)}}
+
+  .lbboss .back{display:inline-block;margin-bottom:.85rem;color:var(--muted);
+    font-family:var(--lmono);font-size:.66rem;letter-spacing:.14em;text-transform:uppercase;
+    text-decoration:none;border-bottom:1px solid transparent}
+  .lbboss .back:hover{color:var(--arc-hi);border-color:currentColor}
+
+  /* ---- hero ---- */
+  .lbboss .hero{position:relative;border:1px solid var(--line2);border-radius:1.1rem;
+    overflow:hidden;background:linear-gradient(180deg,var(--panel),#080d16);
+    box-shadow:0 30px 70px rgba(0,0,0,.6);margin-bottom:1.35rem}
+  .lbboss .hero::before{content:"";position:absolute;inset:0 auto 0 0;width:3px;
+    background:var(--acc,var(--arc))}
+  .lbboss .hero .in{position:relative;padding:1.45rem 1.5rem 1.3rem;
+    display:flex;gap:1.1rem;align-items:center;flex-wrap:wrap}
+  .lbboss .bicon{width:3.1rem;height:3.1rem;flex:none;border-radius:.7rem;display:grid;
+    place-items:center;font-size:1.5rem;background:var(--cell);border:1px solid var(--line2);
+    box-shadow:0 0 22px -6px var(--acc,var(--arc))}
+  .lbboss h1{font-family:var(--lserif);font-size:clamp(1.7rem,1.35rem+1.6vw,2.5rem);
+    margin:0;font-weight:700;letter-spacing:-.015em;color:#fff}
+  .lbboss .htier{margin-top:.4rem;display:flex;gap:.55rem;align-items:center;flex-wrap:wrap}
+  .lbboss .gaunt{font-family:var(--lmono);font-size:.56rem;letter-spacing:.13em;
+    text-transform:uppercase;font-weight:700;color:var(--gold);
+    border:1px solid var(--gold);border-radius:.3rem;padding:.16rem .5rem}
+
+  /* ---- size selector ---- */
+  .lbboss .sizes{display:flex;gap:.35rem;margin-left:auto;flex-wrap:wrap}
+  .lbboss .sizes a{font-family:var(--lmono);font-size:.68rem;letter-spacing:.13em;
+    text-transform:uppercase;font-weight:700;color:var(--muted);text-decoration:none;
+    padding:.45rem .95rem;border-radius:.45rem;border:1px solid var(--line2);
+    background:rgba(255,255,255,.02);transition:all .15s}
+  .lbboss .sizes a:hover{color:var(--arc-hi);border-color:var(--arc-dp)}
+  .lbboss .sizes a.on{color:#0a0f18;background:var(--acc,var(--arc));
+    border-color:var(--acc,var(--arc))}
+
+  .lbboss .legend{display:flex;gap:.85rem;flex-wrap:wrap;margin:0 0 1.35rem;
+    padding:.6rem .85rem;border:1px solid var(--line);border-radius:.55rem;
+    background:rgba(255,255,255,.012);font-family:var(--lmono);font-size:.63rem;
+    color:var(--dim);align-items:center}
+  .lbboss .legend b{font-weight:700}
+
+  /* ---- section ---- */
+  .lbboss section{margin-bottom:1.9rem}
+  .lbboss h2{font-family:var(--lserif);font-size:1.22rem;margin:0 0 .9rem;font-weight:700;
+    color:#fff;display:flex;align-items:baseline;gap:.7rem}
+  .lbboss h2 span{font-family:var(--lmono);font-size:.6rem;letter-spacing:.14em;
+    text-transform:uppercase;color:var(--dim);font-weight:400}
+
+  /* ---- THE PLAQUES ---- */
+  .lbboss .podium{display:grid;grid-template-columns:repeat(3,1fr);gap:.8rem;
+    margin-bottom:.9rem}
+  .lbboss .plq{position:relative;display:block;text-decoration:none;color:inherit;
+    border-radius:.85rem;padding:1.05rem 1.1rem 1rem;
+    background:linear-gradient(160deg,#1a2130,#0d131c);border:1px solid var(--line2);
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.055),inset 0 -2px 6px rgba(0,0,0,.4),
+               0 4px 16px rgba(0,0,0,.35);
+    transition:transform .16s,box-shadow .16s,border-color .16s}
+  .lbboss .plq:hover{transform:translateY(-2px);border-color:var(--arc-dp);
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.07),0 10px 26px rgba(0,0,0,.5)}
+  .lbboss .plq.r1{border-color:rgba(229,204,128,.45);
+    background:linear-gradient(160deg,#241f16,#0f1219)}
+  .lbboss .plq.r1:hover{border-color:var(--gold)}
+  .lbboss .plq .medal{position:absolute;top:-.6rem;left:1.05rem;width:1.75rem;height:1.75rem;
+    border-radius:50%;display:grid;place-items:center;font-family:var(--lmono);
+    font-size:.7rem;font-weight:700;color:#0a0f18;background:var(--line2);
+    border:2px solid #0d1420}
+  .lbboss .plq.r1 .medal{background:linear-gradient(145deg,#fff2cd,var(--gold));
+    box-shadow:0 0 14px rgba(229,204,128,.35)}
+  .lbboss .plq.r2 .medal{background:linear-gradient(145deg,#f2f7fc,var(--silver))}
+  .lbboss .plq.r3 .medal{background:linear-gradient(145deg,#e8b075,var(--bronze))}
+  .lbboss .plq .cap{font-family:var(--lmono);font-size:.55rem;letter-spacing:.16em;
+    text-transform:uppercase;color:var(--dim);margin:.5rem 0 .3rem}
+  .lbboss .plq .who{font-family:var(--lserif);font-size:1.12rem;font-weight:700;
+    line-height:1.25;color:var(--arc-hi);margin-bottom:.55rem;
+    overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+  /* struck-metal name for the record holder -- the one flourish on the page */
+  .lbboss .plq.r1 .who{background:linear-gradient(175deg,#fff6e2 8%,var(--gold) 46%,#a07a32 100%);
+    -webkit-background-clip:text;background-clip:text;color:transparent;
+    text-shadow:0 1px 0 rgba(0,0,0,.45)}
+  .lbboss .plq .big{font-family:var(--lmono);font-size:1.5rem;font-weight:700;
+    font-variant-numeric:tabular-nums;line-height:1;color:var(--green)}
+  .lbboss .plq.dps .big{color:var(--gold)}
+  .lbboss .plq .sub{display:flex;gap:.7rem;flex-wrap:wrap;align-items:baseline;
+    margin-top:.5rem;font-family:var(--lmono);font-size:.63rem;color:var(--dim)}
+  .lbboss .plq .sub b{color:var(--muted);font-weight:600}
+
+  /* ---- table for rank 4 onward ---- */
+  .lbboss .tbl{border:1px solid var(--line);border-radius:.75rem;overflow:hidden;
+    background:var(--panel)}
+  .lbboss .scroll{overflow-x:auto}
+  .lbboss table{width:100%;border-collapse:collapse;font-size:.87rem}
+  .lbboss thead th{font-family:var(--lmono);font-size:.58rem;letter-spacing:.13em;
+    text-transform:uppercase;color:var(--dim);font-weight:700;text-align:left;
+    padding:.65rem .85rem;background:var(--panel2);border-bottom:1px solid var(--line);
+    white-space:nowrap}
+  .lbboss tbody td{padding:.55rem .85rem;border-bottom:1px solid rgba(255,255,255,.035)}
+  .lbboss tbody tr:last-child td{border-bottom:0}
+  .lbboss tbody tr:hover{background:rgba(143,208,255,.045)}
+  .lbboss .rk{font-family:var(--lmono);color:var(--dim);width:2.6rem;
+    font-variant-numeric:tabular-nums}
+  .lbboss .num{font-family:var(--lmono);font-variant-numeric:tabular-nums;text-align:right}
+  .lbboss td a{color:var(--arc-hi);text-decoration:none}
+  .lbboss td a:hover{text-decoration:underline}
+  .lbboss .lb-member{color:var(--arc-hi);text-decoration:none}
+  .lbboss .lb-member:hover{text-decoration:underline}
+  .lbboss .lb-class{color:var(--dim);font-size:.78rem;margin-left:.15rem}
+  .lbboss .lb-anon{color:var(--dim)}
+  .lbboss .lb-muted{color:var(--dim)}
+  .lbboss .lb-parse{font-weight:700;font-variant-numeric:tabular-nums;font-family:var(--lmono)}
+  .lbboss .lb-tier{font-family:var(--lmono);font-size:.58rem;letter-spacing:.12em;
+    text-transform:uppercase;font-weight:700;padding:.16rem .5rem;border-radius:.3rem}
+  .lbboss .lb-tier-official{background:rgba(95,224,163,.12);color:var(--green)}
+  .lbboss .lb-tier-provisional{background:rgba(229,204,128,.12);color:var(--gold)}
+  .lbboss .lb-tier-none{background:rgba(255,255,255,.05);color:var(--muted)}
+  .lbboss .none{padding:1.4rem;text-align:center;color:var(--dim);font-family:var(--lmono);
+    font-size:.72rem}
+
+  @media(max-width:62rem){.lbboss .podium{grid-template-columns:1fr}}
+  @media(prefers-reduced-motion:reduce){
+    .lbb-sky .aur i,.lbb-sky canvas{animation:none}
+    .lbboss .plq:hover{transform:none}
+  }
+</style>
+
+{% set BOSS_ACC = {'kerafyrm':'#ff8a4a','seru':'#a78bfa','plane_of_time':'#e5cc80',
+                   'zebuxoruk':'#4db2ff','quarm':'#5fe0a3'} %}
+{% set BOSS_ICON = {'kerafyrm':'&#128009;','seru':'&#9784;','plane_of_time':'&#8987;',
+                    'zebuxoruk':'&#9889;','quarm':'&#10022;'} %}
+{% set acc = BOSS_ACC.get(data.boss.boss_key, '#4db2ff') %}
+{% set MEDAL = ['r1','r2','r3'] %}
+
+{# One plaque. `metric` is the headline value, `label` says what it measures. #}
+{% macro plaque(r, i, metric, label, who, kind='speed', extra=None) %}
+<a class="plq {{ MEDAL[i] }} {{ kind }}"
+   href="{{ url_for('leaderboard.encounter_detail', encounter_id=r.encounter_id) }}">
+  <span class="medal">{{ i + 1 }}</span>
+  <div class="cap">{{ label }}</div>
+  <div class="who">{{ who }}</div>
+  <div class="big">{{ metric }}</div>
+  <div class="sub">
+    {% if extra %}<span>{{ extra|safe }}</span>{% endif %}
+    {% if r.end_time %}<span>{{ (r.end_time or '')[:10] }}</span>{% endif %}
+  </div>
+</a>
+{% endmacro %}
+
+<div class="lbb-sky" aria-hidden="true" style="--acc:{{ acc }}">
+  <div class="aur"><i class="a1"></i><i class="a2"></i></div>
+  <canvas id="lbb-stars"></canvas>
+</div>
+
+<div class="lbboss" style="--acc:{{ acc }}">
+  <a class="back" href="{{ url_for('leaderboard.leaderboard_home', season=season.key if season else None) }}">&larr; Race Board</a>
+  {% include 'leaderboard_season.html' %}
+
+  <div class="hero">
+    <div class="in">
+      <div class="bicon">{{ BOSS_ICON.get(data.boss.boss_key, '&#10022;')|safe }}</div>
+      <div>
+        <h1>{{ data.boss.name }}</h1>
+        {% if data.boss.kind == 'mission' %}<div class="htier">Solo only &middot; everyone plays the same monster form, so gear does not count</div>{% endif %}
+        <div class="htier">
+          {% if data.boss.is_gauntlet %}<span class="gaunt">Full Gauntlet</span>{% endif %}
+          {{ tier_note(data.tier, data.comparison_count) }}
+        </div>
+      </div>
+      {% if data.boss.kind != 'mission' %}
+      <div class="sizes">
+        {% for gs in group_sizes %}
+        <a class="{{ 'on' if gs == data.group_size }}"
+           href="{{ url_for('leaderboard.boss_rankings', boss_key=data.boss.boss_key, group=gs, season=season.key if season else None) }}">
+          {{ {1:'Solo', 2:'Duo', 3:'Trio'}[gs] }}</a>
+        {% endfor %}
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="legend">
+    {% for b in data.parse_bands %}
+    <span><b style="color:{{ b.color }}">{{ b.label }}</b>
+      {{ b.min|int }}{% if b.max != b.min %}&ndash;{{ b.max|int }}{% endif %}</span>
+    {% endfor %}
+  </div>
+
+  {# ============ 1. SPEED ============ #}
+  {% set speed = data.sections.speed %}
+  <section>
+    <h2>Speed Rankings <span>Fastest clear wins</span></h2>
+    {% if speed %}
+    <div class="podium">
+      {% for r in speed[:3] %}
+        {{ plaque(r, loop.index0, r.duration_display,
+                  'Fastest' if loop.first else ('2nd fastest' if loop.index == 2 else '3rd fastest'),
+                  r.members|map(attribute='character_name')|join(' + '),
+                  'speed',
+                  '<b>' ~ '{:,}'.format(r.active_dps or 0) ~ '</b> dps') }}
+      {% endfor %}
+    </div>
+    {% endif %}
+    {% if speed|length > 3 %}
+    <div class="tbl"><div class="scroll">
+      <table>
+        <thead><tr>
+          <th class="rk">#</th><th>Players</th><th>Classes</th><th>Time</th>
+          <th class="num">DPS</th><th>Speed Parse</th>
+          {% if data.group_size != 1 %}<th class="num">Deaths</th>{% endif %}<th>Date</th>
+        </tr></thead>
+        <tbody>
+        {% for r in speed[3:] %}
+        <tr>
+          <td class="rk">{{ r.rank }}</td>
+          <td>{{ member_list(r.members) }}</td>
+          <td class="lb-muted">{% for m in r.members %}{{ m.class_name }}{% if not loop.last %}, {% endif %}{% endfor %}</td>
+          <td><a href="{{ url_for('leaderboard.encounter_detail', encounter_id=r.encounter_id) }}">{{ r.duration_display }}</a></td>
+          <td class="num">{{ '{:,}'.format(r.active_dps or 0) }}</td>
+          <td>{{ parse_badge(r.speed_parse) }}</td>
+          {% if data.group_size != 1 %}<td class="num">{{ r.raw.deaths if r.raw.deaths is not none else '—' }}</td>{% endif %}
+          <td class="lb-muted">{{ (r.end_time or '')[:10] }}</td>
+        </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div></div>
+    {% elif not speed %}
+    <div class="tbl"><div class="none">No valid clears yet.</div></div>
+    {% endif %}
+  </section>
+
+  {# ============ 2. INDIVIDUAL DPS (Duo/Trio only) ============ #}
+  {% if data.group_size != 1 and data.sections.individual_dps %}
+  {% set ind = data.sections.individual_dps %}
+  <section>
+    <h2>Individual DPS <span>Best single performer</span></h2>
+    <div class="podium">
+      {% for r in ind[:3] %}
+        {{ plaque(r, loop.index0, '{:,}'.format(r.active_dps or 0),
+                  'Top damage' if loop.first else ('2nd' if loop.index == 2 else '3rd'),
+                  r.character_name, 'dps',
+                  '<b>' ~ (r.class_name or '') ~ '</b>') }}
+      {% endfor %}
+    </div>
+    {% if ind|length > 3 %}
+    <div class="tbl"><div class="scroll">
+      <table>
+        <thead><tr>
+          <th class="rk">#</th><th>Character</th><th>Group</th>
+          <th class="num">Boss Damage</th><th class="num">Active DPS</th>
+          <th>DPS Parse</th><th>Date</th>
+        </tr></thead>
+        <tbody>
+        {% for r in ind[3:] %}
+        <tr>
+          <td class="rk">{{ r.rank }}</td>
+          <td><a class="lb-member" href="{{ url_for('leaderboard.character_profile', character_id=r.raw.character_id) }}">{{ r.character_name }}</a><span class="lb-class">({{ r.class_name }})</span></td>
+          <td>{{ member_list(r.members) }}</td>
+          <td class="num">{{ '{:,}'.format(r.boss_damage or 0) }}</td>
+          <td class="num">{{ '{:,}'.format(r.active_dps or 0) }}</td>
+          <td>{{ parse_badge(r.dps_parse) }}</td>
+          <td class="lb-muted">{{ (r.end_time or '')[:10] }}</td>
+        </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div></div>
+    {% endif %}
+  </section>
+  {% endif %}
+
+  {# ============ 3. GROUP DPS (gauntlet only) ============ #}
+  {% if data.boss.is_gauntlet %}
+  {% set grp = data.sections.group_dps %}
+  <section>
+    <h2>Group DPS <span>Combined output across the gauntlet</span></h2>
+    {% if grp %}
+    <div class="podium">
+      {% for r in grp[:3] %}
+        {{ plaque(r, loop.index0, '{:,}'.format(r.combined_dps or 0),
+                  'Highest combined' if loop.first else ('2nd' if loop.index == 2 else '3rd'),
+                  r.members|map(attribute='character_name')|join(' + '), 'dps',
+                  '<b>' ~ r.duration_display ~ '</b>') }}
+      {% endfor %}
+    </div>
+    {% endif %}
+    {% if grp|length > 3 %}
+    <div class="tbl"><div class="scroll">
+      <table>
+        <thead><tr>
+          <th class="rk">#</th><th>Group</th><th class="num">Combined Damage</th>
+          <th class="num">Combined DPS</th><th>Group Parse</th><th>Time</th><th>Date</th>
+        </tr></thead>
+        <tbody>
+        {% for r in grp[3:] %}
+        <tr>
+          <td class="rk">{{ r.rank }}</td>
+          <td>{{ member_list(r.members) }}</td>
+          <td class="num">{{ '{:,}'.format(r.combined_damage or 0) }}</td>
+          <td class="num">{{ '{:,}'.format(r.combined_dps or 0) }}</td>
+          <td>{{ parse_badge(r.group_parse) }}</td>
+          <td><a href="{{ url_for('leaderboard.encounter_detail', encounter_id=r.encounter_id) }}">{{ r.duration_display }}</a></td>
+          <td class="lb-muted">{{ (r.end_time or '')[:10] }}</td>
+        </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div></div>
+    {% elif not grp %}
+    <div class="tbl"><div class="none">No valid clears yet.</div></div>
+    {% endif %}
+  </section>
+  {% endif %}
+
+  {# ============ 4. RECENT -- chronological, so NO podium ============ #}
+  <section>
+    <h2>Recent Valid Kills <span>Newest first &mdash; not a ranking</span></h2>
+    <div class="tbl"><div class="scroll">
+      <table>
+        <thead><tr>
+          <th class="rk">#</th><th>When</th><th>Players</th><th>Size</th>
+          <th>Time</th><th class="num">DPS</th><th>Speed Parse</th><th>Group Parse</th>
+        </tr></thead>
+        <tbody>
+        {% for r in data.sections.recent %}
+        <tr>
+          <td class="rk">{{ r.rank }}</td>
+          <td class="lb-muted"><a href="{{ url_for('leaderboard.encounter_detail', encounter_id=r.encounter_id) }}">{{ (r.end_time or '')[:16]|replace('T', ' ') }}</a></td>
+          <td>{{ member_list(r.members) }}</td>
+          <td class="lb-muted">{{ {1:'Solo', 2:'Duo', 3:'Trio'}.get(r.group_size, r.group_size) }}</td>
+          <td>{{ r.duration_display }}</td>
+          <td class="num">{{ '{:,}'.format(r.active_dps or 0) }}</td>
+          <td>{{ parse_badge(r.speed_parse) }}</td>
+          <td>{{ parse_badge(r.group_parse) }}</td>
+        </tr>
+        {% else %}
+        <tr><td colspan="8" class="none">No valid clears yet.</td></tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div></div>
+  </section>
+
+  {% include 'parse_note.html' %}
+</div>
+
+<script>
+(function(){
+  var c=document.getElementById('lbb-stars'); if(!c)return;
+  var PAL=['#8fd0ff','#ffffff','#cfe6ff','#ff8a4a','#e5cc80'];
+  function paint(){
+    var x=c.getContext('2d'),W=c.width=innerWidth+100,H=c.height=innerHeight+100;
+    x.clearRect(0,0,W,H);
+    var n=Math.round(W*H/3400);
+    for(var i=0;i<n;i++){
+      x.globalAlpha=.2+Math.random()*.5;
+      x.fillStyle=PAL[Math.floor(Math.random()*PAL.length)];
+      x.beginPath();x.arc(Math.random()*W,Math.random()*H,.3+Math.random()*1.1,0,6.283);x.fill();
+    }
+    x.globalAlpha=1;
+  }
+  paint();
+  var t;addEventListener('resize',function(){clearTimeout(t);t=setTimeout(paint,180);});
+})();
+</script>
+{% endblock %}

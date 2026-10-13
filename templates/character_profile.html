@@ -1,0 +1,479 @@
+{% extends "layout.html" %}
+{% block title %}PTDex :: {{ profile.name }}{% if profile.last_name %} {{ profile.last_name }}{% endif %}{% endblock %}
+{% block body %}
+<style>
+  .cprofile{--ink:#080b11;--ink-2:#0b101a;--panel:#0f1622;--panel-2:#132033;--cell:#0f1826;
+    --line:#1b2838;--line-2:#284058;--arcane:#4db2ff;--arcane-hi:#8fd0ff;--ember:#ff7a45;--gold:#ffb289;
+    --green:#5fe0a3;--good:#49d0a0;--ctext:#d9e5f3;--muted:#7d8fa6;
+    --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+    max-width:62.5rem;margin:1.375rem auto 3.75rem;padding:0 1rem;color:var(--ctext)}
+  .cprofile .eyebrow{font-family:var(--mono);font-size:.7rem;letter-spacing:.24em;text-transform:uppercase;color:var(--arcane);opacity:.9;margin-bottom:0.75rem}
+  .cprofile .window{background:linear-gradient(180deg,var(--panel),var(--ink-2));border:1px solid var(--line-2);
+    border-radius:0.875rem;box-shadow:0 30px 70px rgba(0,0,0,.5);overflow:hidden}
+  .cprofile .body{display:grid;grid-template-columns:14.875rem 1fr;gap:0}
+  @media(max-width:50em){.cprofile .body{grid-template-columns:1fr}}
+  .cprofile .stats{padding:0.9375rem 0.9375rem;border-right:1px solid var(--line-2);background:rgba(0,0,0,.16)}
+  @media(max-width:50em){.cprofile .stats{border-right:0;border-bottom:1px solid var(--line-2)}}
+  .cprofile .lvl{font-family:var(--mono);font-size:.82rem;color:var(--muted)} .cprofile .lvl b{color:var(--ctext)}
+  .cprofile .trio{display:flex;flex-wrap:wrap;gap:0.375rem;margin:0.5625rem 0 0.25rem}
+  .cprofile .clschip{font-family:var(--mono);font-size:.82rem;font-weight:700;letter-spacing:.03em;
+    color:var(--gold);background:rgba(255,178,137,.07);border:1px solid rgba(255,178,137,.30);
+    padding:0.1875rem 0.6875rem;border-radius:0.375rem}
+  .cprofile .grp{margin:0.6875rem 0;border-top:1px solid var(--line);padding-top:0.5625rem}
+  .cprofile .row{display:flex;align-items:baseline;font-family:var(--mono);font-size:.82rem;padding:0.125rem 0}
+  .cprofile .row .k{color:var(--muted);width:3.5rem} .cprofile .row .v{color:var(--ctext);font-variant-numeric:tabular-nums}
+  .cprofile .row .full{color:var(--green)} .cprofile .row .bonus{margin-left:auto;color:var(--green);font-weight:600}
+  .cprofile .barlab{font-family:var(--mono);font-size:.66rem;color:var(--muted);letter-spacing:.08em;margin-bottom:0.3125rem}
+  .cprofile .barlab.gold{color:var(--gold)}
+  .cprofile .aabox{margin-top:0.5625rem;padding:0.5rem 0.6875rem;border:1px solid var(--line-2);border-radius:0.5rem;
+    background:rgba(123,108,240,.08);display:flex;justify-content:space-between;align-items:baseline}
+  .cprofile .aabox .k{font-family:var(--mono);font-size:.66rem;letter-spacing:.1em;text-transform:uppercase;color:#b79bff}
+  .cprofile .aabox .v{font-size:1.15rem;font-weight:800;color:#cdbcff;font-variant-numeric:tabular-nums}
+
+  .cprofile .equip{padding:1rem}
+  .cprofile .grid{display:grid;gap:0.75rem;grid-template-columns:repeat(4,1fr);
+    grid-template-areas:
+     "ear1 head face ear2" "chest doll doll neck" "arms doll doll back"
+     "waist doll doll shld" "wri1 doll doll wri2" "legs hands charm feet"
+     ". fin1 fin2 ." "prim seco rang ammo";}
+  @media(max-width:32.5em){.cprofile .grid{grid-template-columns:repeat(2,1fr);grid-template-areas:none}
+    .cprofile .doll{order:-1}}
+  .cprofile .slot{grid-area:var(--a);background:linear-gradient(180deg,var(--panel-2),var(--cell));
+    border:1px solid var(--line-2);border-radius:0.5625rem;padding:0.625rem 0.75rem 0.75rem;position:relative;min-height:6rem;
+    display:flex;flex-direction:column;overflow:hidden;transition:.13s;cursor:help}
+  .cprofile .slot::after{content:"";position:absolute;left:0;top:0;bottom:0;width:0.1875rem;
+    background:linear-gradient(180deg,var(--arcane),var(--good));opacity:.55}
+  .cprofile .slot:hover{border-color:var(--arcane);transform:translateY(-2px);box-shadow:0 8px 20px rgba(0,0,0,.45),0 0 0 1px rgba(77,178,255,.25)}
+  .cprofile .slot .pts{position:absolute;top:0.5625rem;right:0.6875rem;font-family:var(--mono);font-size:.7rem;font-weight:700;color:#fff}
+  .cprofile .slot .top{display:flex;gap:0.625rem;align-items:flex-start}
+  .cprofile .slot .ic{width:2.25rem;height:2.25rem;flex:none;border-radius:0.3125rem;image-rendering:auto}
+  .cprofile .slot .txt{flex:1;min-width:0}
+  .cprofile .slot .lab{font-family:var(--mono);font-size:.58rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);min-height:0.75rem;padding-right:2.125rem}
+  .cprofile .slot .lab .augn{color:var(--gold);margin-left:0.3125rem}
+  .cprofile .slot .itm{font-size:.72rem;font-weight:600;color:var(--ctext);line-height:1.25;margin:0.1875rem 0 0;
+    text-decoration:none;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+  .cprofile .slot .itm:hover{color:var(--arcane-hi)}
+  .cprofile .slot .meter{height:0.3125rem;margin-top:auto;border-radius:0.25rem;background:#0a1120;overflow:hidden;border:1px solid var(--line)}
+  .cprofile .slot .meter i{display:block;height:100%;background:linear-gradient(90deg,var(--arcane),var(--good));box-shadow:0 0 7px rgba(77,178,255,.5)}
+  .cprofile .slot.empty{cursor:default;opacity:.55;justify-content:center}
+  .cprofile .slot.empty .lab{margin-left:0;text-align:center}
+  .cprofile .slot.empty .emp{font-family:var(--mono);font-size:.62rem;color:var(--muted);text-align:center;margin-top:0.1875rem}
+
+  .cprofile .doll{grid-area:doll;border:1px solid var(--line-2);border-radius:0.75rem;position:relative;overflow:hidden;
+    background:radial-gradient(120% 80% at 50% 12%, rgba(77,178,255,.14), transparent 60%), var(--ink-2);
+    display:flex;flex-direction:column;align-items:center;justify-content:center;padding:0.875rem 0.75rem}
+  .cprofile .dollfx{position:absolute;inset:0;z-index:0;overflow:hidden}
+  .cprofile .dollfx::before{content:"";position:absolute;inset:-40%;
+    background:conic-gradient(from 0deg, rgba(77,178,255,0), rgba(77,178,255,.40), rgba(73,208,160,.30), rgba(255,178,137,.22), rgba(255,122,69,.34), rgba(77,178,255,0));
+    filter:blur(20px);animation:cpaurora 16s linear infinite}
+  .cprofile .dollfx::after{content:"";position:absolute;inset:0;
+    background:radial-gradient(40% 32% at 50% 46%, rgba(8,11,17,.80), transparent 72%),
+      radial-gradient(65% 45% at 50% 8%, rgba(143,208,255,.30), transparent 62%),
+      radial-gradient(70% 45% at 50% 100%, rgba(255,122,69,.24), transparent 62%)}
+  @keyframes cpaurora{to{transform:rotate(360deg)}}
+  .cprofile .dollname{position:relative;z-index:1;text-align:center;margin-bottom:0.375rem}
+  .cprofile .dollname .nm{font-size:1.5rem;font-weight:800;letter-spacing:.5px;background:linear-gradient(90deg,#fff,#9fd0ff);-webkit-background-clip:text;background-clip:text;color:transparent}
+  .cprofile .rpbadge{display:inline-block;font-family:var(--mono);font-size:.6rem;font-weight:700;letter-spacing:.1em;
+    color:#c9b6ff;border:1px solid #7a5bd6;background:rgba(123,108,240,.14);border-radius:.3rem;padding:.06rem .38rem;vertical-align:middle}
+  .cprofile .dollname small{display:block;color:var(--muted);font-family:var(--mono);font-size:.62rem;letter-spacing:.04em;margin-top:0.1875rem}
+  .cprofile .dolltrio{display:flex;gap:0.3125rem;justify-content:center;margin-top:0.4375rem;position:relative;z-index:1}
+  /* rank badges below the gear inventory: Triune seals (match the sheet's sigil).
+     The rank number sits in the medallion; ring tints per metric; top-3 turns to
+     metal with a crown at the top node. */
+  .cprofile .rankrow{display:flex;gap:1.25rem;justify-content:center;flex-wrap:wrap;margin:1.25rem 1rem 0.25rem}
+  .cprofile .rankcell{display:flex;flex-direction:column;align-items:center;gap:0.35rem;transition:.16s}
+  .cprofile .rankcell:hover{transform:translateY(-3px)}
+  .cprofile .rseal{width:6.4rem;height:6.4rem;filter:drop-shadow(0 0 9px rgba(77,178,255,.28))}
+  .cprofile .rseal .rnum{font-family:var(--serif,Georgia,serif);font-weight:800;fill:#fff;
+    font-variant-numeric:lining-nums tabular-nums;font-feature-settings:"lnum" 1,"tnum" 1}
+  .cprofile .rlab{font-family:var(--mono);font-size:.6rem;letter-spacing:.16em;text-transform:uppercase;font-weight:700}
+  .cprofile .rsub{font-family:var(--mono);font-size:.58rem;color:var(--muted);text-align:center}
+  .cprofile .gauge{position:relative;z-index:1;width:7.5rem;height:7.5rem;margin-top:0.375rem}
+  .cprofile .gauge .sigil{position:absolute;top:50%;left:50%;width:12.5rem;height:12.5rem;transform:translate(-50%,-50%);z-index:0;opacity:.6;pointer-events:none;filter:drop-shadow(0 0 6px rgba(77,178,255,.35))}
+  /* Rotate about the VIEWBOX centre, not each group's own bounding box.
+     transform-box:fill-box resolves transform-origin against the element's own
+     bbox, and .sig-in's bbox is NOT centred on (100,100): the top node's glow
+     (r 8.5 at y 38) pushes the box up to y 29.5 while the bottom is bounded by
+     the r 62 circle at y 162, so its centre sits at (100, 95.75). Rotating
+     about that made the inner ring ORBIT a 4.2px circle instead of spinning in
+     place -- 8.5px of visible drift. The outer group happens to be symmetric
+     and was unaffected, which is why only the inner ring wandered.
+     guild_portal.html and character_progression.html already do it this way. */
+  .cprofile .gauge .sigil .sig-out,
+  .cprofile .gauge .sigil .sig-in{transform-box:view-box;transform-origin:100px 100px}
+  .cprofile .gauge .sigil .sig-out{animation:cpspin 46s linear infinite}
+  .cprofile .gauge .sigil .sig-in{animation:cpspin 34s linear infinite reverse}
+  @keyframes cpspin{to{transform:rotate(360deg)}}
+  @media(prefers-reduced-motion:reduce){.cprofile .dollfx::before,.cprofile .sigil .sig-out,.cprofile .sigil .sig-in{animation:none}}
+  .cprofile .gauge .ring{position:relative;z-index:1;transform:rotate(-90deg)}
+  .cprofile .gauge .center{position:absolute;inset:0;display:grid;place-items:center;text-align:center;z-index:2}
+  .cprofile .gauge .num{font-size:2rem;font-weight:800;color:#fff;line-height:1;text-shadow:0 0 16px rgba(77,178,255,.5)}
+  .cprofile .gauge .of{font-family:var(--mono);font-size:.56rem;letter-spacing:.12em;color:var(--muted);margin-top:0.125rem}
+  .cprofile .tier{position:relative;z-index:1;margin-top:0.5625rem;font-family:var(--mono);font-size:.62rem;font-weight:700;letter-spacing:.06em;color:#0b0f16;background:linear-gradient(90deg,var(--gold),var(--arcane-hi));padding:0.125rem 0.75rem;border-radius:999px}
+  .cprofile .calc{margin:0 1rem 0.875rem;padding:0.5625rem 0.8125rem;border:1px dashed var(--line-2);border-radius:0.5rem;font-family:var(--mono);font-size:.72rem;color:var(--muted);line-height:1.55;text-align:center}
+  .cprofile .calc b{color:var(--arcane-hi)} .cprofile .calc .g{color:var(--gold)}
+  /* gear-tier explainer footer */
+  .cprofile .tierbox{margin:0 1rem 1rem;padding:0.6875rem 0.875rem;border:1px solid var(--line-2);border-radius:0.5rem;background:rgba(0,0,0,.15)}
+  .cprofile .tl-row{display:flex;align-items:center;gap:0.375rem;flex-wrap:wrap;justify-content:center}
+  .cprofile .tl-chip{font-family:var(--mono);font-size:.6rem;letter-spacing:.08em;padding:0.125rem 0.5625rem;border-radius:999px;
+    border:1px solid var(--line-2);color:var(--muted);white-space:nowrap}
+  .cprofile .tl-chip i{font-style:normal;opacity:.7;margin-left:0.1875rem}
+  .cprofile .tl-chip.done{color:#9fb8d8;border-color:#3a5678}
+  .cprofile .tl-chip.cur{color:#0b0f16;background:linear-gradient(90deg,var(--gold),var(--arcane-hi));border-color:transparent;font-weight:700}
+  .cprofile .tl-sep{color:var(--muted);font-size:.72rem}
+  .cprofile .tl-bar{height:0.375rem;border-radius:999px;background:#132033;margin:0.5625rem 0 0.4375rem;overflow:hidden}
+  .cprofile .tl-bar i{display:block;height:100%;border-radius:999px;background:linear-gradient(90deg,#4db2ff,#49d0a0)}
+  .cprofile .tl-note{font-family:var(--mono);font-size:.68rem;color:var(--muted);text-align:center;line-height:1.55}
+  .cprofile .tl-note b{color:#fff} .cprofile .tl-note .g{color:var(--gold)}
+  /* tooltip */
+  #cp-tip{position:fixed;z-index:3000;max-width:17.5rem;pointer-events:none;opacity:0;transition:opacity .1s;
+    background:linear-gradient(180deg,#0e1830,#0a1120);border:1px solid #4db2ff;border-radius:0.625rem;
+    box-shadow:0 16px 40px rgba(0,0,0,.6),0 0 0 1px rgba(77,178,255,.25);padding:0.6875rem 0.8125rem;
+    font-family:"Segoe UI",system-ui,sans-serif;color:#d9e5f3}
+  #cp-tip .tn{font-weight:700;color:#ffb289;font-size:.9rem;margin-bottom:0.125rem}
+  #cp-tip .ts{font-family:ui-monospace,Consolas,monospace;font-size:.66rem;color:#7d8fa6;margin-bottom:0.4375rem}
+  #cp-tip .line{display:flex;flex-wrap:wrap;gap:0.1875rem 0.625rem;margin:0.25rem 0}
+  #cp-tip .st{font-family:ui-monospace,Consolas,monospace;font-size:.72rem;color:#d9e5f3;white-space:nowrap}
+  #cp-tip .st b{color:#5fe0a3} #cp-tip .st.h b{color:#ffb289} #cp-tip .st.r b{color:#8fd0ff}
+  #cp-tip .sec{font-family:ui-monospace,Consolas,monospace;font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;color:#7d8fa6;margin:0.4375rem 0 0.125rem}
+  #cp-tip .eff{color:#ff7a45}
+  #cp-tip .gs{margin-top:0.5625rem;padding-top:0.5rem;border-top:1px solid #284058;font-family:ui-monospace,Consolas,monospace;font-size:.74rem;color:#fff}
+  #cp-tip .gs b{color:#ffb289}
+</style>
+
+<div class="cprofile">
+  <div class="eyebrow" style="display:flex;justify-content:space-between;align-items:center;gap:1rem">
+    <span>PTDex // player.card</span>
+    <span style="display:flex;gap:1.1rem;align-items:center">
+      {% if is_owner and private_features %}<a href="{{ url_for('characters.character_trader_history', char_id=profile.id) }}" style="color:var(--green,#5fe0a3);text-decoration:none">&#9878; Trader Ledger &rarr;</a>{% endif %}
+      <a href="{{ url_for('characters.character_progression', char_id=profile.id) }}" style="color:var(--gold);text-decoration:none">&#9873; PoP / Time Flags &rarr;</a>
+      <a href="{{ url_for('characters.character_compare', a=profile.id) }}" style="color:var(--arcane-hi);text-decoration:none">&#9878; Compare &rarr;</a>
+    </span>
+  </div>
+  <div class="window">
+    <div class="body">
+      <!-- LEFT: stat readout -->
+      <div class="stats">
+        <div class="lvl">Level: <b>{{ profile.level }}</b> &nbsp; {{ profile.race_name }}</div>
+        <div class="trio">
+          {% for c in profile.class_name.split('/') %}<span class="clschip">{{ c }}</span>{% endfor %}
+        </div>
+        <div class="aabox" style="margin-bottom:4px"><span class="k">AA Spent</span><span class="v">{{ '{:,}'.format(profile.aa_points_spent) }}</span></div>
+        <div class="grp" style="border-top:none;padding-top:6px">
+          <div class="row"><span class="k">HP</span><span class="v full">{{ '{:,}'.format(profile.stats.hp) }}</span></div>
+          <div class="row"><span class="k">MANA</span><span class="v full">{{ '{:,}'.format(profile.stats.mana) }}</span></div>
+          <div class="row"><span class="k">END</span><span class="v full">{{ '{:,}'.format(profile.stats.end) }}</span></div>
+        </div>
+        <div class="grp">
+          <div class="barlab">FROM GEAR (incl. augs)</div>
+          <div class="row"><span class="k">HP</span><span class="v">+{{ '{:,}'.format(profile.gear_hp) }}</span></div>
+          <div class="row"><span class="k">Mana</span><span class="v">+{{ '{:,}'.format(profile.gear_mana) }}</span></div>
+          <div class="row"><span class="k">End</span><span class="v">+{{ '{:,}'.format(profile.gear_end) }}</span></div>
+          <div class="row"><span class="k">Worn AC</span><span class="v">{{ '{:,}'.format(profile.worn_ac) }}</span></div>
+          <div class="row"><span class="k">Attack</span><span class="v">{{ '{:,}'.format(profile.attack) }}</span></div>
+          <div class="row"><span class="k">Haste</span><span class="v">{{ profile.haste }}%</span></div>
+        </div>
+        {% if profile.gear_attr %}
+        <div class="grp">
+          <div class="barlab" title="Base from the character record plus worn gear and augments. Buffs and AA bonuses are not included.">ATTRIBUTES (base + gear)</div>
+          {% for k in ['str','sta','agi','dex','wis','int','cha'] %}
+          <div class="row"><span class="k">{{ k|upper }}</span><span class="v">{{ profile.stats[k] + profile.gear_attr[k] }}</span><span class="bonus" style="font-size:.8rem">{{ profile.stats[k] }}+{{ profile.gear_attr[k] }}</span></div>
+          {% endfor %}
+        </div>
+        {% endif %}
+        <div class="grp">
+          <div class="barlab gold">HEROIC STATS</div>
+          {% for k in ['str','sta','agi','dex','wis','int','cha'] %}
+          <div class="row"><span class="k">{{ k|upper }}</span><span class="bonus" style="margin-left:0;font-size:.92rem">+{{ profile.heroic[k] }}</span></div>
+          {% endfor %}
+        </div>
+        <div class="grp">
+          <div class="barlab">RESISTS (heroic)</div>
+          {% for k,lab in [('mr','MAG'),('fr','FIRE'),('cr','COLD'),('pr','POIS'),('dr','DIS')] %}
+          <div class="row"><span class="k">{{ lab }}</span><span class="v">{{ profile.resists[k] }}</span><span class="bonus" style="font-size:.8rem">+{{ profile.heroic_resists[k] }}</span></div>
+          {% endfor %}
+        </div>
+      </div>
+
+      <!-- RIGHT: equipment paper-doll -->
+      <div class="equip">
+        <div class="grid">
+          <div class="doll">
+            <div class="dollfx"></div>
+            <div class="dollname"><span class="nm">{{ profile.name }}</span>{% if profile.is_rp %} <span class="rpbadge" title="Roleplaying">RP</span>{% endif %}
+              <small>Lvl {{ profile.level }} {{ profile.race_name }}{% if profile.guild_name %} &middot; &#9670; {{ profile.guild_name }}{% endif %}</small></div>
+            <div class="dolltrio">{% for c in profile.class_name.split('/') %}<span class="clschip">{{ c }}</span>{% endfor %}</div>
+            <div class="gauge">
+              {{ sigil|safe }}
+              <svg class="ring" width="120" height="120" viewBox="0 0 118 118">
+                <circle cx="59" cy="59" r="51" fill="none" stroke="#132033" stroke-width="10"/>
+                <circle id="cp-arc" cx="59" cy="59" r="51" fill="none" stroke="url(#cpg)" stroke-width="10" stroke-linecap="round" stroke-dasharray="320" stroke-dashoffset="320"/>
+                <defs><linearGradient id="cpg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#4db2ff"/><stop offset="1" stop-color="#49d0a0"/></linearGradient></defs>
+              </svg>
+              <div class="center"><div><div class="num">{{ profile.gear_score }}</div><div class="of">GEAR / 1000</div></div></div>
+            </div>
+            <div class="tier">{{ profile.gear_tier|upper }}</div>
+          </div>
+
+          {% for sid, area in slot_layout %}
+            {% set s = gear[sid] %}
+            {% if s.item %}
+            <div class="slot" data-slot="{{ s.slot_name }}" style="--a:{{ area }}">
+              <span class="pts">+{{ s.score.pts }}</span>
+              <div class="top">
+                <img class="ic" src="/static/item_icons/item_{{ s.item.icon }}.png" onerror="this.style.visibility='hidden'">
+                <div class="txt">
+                  <div class="lab">{{ s.slot_name }}{% if s.augments %} <span class="augn">&#9670;{{ s.augments|length }}</span>{% endif %}</div>
+                  <a class="itm" href="{{ url_for('items.item_detail', item_id=s.item.id) }}">{{ s.item.name|replace(' (Legendary)','') }}</a>
+                </div>
+              </div>
+              <div class="meter"><i style="width:{{ (s.score.pts / maxpts * 100)|round|int }}%"></i></div>
+            </div>
+            {% else %}
+            <div class="slot empty" style="--a:{{ area }}"><div class="lab">{{ s.slot_name }}</div><div class="emp">&mdash; empty &mdash;</div></div>
+            {% endif %}
+          {% endfor %}
+        </div>
+
+        {% if rank_info %}
+        {% macro rank_seal(value, label, sub, ring, is_rank=true) %}
+          {% set s = value|string %}
+          {% set fs = 24 if s|length<=1 else (22 if s|length==2 else (17 if s|length==3 else 13.5)) %}
+          {% set medal = is_rank and (value <= 3) %}
+          {% set metal = {1:'#ffd558',2:'#c9d6e8',3:'#d0894f'}.get(value, '') if medal else '' %}
+          {% set metaln = {1:'#ffe9a8',2:'#eef4fb',3:'#f0c49a'}.get(value, '') if medal else '' %}
+          <div class="rankcell" title="{{ label }}">
+            <svg class="rseal" viewBox="0 0 100 100" fill="none" aria-label="{{ label }} {{ value }}">
+              <g stroke="{{ metal if medal else ring }}"><circle cx="50" cy="50" r="46" stroke-width="2.4" stroke-opacity=".58"/><circle cx="50" cy="50" r="39" stroke-width="2" stroke-dasharray="2 6" stroke-opacity=".8"/></g>
+              {% if medal %}
+                <polygon points="50,16 80,67 20,67" stroke="{{ metal }}" stroke-width="1.6" stroke-opacity=".55"/>
+                <circle cx="80" cy="67" r="5" fill="{{ metal }}"/><circle cx="20" cy="67" r="5" fill="{{ metal }}"/>
+                <g transform="translate(38.5,4) scale(0.95)"><path d="M2.5 16.5 L4.5 6 L9 11.5 L12 3.5 L15 11.5 L19.5 6 L21.5 16.5 Z" fill="{{ metal }}" stroke="{{ metaln }}" stroke-width="1" stroke-linejoin="round"/><path d="M2.5 16.5 H21.5" stroke="{{ metaln }}" stroke-width="1.6" stroke-linecap="round"/><circle cx="12" cy="3.5" r="1.7" fill="{{ metaln }}"/></g>
+              {% else %}
+                <polygon points="50,16 80,67 20,67" stroke="#8fa5eb" stroke-width="1.6" stroke-opacity=".6"/>
+                <circle cx="50" cy="16" r="5" fill="#9be1ff"/><circle cx="80" cy="67" r="5" fill="#ff8a4a"/><circle cx="20" cy="67" r="5" fill="#49d0a0"/>
+              {% endif %}
+              <circle cx="50" cy="50" r="18" fill="#0a121c" stroke="{{ metaln if medal else ring }}" stroke-width="2"/>
+              <text class="rnum" x="50" y="50" text-anchor="middle" dominant-baseline="central" font-size="{{ fs }}"{% if medal %} fill="{{ metaln }}"{% endif %}>{{ value }}</text>
+            </svg>
+            <div class="rlab" style="color:{{ metaln if medal else ring }}">{{ label }}</div>
+            <div class="rsub">{{ sub }}</div>
+          </div>
+        {% endmacro %}
+        <div class="rankrow">
+          {% if rank_info.trio_rank %}
+          {{ rank_seal(rank_info.trio_rank, 'Trio Rank', 'of ' ~ rank_info.trio_size ~ ' · ' ~ profile.class_name, '#ff8a4a') }}
+          {% endif %}
+          {{ rank_seal(rank_info.rank, 'Server Rank', 'of ' ~ rank_info.total ~ ' players', '#4db2ff') }}
+          {% if rank_info.gear_rank %}
+          {{ rank_seal(rank_info.gear_rank, 'Gear Rank', 'of ' ~ rank_info.total ~ ' · score ' ~ rank_info.gear_score, '#b79bff') }}
+          {% endif %}
+          {{ rank_seal(rank_info.score, 'Player Score', 'of 1000', '#49d0a0', is_rank=false) }}
+        </div>
+        {% endif %}
+
+        {% if parse %}
+        <div class="cp-parse" style="margin-top:1.1rem;border:1px solid #2b3441;border-radius:.7rem;background:linear-gradient(180deg,#141a24,#0f1319);padding:1rem 1.1rem;">
+          <div style="display:flex;align-items:center;gap:.6rem;flex-wrap:wrap;margin-bottom:.75rem;">
+            <span style="font-family:ui-monospace,Consolas,monospace;font-size:.62rem;letter-spacing:.18em;text-transform:uppercase;color:#ff8a4a;font-weight:700;">Raid Parse</span>
+            {% if parse.trophy %}<span style="font-family:ui-monospace,Consolas,monospace;font-size:.66rem;font-weight:700;letter-spacing:.04em;padding:.1rem .55rem;border-radius:1rem;border:1px solid {{ parse.trophy.color }};color:{{ parse.trophy.color }};">&#9733; {{ parse.trophy.label }}</span>{% endif %}
+            {% if is_top_parser %}<span title="Server's #1 average parse" style="display:inline-flex;align-items:center;gap:.3rem;font-family:ui-monospace,Consolas,monospace;font-size:.64rem;font-weight:700;letter-spacing:.05em;text-transform:uppercase;padding:.12rem .55rem;border-radius:1rem;color:#1a1206;background:linear-gradient(90deg,#ffd558,#ffb289);box-shadow:0 0 10px rgba(255,213,88,.45);"><svg viewBox="0 0 24 20" width="13" height="11" fill="#1a1206" aria-hidden="true"><path d="M2.5 16.5 L4.5 6 L9 11.5 L12 3.5 L15 11.5 L19.5 6 L21.5 16.5 Z"/><rect x="2.5" y="17" width="19" height="2.4" rx="1"/></svg>#1 Parser</span>{% endif %}
+            <a href="{{ url_for('leaderboard.character_profile', character_id=parse.character_id) }}" style="margin-left:auto;font-family:ui-monospace,Consolas,monospace;font-size:.7rem;color:#8fd0ff;text-decoration:none;white-space:nowrap;">Full boss performance &rarr;</a>
+          </div>
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(6.5rem,1fr));gap:.55rem;">
+            <div style="background:#0f1826;border:1px solid #23303f;border-radius:.5rem;padding:.55rem .7rem;">
+              <div style="font-family:ui-monospace,Consolas,monospace;font-size:1.35rem;font-weight:800;line-height:1;color:{{ parse.overall_parse_avg.color if parse.overall_parse_avg else '#8a8f98' }};font-variant-numeric:tabular-nums;">{{ '%.1f'|format(parse.overall_parse_avg.value) if parse.overall_parse_avg else '—' }}</div>
+              <div style="font-family:ui-monospace,Consolas,monospace;font-size:.56rem;letter-spacing:.06em;text-transform:uppercase;color:#7d8fa6;margin-top:.3rem;">Avg Parse</div>
+            </div>
+            <div style="background:#0f1826;border:1px solid #23303f;border-radius:.5rem;padding:.55rem .7rem;">
+              <div style="font-family:ui-monospace,Consolas,monospace;font-size:1.35rem;font-weight:800;line-height:1;color:{{ parse.best_parse.color if parse.best_parse else '#8a8f98' }};font-variant-numeric:tabular-nums;">{{ '%.1f'|format(parse.best_parse.value) if parse.best_parse else '—' }}</div>
+              <div style="font-family:ui-monospace,Consolas,monospace;font-size:.56rem;letter-spacing:.06em;text-transform:uppercase;color:#7d8fa6;margin-top:.3rem;">Best Parse</div>
+            </div>
+            <div style="background:#0f1826;border:1px solid #23303f;border-radius:.5rem;padding:.55rem .7rem;">
+              <div style="font-family:ui-monospace,Consolas,monospace;font-size:1.35rem;font-weight:800;line-height:1;color:#8fd0ff;font-variant-numeric:tabular-nums;">{{ parse.total_clears }}</div>
+              <div style="font-family:ui-monospace,Consolas,monospace;font-size:.56rem;letter-spacing:.06em;text-transform:uppercase;color:#7d8fa6;margin-top:.3rem;">Boss Clears</div>
+            </div>
+          </div>
+          {% if parse.per_boss %}
+          <div style="margin-top:.7rem;display:flex;flex-wrap:wrap;gap:.4rem;">
+            {% for pb in parse.per_boss %}
+            <a href="{{ url_for('leaderboard.boss_rankings', boss_key=pb.boss_key) }}" style="font-family:ui-monospace,Consolas,monospace;font-size:.68rem;text-decoration:none;padding:.15rem .55rem;border:1px solid #23303f;border-radius:.4rem;background:#0f1826;color:#cfe0f2;">{{ pb.name }} <b style="color:{{ pb.best_any_d.color if pb.best_any_d else '#8a8f98' }};">{{ '%.0f'|format(pb.best_any) if pb.best_any is not none else '—' }}</b></a>
+            {% endfor %}
+          </div>
+          {% endif %}
+        </div>
+        {% endif %}
+
+        {% if profile.focus_effects %}
+        <div class="cp-focus" style="margin-top:1.1rem;border:1px solid #2b3441;border-radius:.7rem;background:linear-gradient(180deg,#141a24,#0f1319);padding:1rem 1.1rem;">
+          <div style="display:flex;align-items:center;gap:.6rem;flex-wrap:wrap;margin-bottom:.6rem;">
+            <span style="font-family:ui-monospace,Consolas,monospace;font-size:.62rem;letter-spacing:.18em;text-transform:uppercase;color:#ff8a4a;font-weight:700;">Active Focus Effects</span>
+            <span style="font-family:ui-monospace,Consolas,monospace;font-size:.62rem;color:#7d8fa6;">{{ profile.focus_effects|length }} from worn gear and augments</span>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:.3rem;">
+            {% for f in profile.focus_effects %}
+            <div style="display:flex;flex-wrap:wrap;gap:.2rem .6rem;align-items:baseline;font-family:ui-monospace,Consolas,monospace;font-size:.72rem;">
+              <a href="{{ url_for('spells.spell_detail', spell_id=f.id) }}" style="color:#8fd0ff;text-decoration:none;font-weight:700;min-width:14rem;">{{ f.name }}</a>
+              <span style="color:#7d8fa6;">{% for s in f.sources %}{{ s.item }} <span style="color:#56657a;">({{ s.slot }})</span>{% if not loop.last %}, {% endif %}{% endfor %}</span>
+            </div>
+            {% endfor %}
+          </div>
+        </div>
+        {% endif %}
+
+        {% if profile.click_locker %}
+        <div class="cp-clicklocker" style="margin-top:1.1rem;border:1px solid #2b3441;border-radius:.7rem;background:linear-gradient(180deg,#141a24,#0f1319);padding:1rem 1.1rem;">
+          <div style="margin-bottom:.5rem;"><span style="font-family:ui-monospace,Consolas,monospace;font-size:.62rem;letter-spacing:.18em;text-transform:uppercase;color:#ff8a4a;font-weight:700;">Click Locker</span><span style="font-family:ui-monospace,Consolas,monospace;font-size:.62rem;color:#7d8fa6;margin-left:.6rem;">{{ profile.click_locker|length }} buffs kept on the character</span></div>
+          <div style="display:flex;flex-wrap:wrap;gap:.35rem;">{% for it in profile.click_locker %}<a href="{{ url_for('items.item_detail', item_id=it.id) }}" style="display:inline-flex;align-items:center;gap:.35rem;font-family:ui-monospace,Consolas,monospace;font-size:.68rem;text-decoration:none;padding:.15rem .5rem .15rem .2rem;border:1px solid #23303f;border-radius:.4rem;background:#0f1826;color:#cfe0f2;"><img src="/static/item_icons/item_{{ it.icon }}.png" style="width:20px;height:20px" onerror="this.style.visibility='hidden'">{% if it.slot %}<span style="color:#7d8fa6;">{{ it.slot }}:</span> {% endif %}{{ it.name }}{% if it.effect %} <span style="color:#8fd0ff;">&middot; {{ it.effect }}</span>{% endif %}</a>{% endfor %}</div>
+        </div>
+        {% endif %}
+        {% if profile.proc_locker %}
+        <div class="cp-proclocker" style="margin-top:1.1rem;border:1px solid #2b3441;border-radius:.7rem;background:linear-gradient(180deg,#141a24,#0f1319);padding:1rem 1.1rem;">
+          <div style="margin-bottom:.5rem;"><span style="font-family:ui-monospace,Consolas,monospace;font-size:.62rem;letter-spacing:.18em;text-transform:uppercase;color:#ff8a4a;font-weight:700;">Proc Locker</span><span style="font-family:ui-monospace,Consolas,monospace;font-size:.62rem;color:#7d8fa6;margin-left:.6rem;">weapon procs</span></div>
+          <div style="display:flex;flex-wrap:wrap;gap:.35rem;">{% for it in profile.proc_locker %}<a href="{{ url_for('items.item_detail', item_id=it.id) }}" style="display:inline-flex;align-items:center;gap:.35rem;font-family:ui-monospace,Consolas,monospace;font-size:.68rem;text-decoration:none;padding:.15rem .5rem .15rem .2rem;border:1px solid #23303f;border-radius:.4rem;background:#0f1826;color:#cfe0f2;"><img src="/static/item_icons/item_{{ it.icon }}.png" style="width:20px;height:20px" onerror="this.style.visibility='hidden'">{% if it.slot %}<span style="color:#7d8fa6;">{{ it.slot }}:</span> {% endif %}{{ it.name }}{% if it.effect %} <span style="color:#8fd0ff;">&middot; {{ it.effect }}</span>{% endif %}</a>{% endfor %}</div>
+        </div>
+        {% endif %}
+
+        {% if profile.pet_gear %}
+        <div class="cp-petgear" style="margin-top:1.1rem;border:1px solid #2b3441;border-radius:.7rem;background:linear-gradient(180deg,#141a24,#0f1319);padding:1rem 1.1rem;">
+          <div style="margin-bottom:.6rem;">
+            <span style="font-family:ui-monospace,Consolas,monospace;font-size:.62rem;letter-spacing:.18em;text-transform:uppercase;color:#ff8a4a;font-weight:700;">Pet Gear</span>
+          </div>
+          {% for p in profile.pet_gear %}
+          <div style="margin-top:.45rem;">
+            <div style="font-family:ui-monospace,Consolas,monospace;font-size:.62rem;letter-spacing:.08em;text-transform:uppercase;color:#7d8fa6;">{{ p.label }} <span style="color:#56657a;">({{ p.gear|length }})</span></div>
+            <div style="display:flex;flex-wrap:wrap;gap:.35rem;margin-top:.3rem;">
+              {% for it in p.gear %}
+              <a href="{{ url_for('items.item_detail', item_id=it.id) }}" style="display:inline-flex;align-items:center;gap:.35rem;font-family:ui-monospace,Consolas,monospace;font-size:.68rem;text-decoration:none;padding:.15rem .5rem .15rem .2rem;border:1px solid #23303f;border-radius:.4rem;background:#0f1826;color:#cfe0f2;"><img src="/static/item_icons/item_{{ it.icon }}.png" style="width:20px;height:20px" onerror="this.style.visibility='hidden'">{{ it.name }}</a>
+              {% endfor %}
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+        {% endif %}
+
+        {% if aas and aas.available_ranks %}
+        <div class="cp-aas" style="margin-top:1.1rem;border:1px solid #2b3441;border-radius:.7rem;background:linear-gradient(180deg,#141a24,#0f1319);padding:1rem 1.1rem;">
+          <div style="display:flex;align-items:center;gap:.6rem;flex-wrap:wrap;margin-bottom:.75rem;">
+            <span style="font-family:ui-monospace,Consolas,monospace;font-size:.62rem;letter-spacing:.18em;text-transform:uppercase;color:#ff8a4a;font-weight:700;">Alternate Abilities</span>
+            <a href="{{ url_for('aas.aa_search') }}" style="margin-left:auto;font-family:ui-monospace,Consolas,monospace;font-size:.7rem;color:#8fd0ff;text-decoration:none;white-space:nowrap;">AA Search &rarr;</a>
+          </div>
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(8rem,1fr));gap:.55rem;">
+            <div style="background:#0f1826;border:1px solid #23303f;border-radius:.5rem;padding:.55rem .7rem;">
+              <div style="font-family:ui-monospace,Consolas,monospace;font-size:1.35rem;font-weight:800;line-height:1;color:#8fd0ff;font-variant-numeric:tabular-nums;">{{ '{:,}'.format(aas.trained_ranks) }}<span style="font-size:.7em;color:#7d8fa6;font-weight:600;"> / {{ '{:,}'.format(aas.available_ranks) }}</span></div>
+              <div style="font-family:ui-monospace,Consolas,monospace;font-size:.56rem;letter-spacing:.06em;text-transform:uppercase;color:#7d8fa6;margin-top:.3rem;">Ranks trained of available</div>
+            </div>
+            <div style="background:#0f1826;border:1px solid #23303f;border-radius:.5rem;padding:.55rem .7rem;">
+              <div style="font-family:ui-monospace,Consolas,monospace;font-size:1.35rem;font-weight:800;line-height:1;color:#49d0a0;font-variant-numeric:tabular-nums;">{{ aas.trained_aas }}<span style="font-size:.7em;color:#7d8fa6;font-weight:600;"> / {{ aas.available_aas }}</span></div>
+              <div style="font-family:ui-monospace,Consolas,monospace;font-size:.56rem;letter-spacing:.06em;text-transform:uppercase;color:#7d8fa6;margin-top:.3rem;">Abilities started</div>
+            </div>
+            <div style="background:#0f1826;border:1px solid #23303f;border-radius:.5rem;padding:.55rem .7rem;">
+              <div style="font-family:ui-monospace,Consolas,monospace;font-size:1.35rem;font-weight:800;line-height:1;color:#b79bff;font-variant-numeric:tabular-nums;">{{ '{:,}'.format(aas.spent) }}<span style="font-size:.7em;color:#7d8fa6;font-weight:600;"> / {{ '{:,}'.format(aas.max_spend) }}</span></div>
+              <div style="font-family:ui-monospace,Consolas,monospace;font-size:.56rem;letter-spacing:.06em;text-transform:uppercase;color:#7d8fa6;margin-top:.3rem;">Points spent of max</div>
+            </div>
+          </div>
+          <div style="height:6px;border-radius:4px;background:#1a2433;overflow:hidden;margin-top:.7rem;"><i style="display:block;height:100%;width:{{ aas.pct }}%;background:linear-gradient(90deg,#2a6ea8,#8fd0ff);"></i></div>
+          <div style="font-family:ui-monospace,Consolas,monospace;font-size:.6rem;color:#7d8fa6;margin-top:.35rem;">{{ aas.pct }}% of every rank this class trio can train in the current era</div>
+          {% for g in aas.groups %}
+          <details style="margin-top:.6rem;">
+            <summary style="cursor:pointer;font-family:ui-monospace,Consolas,monospace;font-size:.68rem;letter-spacing:.1em;text-transform:uppercase;color:#cfe0f2;">{{ g.tab }} <span style="color:#7d8fa6;">({{ g.aas|length }})</span></summary>
+            <div style="display:flex;flex-wrap:wrap;gap:.35rem;margin-top:.45rem;">
+              {% for a in g.aas %}
+              <a class="aa-tooltip-link" data-url="{{ a.id }}" href="{{ url_for('aas.aa_detail', aa_id=a.id) }}" style="font-family:ui-monospace,Consolas,monospace;font-size:.68rem;text-decoration:none;padding:.15rem .55rem;border:1px solid {{ '#49d0a0' if a.maxed else '#23303f' }};border-radius:.4rem;background:#0f1826;color:#cfe0f2;">{{ a.name }} <b style="color:{{ '#49d0a0' if a.maxed else '#8fd0ff' }};">{{ a.rank }}/{{ a.max_rank }}</b></a>
+              {% endfor %}
+            </div>
+          </details>
+          {% endfor %}
+        </div>
+        {% endif %}
+
+        <div class="calc">slot <b>pts</b> = (item <span class="g">+ augs</span>) raw score &divide; best-in-slot reference &times; 1000 &nbsp;&middot;&nbsp;
+          &Sigma; all slots = <b>{{ profile.gear_score }}</b> gear score &nbsp;&middot;&nbsp; hover a slot for full stats
+          {% if profile.gear_parts %}<br>Season 2: gear <b>{{ profile.gear_parts.gear }}</b> / 850 + clicks &amp; procs (worn and lockers) <b>{{ profile.gear_parts.effects }}</b> / 150{% endif %}</div>
+
+        <div class="tierbox">
+          <div class="tl-row">
+            {% for t in profile.tier_ladder %}
+            <span class="tl-chip {{ 'cur' if t.name == profile.gear_tier else ('done' if profile.gear_score >= t.cut else '') }}">{{ t.name|upper }}<i>{{ t.cut }}+</i></span>
+            {% if not loop.last %}<span class="tl-sep">&rsaquo;</span>{% endif %}
+            {% endfor %}
+          </div>
+          <div class="tl-bar"><i style="width:{{ profile.tier_progress }}%"></i></div>
+          <div class="tl-note">
+            {% if profile.next_tier %}
+              <b>{{ profile.gear_score }}</b> gear score &mdash; <b class="g">{{ profile.next_tier.need }}</b> more to <b>{{ profile.next_tier.name|upper }}</b> ({{ profile.next_tier.cut }}+)
+            {% else %}
+              <b>{{ profile.gear_score }}</b> gear score &mdash; <b class="g">MYTHIC</b>, the highest tier
+            {% endif %}
+            &nbsp;&middot;&nbsp; tiers rate your equipped gear against the best-in-slot set of the current era (1000 = full Legendary BiS)
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<div id="cp-tip"></div>
+
+<script>
+(function(){
+  var DATA = {{ tip_data|tojson }};
+  var GPCT = {{ profile.gear_pct }};
+  var tip = document.getElementById('cp-tip');
+  var AT={astr:"STR",asta:"STA",aagi:"AGI",adex:"DEX",awis:"WIS",aint:"INT",acha:"CHA"};
+  var HT={heroic_str:"STR",heroic_sta:"STA",heroic_agi:"AGI",heroic_dex:"DEX",heroic_wis:"WIS",heroic_int:"INT",heroic_cha:"CHA"};
+  var RT={mr:"MR",fr:"FR",cr:"CR",pr:"PR",dr:"DR"};
+  var CT={attack:"Atk",spelldmg:"SpDmg",healamt:"Heal",accuracy:"Acc",regen:"Regen",shielding:"Shield",stunresist:"StunRes",damageshield:"DS"};
+  function stt(cls,lab,val){return '<span class="st '+cls+'">'+lab+' <b>+'+val+'</b></span>';}
+  function build(slot){
+    var d=DATA[slot]; if(!d) return '';
+    var s=d.stats||{}, h='';
+    h+='<div class="tn">'+d.name+'</div><div class="ts">'+slot+'</div>';
+    var core=[]; if(s.ac)core.push(stt('','AC',s.ac));if(s.hp)core.push(stt('','HP',s.hp));
+    if(s.mana)core.push(stt('','Mana',s.mana));if(s.endur)core.push(stt('','End',s.endur));
+    if(core.length)h+='<div class="line">'+core.join('')+'</div>';
+    var at=[]; for(var k in AT){if(s[k])at.push(stt('',AT[k],s[k]));}
+    if(at.length)h+='<div class="sec">Attributes</div><div class="line">'+at.join('')+'</div>';
+    var ht=[]; for(var k in HT){if(s[k])ht.push(stt('h','H-'+HT[k],s[k]));}
+    if(ht.length)h+='<div class="sec">Heroic</div><div class="line">'+ht.join('')+'</div>';
+    var rt=[]; for(var k in RT){if(s[k])rt.push(stt('r',RT[k],s[k]));}
+    if(rt.length)h+='<div class="sec">Resists</div><div class="line">'+rt.join('')+'</div>';
+    var ct=[]; for(var k in CT){if(s[k])ct.push(stt('',CT[k],s[k]));}
+    if(s.haste)ct.push(stt('','Haste',s.haste)+'%');
+    if(s.delay)ct.unshift('<span class="st">Dmg/Dly <b>'+s.damage+'/'+s.delay+'</b></span>');
+    if(ct.length)h+='<div class="sec">Combat</div><div class="line">'+ct.join('')+'</div>';
+    if(d.effects && d.effects.length){
+      h+='<div class="sec">Effects</div>';
+      d.effects.forEach(function(ef){
+        h+='<div class="st eff" style="white-space:normal">'+ef.type+': <b style="color:#ffb08a">'+ef.name+'</b></div>';
+      });
+    }
+    if(d.augs && d.augs.length){
+      h+='<div class="sec">Augments ('+d.augs.length+')</div>';
+      d.augs.forEach(function(a){
+        var as=a.stats||{}, bits=[];
+        if(as.ac)bits.push('AC+'+as.ac); if(as.hp)bits.push('HP+'+as.hp);
+        var hs=(as.heroic_str||0)+(as.heroic_sta||0)+(as.heroic_agi||0)+(as.heroic_dex||0)+(as.heroic_wis||0)+(as.heroic_int||0)+(as.heroic_cha||0);
+        if(hs)bits.push('Heroic+'+hs);
+        h+='<div class="st" style="white-space:normal;color:#ffb289">&#9670; '+a.name+(bits.length?' <span style="color:#7d8fa6">('+bits.join(' ')+')</span>':'')+'</div>';
+      });
+    }
+    h+='<div class="gs">Gear Score: <b>+'+d.pts+' pts</b> &nbsp;<span style="color:#7d8fa6">(raw '+d.raw.toLocaleString()+')</span></div>';
+    return h;
+  }
+  var grid=document.querySelector('.cprofile .grid');
+  grid.addEventListener('mouseover',function(e){var el=e.target.closest('.slot');
+    if(!el||!el.getAttribute('data-slot')){tip.style.opacity='0';return;}
+    var html=build(el.getAttribute('data-slot'));
+    if(html){tip.innerHTML=html; tip.style.opacity='1';}});
+  grid.addEventListener('mousemove',function(e){var pad=16,w=tip.offsetWidth,h=tip.offsetHeight;
+    var x=e.clientX+pad,y=e.clientY+pad;
+    if(x+w>innerWidth-8)x=e.clientX-w-pad; if(y+h>innerHeight-8)y=innerHeight-h-8;
+    tip.style.left=x+'px'; tip.style.top=y+'px';});
+  grid.addEventListener('mouseout',function(e){
+    if(!e.relatedTarget||!e.relatedTarget.closest||!e.relatedTarget.closest('.slot'))tip.style.opacity='0';});
+  requestAnimationFrame(function(){setTimeout(function(){var arc=document.getElementById('cp-arc');
+    arc.style.transition='stroke-dashoffset 1.4s cubic-bezier(.2,.8,.2,1)';
+    arc.style.strokeDashoffset=(320*(1-GPCT/100)).toFixed(1);},140);});
+})();
+</script>
+{% endblock %}

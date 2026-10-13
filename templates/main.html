@@ -1,0 +1,183 @@
+{% extends "layout.html" %}
+{% block title %}PTDex - Project Triune Database{% endblock %}
+{% block body %}
+<div class="nms-home">
+
+    <div class="hero">
+        <div class="bg"></div><div class="glow"></div>
+        <div class="aurora"><i class="a1"></i><i class="a2"></i><i class="a3"></i></div>
+        <div class="stars" id="hero-stars"></div>
+        <svg class="sigilmark" viewBox="0 0 200 200" fill="none" stroke="#8fd0ff" stroke-width="1" stroke-opacity=".68">
+            <g class="sg-out"><circle cx="100" cy="100" r="95"/><circle cx="100" cy="100" r="80" stroke-dasharray="2 7"/><g id="hero-ticks"></g></g>
+            <g class="sg-in">
+                <polygon points="100,38 153.7,131 46.3,131" stroke="#8fa5eb" stroke-width="1.4"/>
+                <circle cx="100" cy="100" r="62"/>
+                <circle cx="100" cy="38" r="9" fill="#9be1ff" fill-opacity=".42" stroke="none"/>
+                <circle cx="100" cy="38" r="4" fill="#cdefff" stroke="none"/>
+                <circle cx="153.7" cy="131" r="9" fill="#ff8a4a" fill-opacity=".42" stroke="none"/>
+                <circle cx="153.7" cy="131" r="4" fill="#ffb289" stroke="none"/>
+                <circle cx="46.3" cy="131" r="9" fill="#49d0a0" fill-opacity=".42" stroke="none"/>
+                <circle cx="46.3" cy="131" r="4" fill="#7fe8c4" stroke="none"/>
+            </g>
+        </svg>
+        <div class="nms-wrap content">
+            <div class="nms-eyebrow">The Multiclass World, Reborn</div>
+            <h1>Project <span style="background:linear-gradient(180deg,#ffd6ad,#ff8a4a 72%);-webkit-background-clip:text;background-clip:text;color:transparent;text-shadow:0 0 34px rgba(255,138,74,.28);">Triune</span></h1>
+            <p class="lede">Search items, spells, characters and multiclass builds, track server-wide
+                gear scores, and theorycraft your trio. The complete PTDex database.</p>
+            <form class="searchbar" action="{{ url_for('all_search') }}" method="post" novalidate>
+                <input name="all_names" required type="text"
+                       placeholder="Search items, spells, NPCs, characters...">
+                <button type="submit" name="submit" value="Search">Search</button>
+            </form>
+            <script>
+            (function(){
+              var s=document.getElementById('hero-stars');
+              if(s){var h='';
+                function pick(){var r=Math.random();
+                  return r<.56?'#dbe9ff':r<.70?'#ffd9a0':r<.78?'#ff9a76':r<.88?'#9bd0ff':r<.95?'#b79bff':'#7fe0c0';}
+                for(var i=0;i<230;i++){
+                  var big=Math.random()<.14, c=pick();
+                  var sz=big?(Math.random()*3+2.6):(Math.random()*1.7+0.8);
+                  var px=(big?sz*3:sz).toFixed(1);
+                  var bg=big?('radial-gradient(circle, '+c+' 0%, rgba(0,0,0,0) 70%)'):c;
+                  h+='<i style="left:'+(Math.random()*100).toFixed(1)+'%;top:'+(Math.random()*100).toFixed(1)
+                    +'%;width:'+px+'px;height:'+px+'px;background:'+bg
+                    +';animation:nmsTw '+(3+Math.random()*4).toFixed(1)+'s ease-in-out infinite '+(Math.random()*5).toFixed(1)
+                    +'s, nmsFloat'+'ABC'[i%3]+' '+(20+Math.random()*28).toFixed(0)+'s ease-in-out infinite '+(-(Math.random()*40).toFixed(0))+'s"></i>';}
+                // a few large soft glow-orbs drifting through (like distant moons)
+                var orbs=[['#8fb8ff',86],['#ffb27a',52],['#b79bff',64],['#7fd4ff',44],['#ff9a76',58],['#9bd0ff',72]];
+                for(var k=0;k<orbs.length;k++){
+                  h+='<i style="left:'+(8+Math.random()*84).toFixed(0)+'%;top:'+(6+Math.random()*70).toFixed(0)
+                    +'%;width:'+orbs[k][1]+'px;height:'+orbs[k][1]+'px;opacity:.16'
+                    +';background:radial-gradient(circle, '+orbs[k][0]+' 0%, rgba(0,0,0,0) 68%)'
+                    +';animation:nmsFloat'+'ABC'[k%3]+' '+(50+k*9)+'s ease-in-out infinite '+(-(k*17))+'s"></i>';}
+                s.insertAdjacentHTML('beforeend',h);}
+              var t=document.getElementById('hero-ticks');
+              if(t){var m='';
+                for(var k=0;k<48;k++){var a=k*7.5*Math.PI/180,ir=85,or=(k%4===0?94:90);
+                  m+='<line x1="'+(100+ir*Math.cos(a)).toFixed(1)+'" y1="'+(100+ir*Math.sin(a)).toFixed(1)
+                    +'" x2="'+(100+or*Math.cos(a)).toFixed(1)+'" y2="'+(100+or*Math.sin(a)).toFixed(1)+'"/>';}
+                t.innerHTML=m;}
+            })();
+            </script>
+            {# Search tools only. Destinations live in Explore below, the full
+               menu lives in the top nav -- nothing is listed twice. #}
+            <div class="chips" aria-label="Search by">
+                <a class="chip" href="{{ url_for('items.item_fast_search') }}">Items</a>
+                <a class="chip" href="{{ url_for('spells.spell_search') }}">Spells</a>
+                <a class="chip" href="{{ url_for('aas.aa_search') }}">AAs</a>
+                <a class="chip" href="{{ url_for('npcs.npc_search') }}">NPCs</a>
+                <a class="chip" href="{{ url_for('characters.character_browser') }}">Characters</a>
+                <a class="chip" href="{{ url_for('tradeskills.tradeskill_search') }}">Tradeskills</a>
+            </div>
+        </div>
+    </div>
+
+    <section class="nms-wrap">
+        <div class="sec-head">
+            <div><div class="nms-eyebrow">Explore &middot; most visited</div><h2>Where players go next</h2></div>
+        </div>
+        {# Ordered by real page views (nginx, Sept 2026), search pages excluded --
+           those are the chips above. Re-rank from the access log if habits change. #}
+        <div class="cards">
+            <a class="card" href="{{ url_for('leaderboard.leaderboard_home') }}"><div class="ic">&#127942;</div><div>
+                <h3>Leaderboards</h3>
+                <p>The race board: first clears, fastest kills and top DPS for Solo, Duo and Trio. Season 2 opens with LDoN.</p></div></a>
+            <a class="card" href="{{ url_for('zones.zone_listing') }}"><div class="ic">&#129517;</div><div>
+                <h3>Zones</h3>
+                <p>Every zone in Norrath, the NPCs that live there and the waypoint map.</p></div></a>
+            <a class="card" href="{{ url_for('community_wiki.community_home') }}"><div class="ic">&#128172;</div><div>
+                <h3>Forums</h3>
+                <p>Guides, questions and player-written pages from the Triune community.</p></div></a>
+            <a class="card" href="{{ url_for('guilds.guild_portal') }}"><div class="ic">&#128737;</div><div>
+                <h3>Guild Portal</h3>
+                <p>Guild rosters, boss kill counts and achievements.</p></div></a>
+            <a class="card" href="{{ url_for('pets.pet_listing') }}"><div class="ic">&#128062;</div><div>
+                <h3>Pets</h3>
+                <p>Every summoned pet by class and level.</p></div></a>
+            <a class="card" href="{{ url_for('build_simulator.build_simulator') }}"><div class="ic">&#129516;</div><div>
+                <h3>Build Simulator</h3>
+                <p>Pick a multiclass trio and see the AAs and spells it unlocks.</p></div></a>
+        </div>
+    </section>
+
+    <section class="nms-wrap">
+        <div class="sec-head">
+            <div><div class="nms-eyebrow">Live rankings</div><h2>Top Players</h2></div>
+            <a href="{{ url_for('characters.leaderboards') }}">View all rankings &rarr;</a>
+        </div>
+        {# `tp` scopes the leaderboard-style skin to this panel only, so other
+           homepage tables keep the original treatment. #}
+        <div class="panel tp">
+            <div class="phead"><span class="t">Overall Player Ranking</span><span class="live">Live</span></div>
+            <div style="overflow-x:auto">
+                <table>
+                    <thead><tr>
+                        <th class="rank">#</th><th>Character</th><th>Guild</th><th>Class</th>
+                        <th>Level</th><th>AA</th><th>Gear</th><th>Parse</th><th>Player Score</th>
+                    </tr></thead>
+                    <tbody>
+                        {% for char in top_players %}
+                        <tr>
+                            <td class="rank{% if char.rank and char.rank <= 3 %} r{{ char.rank }}{% endif %}">{% if char.rank and char.rank <= 3 %}<span class="medal m{{ char.rank }}">{{ char.rank }}</span>{% else %}{{ char.rank }}{% endif %}</td>
+                            <td class="players"><a href="{{ url_for('characters.character_profile', char_id=char.id) }}">{{ char.name }}</a></td>
+                            <td class="gld">{% if char.guild_id %}<a href="{{ url_for('guilds.guild_detail', guild_id=char.guild_id) }}" title="{{ char.guild_name }} on the Guild Portal">{{ char.guild_name }}</a>{% else %}<span class="none">&mdash;</span>{% endif %}</td>
+                            <td class="trio">{{ char.class_name }}</td>
+                            <td class="num">{{ char.level }}</td>
+                            <td class="num">{{ '{:,}'.format(char.aa) }}</td>
+                            <td class="num">{{ char.gear_score }}</td>
+                            <td class="num">{% if char.parse_trophy %}<span title="{{ char.parse_trophy.label }} parse tier" style="color:{{ char.parse_trophy.color }};font-weight:700;">{{ '%.0f'|format(char.parse_score) }}</span>{% else %}<span style="color:var(--muted);">&mdash;</span>{% endif %}</td>
+                            <td><span class="gs">{{ char.score }}</span></td>
+                        </tr>
+                        {% else %}
+                        <tr><td colspan="9" style="text-align:center; color:var(--muted);">Player rankings are being calculated.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% if score_weights %}
+            <div class="score-legend" style="margin-top:1rem;padding:1rem var(--s-5) var(--s-5);border-top:1px solid rgba(255,255,255,.08);">
+                <p class="nms-eyebrow" style="margin:0 0 .45rem;">How Player Score works</p>
+                <p style="color:var(--muted);font-size:.82rem;margin:0 0 .75rem;">A weighted blend out of <b>1000</b> &mdash; a character maxed on all four reads ~1000.</p>
+                <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(15rem,1fr));gap:.55rem .9rem;">
+                    {% for name, weight, desc in score_weights %}
+                    <div style="display:flex;gap:.6rem;align-items:baseline;">
+                        <span class="gs" style="flex:none;min-width:2.4rem;text-align:center;">{{ weight|int }}</span>
+                        <span style="line-height:1.3;"><b>{{ name }}</b> <span style="color:var(--muted);font-size:.78rem;">&mdash; {{ desc }}</span></span>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </section>
+
+</div>
+
+<script>
+// Line the partner rail up with the page content: pin its top to the
+// top of the category cards and its bottom to the bottom of the rankings
+// table. Measured from the live layout so it stays correct no matter how tall
+// the hero renders. Only applies on wide screens (matches the CSS gutter rule);
+// on narrower windows the rail stacks below and we clear the inline styles.
+(function () {
+    function alignRail() {
+        var lw = document.querySelector('.layout-wrapper');
+        var rail = document.querySelector('.layout-wrapper > .sidebar');
+        var cards = document.querySelector('.nms-home .cards');
+        var panel = document.querySelector('.nms-home .panel');
+        if (!lw || !rail || !cards || !panel) return;
+        if (window.innerWidth < 1184) { rail.style.top = ''; rail.style.height = ''; return; }
+        var base = lw.getBoundingClientRect().top;
+        var top = cards.getBoundingClientRect().top - base;
+        var bottom = panel.getBoundingClientRect().bottom - base;
+        rail.style.top = Math.round(top) + 'px';
+        rail.style.height = Math.round(bottom - top) + 'px';
+    }
+    document.addEventListener('DOMContentLoaded', alignRail);
+    window.addEventListener('load', alignRail);
+    window.addEventListener('resize', alignRail);
+})();
+</script>
+{% endblock %}

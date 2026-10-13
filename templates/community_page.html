@@ -1,0 +1,134 @@
+{% extends "layout.html" %}
+{% block title %}{{ title }} :: Forums{% endblock %}
+{% block body %}
+<style>
+  .fpageview{--f-panel:#141a24;--f-cell:#0f1622;--f-line:#25303f;--f-line2:#33425a;--arc:#4db2ff;--arc-hi:#8fd0ff;
+    --emb:#ff8a4a;--emb-hi:#ffb289;--teal:#49d0a0;--txt:#ece5d6;--dim:#b3b0a4;--mut:#8a8f98;
+    --mono:ui-monospace,"Cascadia Code",Consolas,monospace;--serif:var(--nms-serif,Georgia,serif);
+    max-width:52rem;margin:0 auto;padding:1.5rem 1.25rem 5rem;color:var(--txt)}
+  .fpageview a{text-decoration:none;color:var(--arc-hi)}
+  .fpageview .replies{margin-top:2.2rem;border-top:1px solid var(--f-line);padding-top:1rem}
+  .fpageview .replies h2{font-family:var(--serif);font-size:1.15rem;margin:0 0 .8rem}
+  .fpageview .reply{background:var(--f-cell);border:1px solid var(--f-line);border-radius:.45rem;padding:.6rem .85rem;margin:0 0 .6rem}
+  .fpageview .reply .who{font-family:var(--mono);font-size:.72rem;color:var(--mut);display:flex;gap:.6rem;align-items:center;justify-content:space-between}
+  .fpageview .reply .who b{color:var(--emb-hi);font-weight:600}
+  .fpageview .reply .rbody{margin-top:.35rem;overflow-wrap:anywhere}
+  .fpageview .reply .rbody p{margin:.3rem 0}
+  .fpageview .reply.gone .rbody{color:var(--mut);font-style:italic}
+  .fpageview .reply form{margin:0}
+  .fpageview .reply button{background:none;border:0;color:var(--mut);font:inherit;font-size:.7rem;cursor:pointer}
+  .fpageview .reply button:hover{color:var(--emb)}
+  .fpageview .rform textarea{width:100%;min-height:7rem;box-sizing:border-box;background:var(--f-cell);color:var(--txt);border:1px solid var(--f-line2);border-radius:.45rem;padding:.6rem;font:inherit}
+  .fpageview .rform .row{display:flex;justify-content:space-between;align-items:center;margin-top:.45rem;gap:.6rem;flex-wrap:wrap}
+  .fpageview .rform small{color:var(--mut);font-size:.72rem}
+  .fpageview .rform button{background:var(--emb);color:#1a1209;border:0;border-radius:.4rem;padding:.45rem 1rem;font-weight:600;cursor:pointer}
+  .fpageview .noreply{color:var(--mut);font-size:.85rem}
+  .fpageview .back{font-family:var(--mono);font-size:.72rem;color:var(--mut);display:inline-block;margin-bottom:1rem}
+  .fpageview .back:hover{color:var(--arc-hi)}
+  .fpageview .titlebar{display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap;margin-bottom:.4rem}
+  .fpageview h1{font-family:var(--serif);font-size:clamp(1.7rem,1.3rem+1.6vw,2.3rem);font-weight:700;color:#f4ecda;margin:0;line-height:1.1}
+  .fpageview .editbtn{font-family:var(--mono);font-size:.75rem;font-weight:700;color:var(--arc-hi);border:1px solid var(--f-line2);border-radius:.5rem;padding:.4rem .9rem;white-space:nowrap}
+  .fpageview .editbtn:hover{border-color:var(--arc);background:rgba(77,178,255,.08)}
+  .fpageview .crumb{font-family:var(--mono);font-size:.68rem;color:var(--mut);margin-bottom:1.25rem}
+  .fpageview .crumb b{color:var(--emb-hi)}
+  .fpageview .missing{border:1px dashed var(--f-line2);border-radius:.7rem;padding:2rem;text-align:center;color:var(--mut)}
+  .fpageview .missing a{color:var(--emb-hi);font-weight:700}
+  .fpageview .doc{background:linear-gradient(180deg,var(--f-panel),#0f1319);border:1px solid var(--f-line2);border-radius:.9rem;
+    padding:1.6rem 1.8rem;box-shadow:0 1rem 2.4rem rgba(0,0,0,.35);line-height:1.7;overflow-wrap:break-word}
+  @media(max-width:34rem){.fpageview .doc{padding:1.2rem}}
+  .fpageview .doc>*:first-child{margin-top:0}
+  .fpageview .doc h1,.fpageview .doc h2,.fpageview .doc h3{font-family:var(--serif);color:var(--arc-hi);margin:1.5em 0 .5em;line-height:1.2}
+  .fpageview .doc h1{font-size:1.6rem;color:#f4ecda} .fpageview .doc h2{font-size:1.3rem} .fpageview .doc h3{font-size:1.1rem}
+  .fpageview .doc a{color:var(--emb-hi)} .fpageview .doc a:hover{text-decoration:underline}
+  .fpageview .doc p{margin:0 0 1rem}
+  .fpageview .doc ul,.fpageview .doc ol{margin:0 0 1rem;padding-left:1.4rem} .fpageview .doc li{margin:.3rem 0}
+  .fpageview .doc code{font-family:var(--mono);font-size:.88em;background:#0b1220;border:1px solid var(--f-line);border-radius:.3rem;padding:.08em .38em;color:var(--emb-hi)}
+  .fpageview .doc pre{background:#0b1220;border:1px solid var(--f-line2);border-radius:.5rem;padding:1rem;overflow:auto;margin:1rem 0}
+  .fpageview .doc pre code{background:none;border:0;padding:0}
+  .fpageview .doc blockquote{border-left:3px solid var(--emb);margin:1rem 0;padding:.3rem 1rem;color:var(--dim);background:rgba(255,138,74,.04)}
+  .fpageview .doc table{border-collapse:collapse;width:100%;margin:1rem 0;font-size:.92rem}
+  .fpageview .doc th,.fpageview .doc td{border:1px solid var(--f-line2);padding:.5rem .75rem;text-align:left}
+  .fpageview .doc th{background:rgba(0,0,0,.25);font-family:var(--mono);font-size:.72rem;text-transform:uppercase;letter-spacing:.06em;color:var(--emb)}
+  .fpageview .doc img{max-width:100%;border-radius:.4rem}
+  .fpageview .doc hr{border:0;border-top:1px solid var(--f-line);margin:1.5rem 0}
+  .fpageview .foot{font-family:var(--mono);font-size:.7rem;color:var(--mut);margin-top:1rem}
+  .fpageview .acts{display:flex;gap:.5rem;align-items:center;flex-wrap:wrap}
+  .fpageview .delbtn{font-family:var(--mono);font-size:.75rem;font-weight:700;color:#ff8f8f;
+    background:none;border:1px solid rgba(255,143,143,.35);border-radius:.5rem;
+    padding:.4rem .9rem;white-space:nowrap;cursor:pointer}
+  .fpageview .delbtn:hover{border-color:#ff8f8f;background:rgba(255,143,143,.1)}
+  .fpageview .modtag{font-family:var(--mono);font-size:.58rem;letter-spacing:.12em;
+    text-transform:uppercase;font-weight:700;color:var(--emb-hi);
+    border:1px solid rgba(255,138,74,.4);border-radius:.3rem;padding:.16rem .45rem}
+  .fpageview .locked{font-family:var(--mono);font-size:.68rem;color:var(--mut);
+    border:1px solid var(--f-line);border-radius:.5rem;padding:.4rem .8rem;
+    background:rgba(255,255,255,.02)}
+</style>
+
+<div class="fpageview forums">
+  <a class="back" href="{{ url_for('community_wiki.community_home') }}">&larr; Forums</a>
+  <div class="titlebar">
+    <h1>{{ title }}</h1>
+    {# Controls appear only when the server would actually allow the action --
+       the routes re-check on every request regardless of what is rendered. #}
+    <div class="acts">
+      {% if is_mod %}<span class="modtag" title="You can edit or remove any post">Moderator</span>{% endif %}
+      {% if not missing and can_edit %}
+        <a class="editbtn" href="{{ url_for('community_wiki.community_edit', slug=slug) }}">&#9998; Edit</a>
+      {% elif not missing and user and edit_why %}
+        <span class="locked" title="{{ edit_why }}">&#128274; Author only</span>
+      {% endif %}
+      {% if not missing and can_delete %}
+        <form method="post" action="{{ url_for('community_wiki.community_delete', slug=slug) }}"
+              onsubmit="return confirm('Delete &quot;{{ title|e }}&quot;? This removes it from the forums.');"
+              style="display:inline">
+          <button type="submit" class="delbtn">&#128465; Delete</button>
+        </form>
+      {% endif %}
+    </div>
+  </div>
+  {% if meta and (meta.section or meta.subsection) %}
+  <div class="crumb"><b>{{ meta.section or 'General' }}</b>{% if meta.subsection %} &rsaquo; {{ meta.subsection }}{% endif %}</div>
+  {% endif %}
+
+  {% if missing %}
+    <div class="missing">
+      <p>This page doesn't exist yet.</p>
+      {% if user %}<a href="{{ url_for('community_wiki.community_edit', slug=slug) }}">Create it &rarr;</a>{% endif %}
+    </div>
+  {% else %}
+    <div class="doc">{{ body|safe }}</div>
+    <div class="foot">
+      {% if meta and meta.author %}Posted by {{ meta.author }}{% endif %}
+      {%- if meta and meta.editor %}{% if meta.author %} &middot; {% endif %}last edited by {{ meta.editor }}{% endif %}
+      {%- if meta and meta.updated_str %} &middot; {{ meta.updated_str }}{% endif %}
+    </div>
+
+    <section class="replies" id="replies">
+      <h2>Replies{% if comments %} ({{ comments|rejectattr('removed')|list|length }}){% endif %}</h2>
+      {% for c in comments %}
+      <div class="reply{% if c.removed %} gone{% endif %}" id="c{{ c.id }}">
+        <div class="who"><span>{% if c.removed %}[removed]{% else %}<b>{{ c.author }}</b>{% endif %} &middot; {{ c.when }}</span>
+          {% if c.can_remove %}
+          <form method="post" action="{{ url_for('community_wiki.community_comment_delete', slug=slug, cid=c.id) }}"
+                onsubmit="return confirm('Remove this reply?');"><button type="submit">remove</button></form>
+          {% endif %}
+        </div>
+        {% if not c.removed %}<div class="rbody">{{ c.html|safe }}</div>{% else %}<div class="rbody">This reply was removed.</div>{% endif %}
+      </div>
+      {% else %}
+      <p class="noreply">No replies yet.</p>
+      {% endfor %}
+
+      {% if user %}
+      <form class="rform" method="post" action="{{ url_for('community_wiki.community_comment', slug=slug) }}">
+        <textarea name="body" maxlength="{{ comment_max }}" required placeholder="Write a reply. Markdown works."></textarea>
+        <div class="row"><small>Replying as {{ user.name }}</small><button type="submit">Post reply</button></div>
+      </form>
+      {% else %}
+      <p class="noreply">Sign in with Discord to reply.</p>
+      {% endif %}
+    </section>
+  {% endif %}
+</div>
+{% endblock %}

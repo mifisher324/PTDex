@@ -1,0 +1,157 @@
+{% extends "layout.html" %}
+{% block title %}Forums{% endblock %}
+{% block body %}
+<style>
+  .forum{--f-panel:#141a24;--f-panel2:#1a2130;--f-cell:#0f1622;--f-line:#25303f;--f-line2:#33425a;
+    --arc:#4db2ff;--arc-hi:#8fd0ff;--emb:#ff8a4a;--emb-hi:#ffb289;--teal:#49d0a0;--txt:#ece5d6;--dim:#b3b0a4;--mut:#8a8f98;
+    --mono:ui-monospace,"Cascadia Code",Consolas,monospace;
+    --emoji:"Segoe UI Emoji","Apple Color Emoji","Noto Color Emoji";--serif:var(--nms-serif,Georgia,serif);
+    max-width:78rem;margin:0 auto;padding:1.5rem 1.25rem 5rem;color:var(--txt)}
+  .forum a{text-decoration:none}
+  .forum .fhead{display:flex;align-items:flex-end;justify-content:space-between;gap:1rem;flex-wrap:wrap;
+    padding-bottom:1.1rem;border-bottom:1px solid var(--f-line);margin-bottom:1.4rem}
+  .forum .eyebrow{font-family:var(--mono);font-size:.68rem;letter-spacing:.2em;text-transform:uppercase;color:var(--emb);font-weight:700;margin:0 0 .5rem}
+  .forum h1{font-family:var(--serif);font-size:clamp(2rem,1.5rem+2vw,2.7rem);margin:0;font-weight:700;color:#f4ecda;line-height:1.05}
+  .forum .sub{color:var(--mut);font-size:.9rem;margin:.4rem 0 0}
+  .forum .stats{font-family:var(--mono);font-size:.7rem;color:var(--mut);margin-top:.35rem}
+  .forum .stats b{color:var(--dim)}
+  .forum .newbtn{font-family:var(--mono);font-size:.82rem;font-weight:700;color:#0b1220;
+    background:linear-gradient(180deg,var(--emb-hi),var(--emb));border:0;border-radius:.5rem;padding:.55rem 1.1rem;white-space:nowrap}
+  .forum .newbtn:hover{filter:brightness(1.07)}
+  .forum .signin{font-family:var(--mono);font-size:.8rem;color:var(--arc-hi);border:1px solid var(--f-line2);border-radius:.5rem;padding:.5rem 1rem;white-space:nowrap}
+
+  /* two columns: category cards + sidebar; one column on narrow screens */
+  .forum .flayout{display:grid;grid-template-columns:minmax(0,1fr) 19rem;gap:1.2rem;align-items:start}
+  @media (max-width:60rem){.forum .flayout{grid-template-columns:minmax(0,1fr)}}
+  .forum .fcats{columns:2 22rem;column-gap:1rem;min-width:0}
+  .forum .fcat{break-inside:avoid;margin:0 0 1rem;display:block;min-width:0;max-width:100%}
+  @media (max-width:48rem){.forum .fcats{columns:1}}
+
+  .forum .fcat{background:linear-gradient(180deg,var(--f-panel),#0f1319);border:1px solid var(--f-line2);border-radius:.8rem;overflow:hidden}
+  .forum .fcat-head{display:flex;align-items:center;gap:.6rem;padding:.8rem 1rem;position:relative;
+    background:linear-gradient(180deg,rgba(255,138,74,.07),transparent);border-bottom:1px solid var(--f-line)}
+  .forum .fcat-head::before{content:"";position:absolute;left:0;top:0;bottom:0;width:.2rem;background:linear-gradient(180deg,var(--emb),var(--teal))}
+  .forum .fcat-head h2{font-family:var(--serif);font-size:1.15rem;font-weight:700;color:#f4ecda;margin:0;flex:1;min-width:0}
+  .forum .fcat-head .cnt{font-family:var(--mono);font-size:.62rem;color:var(--mut);white-space:nowrap}
+  .forum .fcat-head .add{font-family:var(--mono);font-size:.68rem;color:var(--arc-hi);border:1px solid var(--f-line2);border-radius:.35rem;padding:.2rem .55rem}
+  .forum .fcat-head .add:hover{border-color:var(--arc);background:rgba(77,178,255,.08)}
+
+  .forum .fsub{font-family:var(--mono);font-size:.6rem;letter-spacing:.14em;text-transform:uppercase;color:var(--teal);
+    font-weight:700;padding:.7rem 1rem .15rem}
+  .forum .flist{list-style:none;margin:0;padding:.15rem .4rem .4rem}
+  .forum .fpage{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:.6rem;align-items:center;padding:.4rem .6rem;border-radius:.45rem}
+  .forum .fpage:hover{background:rgba(77,178,255,.06)}
+  .forum .fpage .t,.forum .fside-box li a{font-family:var(--nms-sans),var(--emoji)}
+  .forum .fpage .t{font-size:.9rem;font-weight:600;color:var(--arc-hi);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .forum .fpage:hover .t{color:var(--emb-hi)}
+  .forum .fpage.pinned .t::before{content:"\1F4CC  ";font-size:.75rem}
+  .forum .freplies{font-family:var(--mono);font-size:.64rem;color:var(--mut);background:rgba(0,0,0,.28);border-radius:999px;padding:.1rem .5rem;white-space:nowrap}
+  .forum .freplies.hot{color:var(--emb-hi);background:rgba(255,138,74,.12)}
+  .forum details.fmore summary{list-style:none;cursor:pointer;font-family:var(--mono);font-size:.66rem;color:var(--arc-hi);padding:.2rem 1rem .7rem}
+  .forum details.fmore summary::-webkit-details-marker{display:none}
+  .forum details.fmore[open] summary{display:none}
+
+  .forum .fside{display:grid;gap:1rem;min-width:0}
+  .forum .fside > *{min-width:0}
+  .forum .fside-box{width:auto;height:auto;min-width:0;background:var(--f-panel);border:1px solid var(--f-line2);border-radius:.8rem;padding:.8rem .9rem}
+  .forum .fside-box h3{font-family:var(--mono);font-size:.64rem;letter-spacing:.16em;text-transform:uppercase;color:var(--emb);margin:0 0 .5rem}
+  .forum .fside-box ol{list-style:none;margin:0;padding:0;display:grid;gap:.45rem}
+  .forum .fside-box li a{font-size:.86rem;font-weight:600;color:var(--arc-hi);overflow:hidden;
+    display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow-wrap:anywhere}
+  .forum .fside-box li a:hover{color:var(--emb-hi)}
+  .forum .fside-box li span{display:block;font-family:var(--mono);font-size:.62rem;color:var(--mut)}
+
+  .forum .empty{text-align:center;color:var(--mut);padding:3rem 1rem;border:1px dashed var(--f-line2);border-radius:.9rem}
+  .forum .empty b{color:var(--txt)}
+</style>
+
+{% macro row(p) %}
+<li><a class="fpage{{ ' pinned' if p.pinned else '' }}" href="{{ url_for('community_wiki.community_view', slug=p.slug) }}" title="{{ p.title }}">
+  <span class="t">{{ p.title }}</span>
+  <span class="freplies{{ ' hot' if p.replies >= 5 else '' }}" title="{{ p.replies }} repl{{ 'y' if p.replies == 1 else 'ies' }}{% if p.last_str %}, last activity {{ p.last_str }}{% endif %}">{{ p.replies }} &#9993;</span>
+</a></li>
+{% endmacro %}
+
+<div class="forum forums">
+  <div class="fhead">
+    <div>
+      <p class="eyebrow">Community</p>
+      <h1>Forums</h1>
+      <p class="sub">Player-run guides &amp; discussion for the NMS server.</p>
+      <p class="stats"><b>{{ total_pages }}</b> post{{ 's' if total_pages != 1 else '' }} &middot; <b>{{ total_replies }}</b> repl{{ 'y' if total_replies == 1 else 'ies' }}</p>
+    </div>
+    {% if user %}
+      <a class="newbtn" href="{{ url_for('community_wiki.community_new') }}">&#43; New Post</a>
+    {% else %}
+      <a class="signin" href="{{ url_for('login') }}">Sign in with Discord to post</a>
+    {% endif %}
+  </div>
+
+  <div class="flayout">
+    <div class="fcats">
+      {% for sec in sections if sec.count or user %}
+      <section class="fcat">
+        <div class="fcat-head">
+          <h2>{{ sec.name }}</h2>
+          <span class="cnt">{{ sec.count }} post{{ 's' if sec.count != 1 else '' }} &middot; {{ sec.replies }} repl{{ 'y' if sec.replies == 1 else 'ies' }}</span>
+          {% if user %}<a class="add" href="{{ url_for('community_wiki.community_new', section=sec.name) }}" title="New post in {{ sec.name }}">&#43;</a>{% endif %}
+        </div>
+        {% for sub in sec.subs %}
+          {% if sub.name %}<div class="fsub">{{ sub.name.split('. ', 1)[-1] if sub.name[:1].isdigit() else sub.name }}</div>{% endif %}
+          <ul class="flist">
+            {% for p in sub.pages[:6] %}{{ row(p) }}{% endfor %}
+          </ul>
+          {% if sub.pages|length > 6 %}
+          <details class="fmore"><summary>Show all {{ sub.pages|length }} &darr;</summary>
+            <ul class="flist">{% for p in sub.pages[6:] %}{{ row(p) }}{% endfor %}</ul>
+          </details>
+          {% endif %}
+        {% endfor %}
+      </section>
+      {% else %}
+      <div class="empty">
+        <p><b>No posts yet.</b></p>
+        {% if user %}<p>Create the first one with <b>+ New Post</b>.</p>{% else %}<p>Sign in with Discord to start posting.</p>{% endif %}
+      </div>
+      {% endfor %}
+    </div>
+
+    <aside class="fside">
+      <div class="fside-box">
+        <h3>Latest activity</h3>
+        <ol>
+          {% for p in recent %}
+          <li><a href="{{ url_for('community_wiki.community_view', slug=p.slug) }}{{ '#replies' if p.replies else '' }}" title="{{ p.title }}">{{ p.title }}</a>
+            <span>{{ p.last_str }}{% if p.last_who %} &middot; {{ p.last_who }}{% endif %} &middot; {{ p.section }}</span></li>
+          {% else %}<li><span>Nothing yet.</span></li>{% endfor %}
+        </ol>
+      </div>
+      {% if discussed %}
+      <div class="fside-box">
+        <h3>Most discussed</h3>
+        <ol>
+          {% for p in discussed %}
+          <li><a href="{{ url_for('community_wiki.community_view', slug=p.slug) }}#replies" title="{{ p.title }}">{{ p.title }}</a>
+            <span>{{ p.replies }} repl{{ 'y' if p.replies == 1 else 'ies' }} &middot; {{ p.section }}</span></li>
+          {% endfor %}
+        </ol>
+      </div>
+      {% endif %}
+      <div id="sg-forum-slot"></div>
+    </aside>
+  </div>
+</div>
+<script>
+// The forum home has its own right column, so the site-wide partner rail goes INTO it,
+// under Latest activity / Most discussed, instead of the page's outer gutter. layout.html's
+// loader fills the same element wherever it sits.
+// The rail element comes AFTER this page's body in layout.html, so move it once the DOM is complete.
+document.addEventListener('DOMContentLoaded', function () {
+  var rail = document.getElementById('sg-sidebar'), slot = document.getElementById('sg-forum-slot');
+  if (rail && slot) { slot.appendChild(rail); rail.classList.add('in-forum'); }
+});
+</script>
+<style>
+  .layout-wrapper:has(.forums) .forum .fside #sg-sidebar.in-forum{position:static;flex:none;width:auto;height:auto;max-width:100%;min-width:0;margin:0;padding:0;top:auto}
+</style>
+{% endblock %}

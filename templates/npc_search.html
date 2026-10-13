@@ -1,0 +1,13 @@
+{% extends "layout.html" %}
+{% block title %}PTDex :: NPC Search{% endblock %}
+{% block body %}
+<div class="wp">
+  <div class="wp-eyebrow">PTDex // world.npcs</div>
+  <h1>NPC Search</h1>
+  <form class="wp-search" action="{{ url_for('npcs.npc_search') }}" method="post">
+    <input type="text" name="npc_name" placeholder="NPC name (partial allowed)..." autofocus>
+    <button type="submit">Search</button>
+  </form>
+  <div class="wp-hint">Find NPCs by name. Partial names allowed (minimum 3 characters).</div>
+</div>
+{% endblock %}

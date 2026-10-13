@@ -1,0 +1,73 @@
+{% extends "layout.html" %}
+{% block title %}PTDex :: AA :: {{ aa.name }}{% endblock %}
+{% block body %}
+<style>
+  .aad{max-width:64rem;margin:1.4rem auto 3rem;padding:0 1.1rem}
+  .aad .back{font-size:.8rem;color:#8fd0ff;text-decoration:none}
+  .aad h1{margin:.4rem 0 .3rem}
+  .aad .meta{display:flex;flex-wrap:wrap;gap:.4rem;margin-bottom:.9rem}
+  .aad .pill{font-size:.72rem;padding:.12rem .55rem;border-radius:999px;border:1px solid #25384f;color:#cfe0f2}
+  .aad .pill.act{border-color:#8a5a2b;color:#ffc08e}
+  .aad .desc{border:1px solid #1e3149;border-left:3px solid #ff8a4a;border-radius:0 8px 8px 0;
+    padding:.75rem .95rem;background:#0d1826;line-height:1.6;color:#dce7f5;margin-bottom:1.2rem;
+    white-space:pre-line}
+  .aad .sum{display:flex;flex-wrap:wrap;gap:1.6rem;margin-bottom:1.2rem}
+  .aad .sum .n{font-size:1.4rem;font-weight:700;font-variant-numeric:tabular-nums;color:#8fd0ff}
+  .aad .sum .k{font-size:.66rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted,#7f92a9)}
+  .aad-scroll{overflow-x:auto}
+  .aad table{width:100%;border-collapse:collapse;font-size:.86rem}
+  .aad th{text-align:left;font-size:.7rem;letter-spacing:.08em;text-transform:uppercase;
+    color:var(--muted,#7f92a9);border-bottom:1px solid #1e3149;padding:.4rem .5rem}
+  .aad td{padding:.5rem;border-bottom:1px solid #142334;vertical-align:top}
+  .aad td.num{font-variant-numeric:tabular-nums;text-align:right;white-space:nowrap}
+  .aad tr.future td{color:#5d6f84}
+  .aad ul{margin:0;padding-left:1.1rem}
+  .aad li{margin:.1rem 0}
+  .aad .rdesc{color:#9fb0c4;font-size:.8rem;margin-top:.3rem;white-space:pre-line}
+  .aad .req{font-size:.78rem;color:#ffc08e}
+</style>
+<div class="aad">
+  <a class="back" href="{{ url_for('aas.aa_search') }}">&larr; AA Search</a>
+  <h1>{{ aa.name }}</h1>
+  <div class="meta">
+    <span class="pill">{{ aa.tab }}</span>
+    <span class="pill {{ 'act' if aa.activated }}">{{ 'Activated' if aa.activated else 'Passive' }}</span>
+    {% for c in aa.classes %}<span class="pill">{{ c }}</span>{% endfor %}
+    {% if not aa.public %}<span class="pill">Not trainable</span>{% endif %}
+  </div>
+  {% if aa.description %}<div class="desc">{{ aa.description }}</div>{% endif %}
+  <div class="sum">
+    <div><div class="n">{{ aa.available_ranks }}{% if aa.available_ranks != aa.max_rank %}<small style="font-size:.7em;color:#7f92a9">/{{ aa.max_rank }}</small>{% endif %}</div>
+      <div class="k">Ranks available now</div></div>
+    <div><div class="n">{{ aa.total_cost }}</div><div class="k">Points for every rank</div></div>
+    {% if aa.ranks %}<div><div class="n">{{ aa.ranks[0].level }}</div><div class="k">Level for rank 1</div></div>{% endif %}
+  </div>
+
+  <h2 style="font-size:1.1rem">Rank by rank</h2>
+  <div class="aad-scroll">
+  <table>
+    <thead><tr><th>Rank</th><th>Cost</th><th>Total</th><th>Level</th><th>Recast</th><th>What this rank does</th></tr></thead>
+    <tbody>
+    {% for r in aa.ranks %}
+    <tr class="{{ 'future' if r.future }}">
+      <td class="num">{{ r.rank }}</td>
+      <td class="num">{{ r.cost }}</td>
+      <td class="num">{{ r.total_cost }}</td>
+      <td class="num">{{ r.level }}</td>
+      <td class="num">{{ r.recast or '—' }}</td>
+      <td>
+        {% if r.spell_id %}<div>Activates <a class="spell-tooltip-link" data-url="{{ r.spell_id }}" href="{{ url_for('spells.spell_detail', spell_id=r.spell_id) }}">{{ r.spell_name or ('spell %d' % r.spell_id) }}</a></div>{% endif %}
+        {% if r.effects %}<ul>{% for e in r.effects %}<li>{{ e.text }}</li>{% endfor %}</ul>{% endif %}
+        {% if not r.spell_id and not r.effects %}<span style="color:#5d6f84">No listed effect</span>{% endif %}
+        {% for p in r.prereqs %}<div class="req">Requires {{ p.points }} point{{ '' if p.points == 1 else 's' }} in
+          <a class="aa-tooltip-link" data-url="{{ p.aa_id }}" href="{{ url_for('aas.aa_detail', aa_id=p.aa_id) }}">{{ p.name }}</a></div>{% endfor %}
+        {% if r.description %}<div class="rdesc">{{ r.description }}</div>{% endif %}
+        {% if r.future %}<div class="req">Later expansion &mdash; not available yet</div>{% endif %}
+      </td>
+    </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  </div>
+</div>
+{% endblock %}

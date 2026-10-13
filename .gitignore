@@ -1,0 +1,32 @@
+# Local configuration and data (never commit these)
+configuration.ini
+configuration.ini.*
+!configuration.ini.example
+*.db
+*.bak
+*.bak.*
+error_list.txt
+logs/
+db/
+
+# Optional private extension (see README)
+eqdb_private/
+
+# Forum user data written at runtime
+community-wiki/_comments/
+community-wiki/_trash/
+
+# Server-specific content kept outside the repo
+nms-wiki/
+maps
+/static/item_icons/
+/static/spell_icons/
+/static/monograms/
+
+# Python / editor
+__pycache__/
+*.pyc
+venv/
+.venv/
+.idea/
+wsgi.py

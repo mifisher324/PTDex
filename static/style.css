@@ -1,0 +1,163 @@
+body {
+	padding: 2em;
+	padding-top: 3.4375rem;
+	padding-bottom: 1.5625rem;
+}
+
+textarea.nameentry,
+input.nameentry {
+	width: 25em;
+	height: 1.5625rem;
+	resize: none;
+	white-space: nowrap;
+}
+
+form {
+    display:inline;
+}
+
+.basicpadding table, th, td {
+	padding: 0.3125rem;
+}
+
+.noteentry {
+	width: 37.5rem;
+	height: 7.5rem;
+}
+
+.charlist {
+	width: 6.25rem;
+	height: 6.25rem;
+}
+
+.halftable {
+	width: 50%;
+}
+
+pre {
+    white-space: pre-wrap;       /* Since CSS 2.1 */
+    white-space: -moz-pre-wrap;  /* Mozilla, since 1999 */
+    white-space: -pre-wrap;      /* Opera 4-6 */
+    white-space: -o-pre-wrap;    /* Opera 7 */
+    word-wrap: break-word;       /* Internet Explorer 5.5+ */
+}
+
+.box {
+  width: 6.25rem;
+  height: 1.25rem;
+}
+
+/* Layout & Sidebar: one shell for every page.
+   The page content and the partner rail (.sidebar) are centered TOGETHER as one block, so the
+   space either side of them is even. From 74em (about 1184px) the rail sits to the right of the
+   content and the content narrows to make room; below that the rail stacks under the content.
+   Nothing is pushed off-center and nothing scrolls sideways. A page that needs another content
+   width says so in one line -- .layout-wrapper:has(.mypage) { --page-w: 62.5rem; }.
+   (Was: a 3:1 flex row that pushed every page left, patched by ~36 per-page :has() overrides.) */
+.layout-wrapper {
+    --page-w: 71.25rem;
+    --rail-w: 20rem;
+    --rail-gap: 1.5rem;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    row-gap: 2rem;
+    max-width: calc(var(--page-w) + 2rem);
+    margin: 0 auto;
+    padding: 0 1rem;
+}
+.layout-wrapper > .main-content,
+.layout-wrapper > .sidebar { min-width: 0; }
+
+@media (min-width: 74em) {
+    .layout-wrapper {
+        grid-template-columns: minmax(0, 1fr) var(--rail-w);
+        column-gap: var(--rail-gap);
+        max-width: calc(var(--page-w) + var(--rail-gap) + var(--rail-w) + 2rem);
+    }
+    .layout-wrapper > .main-content { grid-column: 1; grid-row: 1; }
+    .layout-wrapper > .sidebar { grid-column: 2; grid-row: 1; align-self: start; }
+}
+
+.sidebar-widget {
+    background: rgba(33, 37, 41, 0.9);
+    border: 1px solid #374151;
+    border-radius: 0.5rem;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+.sidebar-widget h3 {
+    color: #10b981;
+    font-size: 1.25rem;
+    font-weight: 700;
+    margin-bottom: 1rem;
+    border-bottom: 2px solid #065f46;
+    padding-bottom: 0.5rem;
+}
+
+.games-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.game-row {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.5rem;
+    border-radius: 0.25rem;
+    transition: background 0.2s;
+    text-decoration: none;
+    color: #e5e7eb;
+}
+
+.game-row:hover {
+    background: rgba(55, 65, 81, 0.5);
+    color: #fff;
+    text-decoration: none;
+}
+
+.game-icon {
+    width: 1.5rem;
+    height: 1.5rem;
+    border-radius: 0.25rem;
+    object-fit: cover;
+}
+
+.game-name {
+    font-size: 0.9rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.game-category-section {
+    margin-bottom: 1.5rem;
+}
+
+.game-category-title {
+    font-size: 0.75rem;
+    color: #10b981;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-bottom: 0.75rem;
+    padding-bottom: 0.25rem;
+    border-bottom: 1px solid #374151;
+    font-weight: 700;
+}
+
+.view-all-link {
+    display: block;
+    margin-top: 1rem;
+    text-align: center;
+    font-size: 0.85rem;
+    color: #10b981;
+    text-decoration: none;
+}
+
+.view-all-link:hover {
+    text-decoration: underline;
+    color: #059669;
+}

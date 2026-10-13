@@ -1,0 +1,59 @@
+{#
+  Shared cross-page tab strip for the three leaderboard pages.
+
+  WHY THIS EXISTS: the site had three separate boards -- /leaderboards (players),
+  /leaderboard/ (raid encounters) and /leaderboard/characters (parse rankings) --
+  and only ONE link between them, buried mid-paragraph. The top nav pointed at
+  the first, so anyone who reached the other two had no visible way back and no
+  reason to believe they were related. These are siblings; this makes them look
+  like siblings.
+
+  Self-contained: brings its own scoped CSS so it renders identically on the
+  Bootstrap-themed players page and the themed raid pages.
+
+  Usage:  {% with lbtab = 'raid' %}{% include 'leaderboard_tabs.html' %}{% endwith %}
+  where lbtab is one of: players | raid | ldon | parses
+#}
+<style>
+  .lbnav{display:flex;gap:.4rem;flex-wrap:wrap;align-items:center;
+    margin:0 0 1.15rem;padding:0 0 .7rem;border-bottom:1px solid #1a2637}
+  .lbnav a{font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+    font-size:.7rem;letter-spacing:.13em;text-transform:uppercase;font-weight:700;
+    color:#7f92a9;text-decoration:none;padding:.42rem .8rem;border-radius:.4rem;
+    border:1px solid transparent;transition:color .15s,border-color .15s,background .15s}
+  .lbnav a:hover{color:#8fd0ff;border-color:#25384f;background:rgba(143,208,255,.05)}
+  .lbnav a.on{color:#ffc08e;border-color:rgba(255,138,74,.42);
+    background:rgba(255,138,74,.08)}
+  .lbnav a.on:hover{color:#ffc08e}
+  .lbnav .sep{flex:1}
+  .lbnav .hint{font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+    font-size:.62rem;letter-spacing:.1em;text-transform:uppercase;color:#55677d}
+</style>
+{% include 'leaderboard_season.html' %}
+<nav class="lbnav" aria-label="Leaderboards">
+  <a href="{{ url_for('characters.leaderboards') }}"
+     class="{{ 'on' if lbtab == 'players' }}"
+     {% if lbtab == 'players' %}aria-current="page"{% endif %}>Players</a>
+  <a href="{{ url_for('leaderboard.season_top_players', season=season.key if season else None) }}"
+     class="{{ 'on' if lbtab == 'top' }}"
+     {% if lbtab == 'top' %}aria-current="page"{% endif %}>Season Standings</a>
+  <a href="{{ url_for('leaderboard.leaderboard_home', season=season.key if season else None) }}"
+     class="{{ 'on' if lbtab == 'raid' }}"
+     {% if lbtab == 'raid' %}aria-current="page"{% endif %}>Raid Encounters</a>
+  {% if private_features %}
+  <a href="{{ url_for('leaderboard.ldon_speedruns', season=season.key if season else None) }}"
+     class="{{ 'on' if lbtab == 'ldon' }}"
+     {% if lbtab == 'ldon' %}aria-current="page"{% endif %}>LDoN Speedruns</a>
+  {% endif %}
+  <a href="{{ url_for('leaderboard.character_rankings', season=season.key if season else None) }}"
+     class="{{ 'on' if lbtab == 'parses' }}"
+     {% if lbtab == 'parses' %}aria-current="page"{% endif %}>Parse Rankings</a>
+  <span class="sep"></span>
+  <span class="hint">
+    {%- if lbtab == 'players' %}Level · AA · Gear · Parse
+    {%- elif lbtab == 'raid' %}Solo · Duo · Trio clears
+    {%- elif lbtab == 'ldon' %}Fastest adventure wins
+    {%- elif lbtab == 'top' %}Player Score for the season
+    {%- else %}Per-character percentiles{% endif -%}
+  </span>
+</nav>

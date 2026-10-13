@@ -1,0 +1,19 @@
+{% extends "layout.html" %}
+{% block title %}PTDex :: Pets{% endblock %}
+{% block body %}
+<div class="wp">
+  <div class="wp-eyebrow">PTDex // world.pets</div>
+  <h1>Pets by Class</h1>
+  <div class="wp-panel"><div class="wp-pb">
+    <div class="wp-mono">
+      {% set petclasses = [(15,'Beastlord'),(2,'Cleric'),(6,'Druid'),(14,'Enchanter'),(13,'Magician'),(11,'Necromancer'),(5,'Shadow Knight'),(10,'Shaman'),(12,'Wizard')] %}
+      {% for cid, cname in petclasses %}
+      <a href="{{ url_for('pets.pet_listing_result', class_id=cid) }}">
+        <img src="/static/monograms/{{ cid }}.gif" alt="{{ cname }}" onerror="this.style.visibility='hidden'">
+        <span>{{ cname }}</span>
+      </a>
+      {% endfor %}
+    </div>
+  </div></div>
+</div>
+{% endblock %}

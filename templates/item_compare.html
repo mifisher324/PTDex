@@ -1,0 +1,178 @@
+{% extends "layout.html" %}
+{% block title %}PTDex :: Compare Items{% endblock %}
+{% block body %}
+<style>
+  .icmp{--ink:#080b11;--ink-2:#0b101a;--panel:#0f1622;--panel-2:#132033;--cell:#0f1826;
+    --line:#1b2838;--line-2:#284058;--arcane:#4db2ff;--arcane-hi:#8fd0ff;--ember:#ff7a45;
+    --gold:#ffb289;--gold-2:#ff8a4a;--green:#5fe0a3;--ctext:#d9e5f3;--muted:#7d8fa6;
+    --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+    max-width:58rem;margin:1.375rem auto 3.75rem;padding:0 1rem;color:var(--ctext)}
+  .layout-wrapper:has(.icmp){--page-w:58rem}
+  .icmp a{text-decoration:none}
+  .icmp .eyebrow{font-family:var(--mono);font-size:.7rem;letter-spacing:.24em;text-transform:uppercase;color:var(--arcane);opacity:.9;margin-bottom:.9rem}
+
+  .icmp .heads{display:grid;grid-template-columns:1fr 2.5rem 1fr;gap:.75rem;align-items:stretch}
+  @media(max-width:40em){.icmp .heads{grid-template-columns:1fr;gap:.5rem}.icmp .vs{display:none}}
+  .icmp .vs{display:grid;place-items:center;font-family:var(--mono);font-weight:800;font-size:.9rem;color:var(--muted)}
+  .icmp .card{background:linear-gradient(180deg,var(--panel),var(--ink-2));border:1px solid var(--line-2);
+    border-radius:.875rem;box-shadow:0 20px 50px rgba(0,0,0,.45);padding:1rem 1.1rem;position:relative;min-height:9.5rem;display:flex;flex-direction:column}
+  .icmp .card.leg{border-color:#5e3018}
+  .icmp .card .acts{position:absolute;top:.7rem;right:.85rem;display:flex;gap:.7rem;font-family:var(--mono);font-size:.68rem}
+  .icmp .card .acts a{color:var(--arcane-hi)} .icmp .card .acts a.chg{color:var(--muted)}
+  .icmp .card .top{display:flex;gap:.8rem;align-items:flex-start}
+  .icmp .card .icon{width:3.25rem;height:3.25rem;flex:none;border-radius:.6rem;background:var(--ink-2);border:1px solid var(--gold-2);
+    box-shadow:0 0 16px rgba(255,178,137,.2);display:grid;place-items:center}
+  .icmp .card .icon img{width:2.6rem;height:2.6rem}
+  .icmp .card .rar{font-family:var(--mono);font-size:.58rem;letter-spacing:.16em;text-transform:uppercase;color:var(--gold);font-weight:700}
+  .icmp .card .nm{font-size:1.1rem;font-weight:800;color:#f4ecda;line-height:1.15;margin-top:.1rem;padding-right:4.5rem}
+  .icmp .card .chips{display:flex;flex-wrap:wrap;gap:.3rem;margin:.55rem 0 .3rem}
+  .icmp .chip{font-family:var(--mono);font-size:.66rem;padding:.12rem .5rem;border-radius:.35rem;border:1px solid var(--line-2);background:rgba(77,178,255,.07);color:var(--arcane-hi)}
+  .icmp .chip.slot{color:var(--gold);border-color:rgba(255,178,137,.3);background:rgba(255,178,137,.07)}
+  .icmp .card .gp{display:flex;align-items:baseline;gap:.5rem;margin-top:auto;padding-top:.55rem}
+  .icmp .card .gp .n{font-size:1.6rem;font-weight:800;color:var(--arcane-hi);font-variant-numeric:tabular-nums;line-height:1}
+  .icmp .card .gp .l{font-family:var(--mono);font-size:.58rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+
+  .icmp .slotpick{border-style:dashed;border-color:var(--line-2);justify-content:center}
+  .icmp .slotpick .pl{font-family:var(--mono);font-size:.66rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-bottom:.55rem}
+  .icmp .slotpick input{width:100%;box-sizing:border-box;background:var(--cell);border:1px solid var(--line-2);border-radius:.5rem;
+    color:var(--ctext);font-size:.92rem;padding:.6rem .75rem;font-family:inherit}
+  .icmp .slotpick input:focus{outline:none;border-color:var(--arcane);box-shadow:0 0 0 3px rgba(77,178,255,.15)}
+  .icmp .results{position:relative}
+  .icmp .results ul{list-style:none;margin:.3rem 0 0;padding:0;position:absolute;left:0;right:0;z-index:20;
+    background:#0b1220;border:1px solid var(--line-2);border-radius:.5rem;max-height:16rem;overflow-y:auto;box-shadow:0 14px 30px rgba(0,0,0,.55)}
+  .icmp .results li{padding:.45rem .6rem;cursor:pointer;display:flex;gap:.55rem;align-items:center;border-bottom:1px solid var(--line)}
+  .icmp .results li:last-child{border-bottom:0} .icmp .results li:hover{background:rgba(77,178,255,.08)}
+  .icmp .results li img{width:1.6rem;height:1.6rem;flex:none}
+  .icmp .results li b{color:var(--arcane-hi);font-weight:600;font-size:.86rem}
+  .icmp .results li .rar{margin-left:auto;flex:none;font-family:var(--mono);font-size:.58rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+  .icmp .results li .rar.leg{color:var(--gold)} .icmp .results li .rar.ench{color:var(--arcane-hi)}
+  .icmp .results .none{padding:.55rem .7rem;color:var(--muted);font-family:var(--mono);font-size:.72rem}
+
+  .icmp .hint{margin-top:1.5rem;text-align:center;color:var(--muted);font-family:var(--mono);font-size:.82rem;
+    border:1px dashed var(--line-2);border-radius:.75rem;padding:2.5rem 1rem}.icmp .hint b{color:var(--ctext)}
+
+  .icmp .panel{margin-top:1.25rem;background:linear-gradient(180deg,var(--panel),var(--ink-2));border:1px solid var(--line-2);
+    border-radius:.875rem;overflow:hidden;box-shadow:0 20px 50px rgba(0,0,0,.4)}
+  .icmp .ptitle{font-family:var(--mono);font-size:.64rem;letter-spacing:.14em;text-transform:uppercase;color:var(--gold);padding:.8rem 1rem .65rem;border-bottom:1px solid var(--line)}
+  .icmp table{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums}
+  .icmp thead th{font-family:var(--mono);font-size:.64rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);
+    text-align:right;padding:.5rem 1rem;border-bottom:1px solid var(--line);background:rgba(0,0,0,.2)}
+  .icmp thead th:first-child{text-align:left}
+  .icmp .sechd td{font-family:var(--mono);font-size:.6rem;letter-spacing:.12em;text-transform:uppercase;color:var(--arcane);padding:.6rem 1rem .3rem;background:rgba(77,178,255,.04)}
+  .icmp tbody td{padding:.4rem 1rem;font-size:.9rem;border-bottom:1px dotted var(--line);text-align:right}
+  .icmp tbody td.k{text-align:left;color:var(--muted);font-family:var(--mono);font-size:.8rem}
+  .icmp td.win{color:var(--green);font-weight:800} .icmp td.lose{color:var(--muted)}
+  .icmp td .up{color:var(--green);font-size:.7rem;margin-left:.3rem}
+  .icmp .gprow td{font-size:1.05rem;font-weight:800;padding:.65rem 1rem;background:rgba(255,178,137,.04)}
+  .icmp .gprow td.k{color:var(--gold);font-weight:700;font-size:.8rem}
+</style>
+
+<div class="icmp">
+  <div class="eyebrow">PTDex // item.compare</div>
+
+  {% macro head(it, other_id, side, gpv) %}
+    {% if it %}
+      {% set rarity = 'Legendary' if (it.triune_enabled and it.id >= 2000000) else ('Enchanted' if (it.triune_enabled and it.id >= 1000000) else 'Base') %}
+      {% set classes = (it.class_str or '').replace(',', ' ').split() %}
+      {% set slots = (it.slot_str or '').replace(',', ' ').split() %}
+      <div class="card {{ 'leg' if rarity=='Legendary' }}">
+        <div class="acts">
+          <a href="{{ url_for('items.item_detail', item_id=it.id) }}">Full item &rarr;</a>
+          <a class="chg" href="{{ url_for('items.item_compare', **({'b': other_id} if side=='a' else {'a': other_id})) }}">Change</a>
+        </div>
+        <div class="top">
+          <div class="icon"><img src="/static/item_icons/item_{{ it.icon }}.png" alt="" onerror="this.style.visibility='hidden'"></div>
+          <div>
+            {% if it.triune_enabled %}<div class="rar">{{ rarity }}</div>{% endif %}
+            <div class="nm">{{ it.Name }}</div>
+          </div>
+        </div>
+        <div class="chips">
+          {% for c in classes %}<span class="chip">{{ c }}</span>{% endfor %}
+          {% for sl in slots %}<span class="chip slot">{{ sl }}</span>{% endfor %}
+        </div>
+        <div class="gp"><span class="n">{{ gpv if gpv is not none else '—' }}</span><span class="l">Gear Points</span></div>
+      </div>
+    {% else %}
+      <div class="card slotpick">
+        <div class="pl">{{ 'Item A' if side=='a' else 'Item B' }}</div>
+        <div class="results">
+          <input type="text" autocomplete="off" placeholder="Search by name&hellip;" data-side="{{ side }}" data-other="{{ other_id or '' }}">
+          <div class="rbox"></div>
+        </div>
+      </div>
+    {% endif %}
+  {% endmacro %}
+
+  <div class="heads">
+    {{ head(a, bid, 'a', gpts.a if gpts else None) }}
+    <div class="vs">VS</div>
+    {{ head(b, aid, 'b', gpts.b if gpts else None) }}
+  </div>
+
+  {% if sections %}
+    <div class="panel">
+      <div class="ptitle">Stat Comparison</div>
+      <table>
+        <thead><tr><th>Stat</th><th>{{ a.Name }}</th><th>{{ b.Name }}</th></tr></thead>
+        <tbody>
+          {% if gpts %}
+          <tr class="gprow">
+            <td class="k">Gear Points</td>
+            <td class="{{ 'win' if gpts.win=='a' else ('lose' if gpts.win=='b' else '') }}">{{ gpts.a if gpts.a is not none else '—' }}{% if gpts.win=='a' %}<span class="up">&#9650;</span>{% endif %}</td>
+            <td class="{{ 'win' if gpts.win=='b' else ('lose' if gpts.win=='a' else '') }}">{{ gpts.b if gpts.b is not none else '—' }}{% if gpts.win=='b' %}<span class="up">&#9650;</span>{% endif %}</td>
+          </tr>
+          {% endif %}
+          {% for sec in sections %}
+            <tr class="sechd"><td colspan="3">{{ sec.name }}</td></tr>
+            {% for r in sec.rows %}
+            <tr>
+              <td class="k">{{ r.label }}</td>
+              <td class="{{ 'win' if r.win=='a' else ('lose' if r.win=='b' else '') }}">{{ r.a if r.a is not none else '—' }}{% if r.win=='a' %}<span class="up">&#9650;</span>{% endif %}</td>
+              <td class="{{ 'win' if r.win=='b' else ('lose' if r.win=='a' else '') }}">{{ r.b if r.b is not none else '—' }}{% if r.win=='b' %}<span class="up">&#9650;</span>{% endif %}</td>
+            </tr>
+            {% endfor %}
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <div class="hint">Pick <b>two items</b> above to see their stats side by side, with the higher value in each row highlighted.</div>
+  {% endif %}
+</div>
+
+<script>
+(function(){
+  function debounce(fn,ms){var t;return function(){var a=arguments,c=this;clearTimeout(t);t=setTimeout(function(){fn.apply(c,a);},ms);};}
+  function esc(s){return (s||'').replace(/[&<>"]/g,function(m){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m];});}
+  document.querySelectorAll('.icmp .slotpick input').forEach(function(inp){
+    var box=inp.parentNode.querySelector('.rbox');
+    var side=inp.dataset.side, other=inp.dataset.other;
+    function go(id){
+      var p=new URLSearchParams(location.search);
+      p.set(side,id);
+      if(other) p.set(side==='a'?'b':'a', other);
+      location.search=p.toString();
+    }
+    var run=debounce(function(){
+      var q=inp.value.trim();
+      if(q.length<2){box.innerHTML='';return;}
+      fetch('/item/compare/find?q='+encodeURIComponent(q))
+        .then(function(r){return r.json();})
+        .then(function(list){
+          if(!list.length){box.innerHTML='<ul><li class="none">No items found</li></ul>';return;}
+          var h='<ul>';
+          list.forEach(function(it){
+            var nm=esc(it.name).replace(/ \((Enchanted|Legendary)\)$/,'');
+            var rc=it.rarity==='Legendary'?'leg':(it.rarity==='Enchanted'?'ench':'');
+            h+='<li data-id="'+it.id+'"><img src="/static/item_icons/item_'+it.icon+'.png" onerror="this.style.visibility=\'hidden\'"><b>'+nm+'</b><span class="rar '+rc+'">'+esc(it.rarity)+'</span></li>';
+          });
+          box.innerHTML=h+'</ul>';
+          box.querySelectorAll('li[data-id]').forEach(function(li){li.addEventListener('click',function(){go(li.dataset.id);});});
+        }).catch(function(){box.innerHTML='';});
+    },220);
+    inp.addEventListener('input',run);
+  });
+})();
+</script>
+{% endblock %}

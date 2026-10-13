@@ -1,0 +1,635 @@
+{% extends "layout.html" %}
+{% block title %}PTDex :: {{ g.name }}{% endblock %}
+{% block body %}
+<style>
+  .ghall{--void:#05080e;--panel:#0d1420;--panel2:#111b2b;--cell:#0c1420;
+    --line:#1a2637;--line2:#25384f;--arc:#4db2ff;--arc-hi:#8fd0ff;--arc-dp:#1d4a75;
+    --ember:#ff8a4a;--ember-hi:#ffc08e;--gold:#ffb289;--green:#5fe0a3;--green-dp:#2f6b52;
+    --ctext:#dce7f5;--muted:#7f92a9;--dim:#55677d;
+    --gserif:Georgia,"Iowan Old Style","Times New Roman",serif;
+    --gmono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+    position:relative;z-index:1;max-width:68rem;margin:1.4rem auto 4rem;padding:0 1.15rem;color:var(--ctext)}
+  .gh-sky{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden}
+  .gh-sky .aur{position:absolute;inset:-20%;filter:blur(70px);opacity:.28}
+  .gh-sky .aur i{position:absolute;border-radius:50%;mix-blend-mode:screen;animation:ghAu 24s ease-in-out infinite}
+  .gh-sky .a1{width:440px;height:440px;left:3%;top:-8%;background:radial-gradient(circle,#1f6dd0,transparent 66%)}
+  .gh-sky .a2{width:470px;height:470px;right:-3%;top:-14%;background:radial-gradient(circle,#7b53d6,transparent 66%);animation-delay:-8s}
+  @keyframes ghAu{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(22px,-16px) scale(1.09)}}
+  .gh-sky canvas{position:absolute;inset:-50px;opacity:.5}
+
+  .ghall .eyebrow{font-family:var(--gmono);font-size:.66rem;letter-spacing:.26em;text-transform:uppercase;
+    color:var(--arc);display:flex;justify-content:space-between;align-items:center;gap:1rem;margin-bottom:.85rem;flex-wrap:wrap}
+  .ghall .eyebrow a{color:var(--arc-hi);text-decoration:none;border-bottom:1px solid transparent}
+  .ghall .eyebrow a:hover{border-color:currentColor}
+
+  .ghall .hero{position:relative;border:1px solid var(--line2);border-radius:1.1rem;overflow:hidden;
+    background:linear-gradient(180deg,var(--panel),#080d16);box-shadow:0 34px 80px rgba(0,0,0,.62)}
+  .ghall .hero .aur2{position:absolute;inset:-60% -20% auto -20%;height:200%;pointer-events:none;
+    background:conic-gradient(from 200deg,rgba(77,178,255,0),rgba(77,178,255,.22),rgba(95,224,163,.14),
+      rgba(255,138,74,.18),rgba(77,178,255,0));filter:blur(58px);animation:ghSpin 38s linear infinite}
+  @keyframes ghSpin{to{transform:rotate(360deg)}}
+  .ghall .hero .in{position:relative;padding:1.6rem 1.5rem;display:flex;gap:1.6rem;align-items:center;flex-wrap:wrap}
+  .ghall .crest{flex:none;filter:drop-shadow(0 14px 30px rgba(0,0,0,.65))}
+  .ghall .crest svg{display:block}
+  .ghall .who{flex:1;min-width:15rem}
+  .ghall .kicker{font-family:var(--gmono);font-size:.6rem;letter-spacing:.2em;text-transform:uppercase;color:var(--ember);margin-bottom:.3rem}
+  .ghall h1{font-family:var(--gserif);margin:0;font-size:2.4rem;line-height:1.02;font-weight:700;
+    background:linear-gradient(92deg,#fff 15%,var(--arc-hi) 72%);-webkit-background-clip:text;background-clip:text;color:transparent}
+  .ghall .rec{display:inline-block;font-family:var(--gmono);font-size:.58rem;letter-spacing:.13em;text-transform:uppercase;
+    font-weight:700;color:#04231a;background:var(--green);padding:.16rem .5rem;border-radius:.32rem;margin-top:.55rem}
+  .ghall .blurb{color:#c3d2e4;font-size:.95rem;margin-top:.7rem;max-width:40rem;line-height:1.55}
+  .ghall .tally{display:flex;gap:1.5rem;margin-top:1rem;flex-wrap:wrap}
+  .ghall .t .n{font-size:1.4rem;font-weight:800;line-height:1;font-variant-numeric:tabular-nums}
+  .ghall .t .l{font-family:var(--gmono);font-size:.52rem;letter-spacing:.15em;text-transform:uppercase;color:var(--muted);margin-top:.28rem}
+  .ghall .t.a .n{color:var(--arc-hi)} .ghall .t.b .n{color:var(--green)}
+  .ghall .t.c .n{color:var(--gold)} .ghall .t.d .n{color:var(--ember)}
+  /* Edit attribution -- deliberately on the public page, not buried in a log.
+     A change that shouldn't have happened carries the editor's name where the
+     whole guild can see it. */
+  .ghall .stamp{font-family:var(--gmono);font-size:.66rem;color:var(--dim);margin-top:.55rem}
+  .ghall .stamp b{color:var(--gold)}
+
+  .ghall .motd{margin:.9rem 1.05rem 1.05rem;display:flex;gap:.8rem;align-items:flex-start;padding:.8rem .95rem;
+    border:1px dashed rgba(255,178,137,.32);border-radius:.7rem;background:rgba(255,138,74,.05);position:relative}
+  .ghall .motd .i{font-size:1rem;color:var(--ember-hi);flex:none;line-height:1.35}
+  .ghall .motd .b{font-size:.88rem;color:#c3d2e4;line-height:1.5}
+  .ghall .motd .src{font-family:var(--gmono);font-size:.62rem;color:var(--dim);margin-top:.28rem}
+
+  .gh-grid{display:grid;gap:1rem;grid-template-columns:minmax(0,1.55fr) minmax(0,1fr);margin-top:1.2rem;align-items:start}
+  @media(max-width:56rem){.gh-grid{grid-template-columns:1fr}}
+  .gh-panel{border:1px solid var(--line2);border-radius:.9rem;overflow:hidden;
+    background:linear-gradient(180deg,var(--panel2),var(--cell))}
+  .gh-panel .ph{padding:.85rem 1.05rem;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:.6rem;flex-wrap:wrap}
+  .gh-panel .ph h3{font-family:var(--gserif);margin:0;font-size:1.08rem;font-weight:700}
+  .gh-panel .ph .c{font-family:var(--gmono);font-size:.66rem;color:var(--muted);margin-left:auto;font-variant-numeric:tabular-nums}
+
+  /* roster */
+  .gh-rost{max-height:34rem;overflow-y:auto}
+  .gh-row{display:grid;grid-template-columns:1fr auto auto;gap:.75rem;align-items:center;
+    padding:.5rem 1.05rem;border-bottom:1px solid var(--line);transition:.12s}
+  .gh-row:last-child{border-bottom:none}
+  .gh-row:hover{background:rgba(255,255,255,.022)}
+  .gh-row .nm{min-width:0}
+  .gh-row .nm a{color:var(--ctext);text-decoration:none;font-weight:600;font-size:.92rem}
+  .gh-row .nm a:hover{color:var(--arc-hi)}
+  .gh-row .ti{font-family:var(--gmono);font-size:.62rem;color:var(--dim);margin-top:.1rem}
+  .gh-row.off .ti{color:var(--gold)}
+  .gh-row .lv{font-family:var(--gmono);font-size:.72rem;color:var(--muted);font-variant-numeric:tabular-nums;text-align:right}
+  .gh-row .lv b{color:#a8bdd4}
+  .gh-row .dot{width:.5rem;height:.5rem;border-radius:50%;background:#233246;flex:none}
+  .gh-row.act .dot{background:var(--green);box-shadow:0 0 8px rgba(95,224,163,.6)}
+
+  /* progression + info */
+  .gh-stat{padding:.75rem 1.05rem;border-bottom:1px solid var(--line)}
+  .gh-stat:last-child{border-bottom:none}
+  .gh-stat .k{font-family:var(--gmono);font-size:.58rem;letter-spacing:.13em;text-transform:uppercase;color:var(--muted)}
+  .gh-stat .v{font-size:1.05rem;font-weight:700;margin-top:.22rem;font-variant-numeric:tabular-nums}
+  .gh-stat .track{height:.36rem;border-radius:999px;background:#0a1220;border:1px solid var(--line);overflow:hidden;margin-top:.4rem}
+  .gh-stat .track i{display:block;height:100%;background:linear-gradient(90deg,var(--arc),var(--green))}
+  .gh-stat .sm{font-size:.76rem;color:var(--dim);margin-top:.3rem}
+  /* Officer-supplied external links. The hostname is always shown next to the
+     link text so a reader can see where it actually goes before clicking. */
+  .gh-stat .extlink{color:var(--arc-hi);text-decoration:none;border-bottom:1px solid transparent}
+  .gh-stat .extlink:hover{border-color:currentColor}
+  .gh-stat .extlink::after{content:" \2197";font-size:.75em;color:var(--dim)}
+  .gh-stat .hostname{display:block;font-family:var(--gmono);font-size:.62rem;color:var(--dim);margin-top:.15rem}
+
+  /* editor */
+  .gh-edit{margin-top:1.2rem;border:1px solid rgba(255,138,74,.35);border-radius:.9rem;overflow:hidden;
+    background:linear-gradient(180deg,rgba(255,138,74,.06),var(--cell))}
+  .gh-edit .ph{padding:.85rem 1.05rem;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:.6rem;flex-wrap:wrap}
+  .gh-edit .ph h3{font-family:var(--gserif);margin:0;font-size:1.08rem;color:var(--ember-hi)}
+  .gh-edit .ph .why{font-family:var(--gmono);font-size:.62rem;color:var(--muted);margin-left:auto}
+  .gh-body{padding:1.1rem}
+  .bb{display:grid;gap:1.2rem;grid-template-columns:minmax(0,15rem) minmax(0,1fr);align-items:start}
+  @media(max-width:46rem){.bb{grid-template-columns:1fr}}
+  .stage{background:radial-gradient(60% 60% at 50% 35%,rgba(77,178,255,.10),transparent 70%),#080e17;
+    border:1px solid var(--line2);border-radius:.75rem;padding:1.2rem;display:grid;place-items:center;min-height:15rem}
+  .stage svg{filter:drop-shadow(0 10px 26px rgba(0,0,0,.6))}
+  .ctl{display:flex;flex-direction:column;gap:.8rem}
+  .ctl .lab{font-family:var(--gmono);font-size:.58rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-bottom:.35rem}
+  .opts{display:flex;flex-wrap:wrap;gap:.3rem}
+  .opt{font-size:.76rem;padding:.28rem .55rem;border-radius:.38rem;cursor:pointer;font-family:inherit;
+    border:1px solid var(--line2);background:#0a121d;color:var(--muted);transition:.13s}
+  .opt:hover{border-color:var(--arc-dp);color:var(--ctext)}
+  .opt[aria-pressed="true"]{background:var(--arc-hi);color:#04121f;border-color:transparent;font-weight:700}
+  .opt:focus-visible{outline:2px solid var(--arc-hi);outline-offset:2px}
+  .sw{width:1.6rem;height:1.6rem;border-radius:.32rem;border:2px solid var(--line2);cursor:pointer;padding:0}
+  .sw[aria-pressed="true"]{border-color:#fff;box-shadow:0 0 0 2px rgba(255,255,255,.22)}
+  /* Colour wheel. Presets are quick picks; this is the escape hatch. Safe
+     because the value is validated as a strict six-digit hex server-side. */
+  .pick{position:relative;width:1.6rem;height:1.6rem;border-radius:.32rem;cursor:pointer;
+    border:2px dashed var(--line2);display:grid;place-items:center;overflow:hidden;
+    background:conic-gradient(#ff5d5d,#ffd23f,#4fd97d,#35d6e8,#4f9dff,#c084fc,#ff5d5d)}
+  .pick:hover{border-color:var(--arc-hi)}
+  .pick input{position:absolute;inset:0;opacity:0;cursor:pointer;border:none;padding:0}
+  .pick span{font-size:.62rem;color:#0a0f18;text-shadow:0 0 3px rgba(255,255,255,.9);pointer-events:none}
+  .pick:focus-within{outline:2px solid var(--arc-hi);outline-offset:2px}
+  .warncon{margin-top:.5rem;font-size:.76rem;color:var(--ember-hi);
+    background:rgba(255,138,74,.08);border:1px solid rgba(255,138,74,.3);
+    border-radius:.4rem;padding:.4rem .55rem}
+  .gh-field{margin-top:1rem}
+  .gh-field textarea,.gh-field input[type=text]{width:100%;background:#080d16;color:var(--ctext);
+    border:1px solid var(--line2);border-radius:.5rem;padding:.6rem .7rem;font-family:inherit;font-size:.9rem;resize:vertical}
+  .gh-field textarea:focus,.gh-field input:focus{outline:none;border-color:var(--arc)}
+  .gh-field.two{display:grid;grid-template-columns:1fr 1fr;gap:.9rem}
+  .gh-field .fhint{font-family:var(--gmono);font-size:.62rem;color:var(--dim);margin-top:.3rem;line-height:1.5}
+  .rowline{display:flex;align-items:center;gap:.7rem;flex-wrap:wrap;margin-top:1rem}
+  .toggle{display:flex;align-items:center;gap:.45rem;font-size:.88rem;color:#c3d2e4;cursor:pointer}
+  .save{font-family:var(--gmono);font-size:.7rem;letter-spacing:.11em;text-transform:uppercase;font-weight:700;
+    color:#2a1004;background:linear-gradient(90deg,var(--ember-hi),var(--ember));border:none;
+    padding:.55rem 1.15rem;border-radius:999px;cursor:pointer;transition:.15s}
+  .save:hover{filter:brightness(1.08)}
+  .save:focus-visible{outline:2px solid var(--ember-hi);outline-offset:3px}
+  .hintline{font-family:var(--gmono);font-size:.62rem;color:var(--dim);margin-left:auto}
+
+  /* ---- top contributors ---- */
+  .gh-contrib{margin-top:1.2rem}
+  .ctable{overflow-x:auto}
+  .ctable table{border-collapse:collapse;width:100%;font-size:.86rem;min-width:34rem}
+  .ctable th{font-family:var(--gmono);font-size:.58rem;letter-spacing:.13em;text-transform:uppercase;
+    color:var(--muted);text-align:left;padding:.6rem 1.05rem;border-bottom:1px solid var(--line);
+    white-space:nowrap;background:rgba(0,0,0,.2)}
+  .ctable td{padding:.5rem 1.05rem;border-bottom:1px solid var(--line);
+    font-variant-numeric:tabular-nums;color:var(--muted)}
+  .ctable tr:last-child td{border-bottom:none}
+  .ctable tbody tr:hover{background:rgba(255,255,255,.022)}
+  .ctable .n{text-align:right;white-space:nowrap}
+  .ctable .who a{color:var(--ctext);text-decoration:none;font-weight:600}
+  .ctable .who a:hover{color:var(--arc-hi)}
+  .ctable .who .sub{display:block;font-family:var(--gmono);font-size:.6rem;color:var(--dim);margin-top:.1rem}
+  .ctable .lead{color:var(--gold);font-weight:700}
+  .ctable .cr{color:var(--gold);margin-right:.22rem}
+  .cnote{padding:.75rem 1.05rem;border-top:1px solid var(--line);font-family:var(--gmono);
+    font-size:.64rem;color:var(--dim);line-height:1.6}
+  .cnote b{color:var(--muted)}
+
+  /* ---- achievements ---- */
+  /* overflow must stay VISIBLE: the achievement tooltips are absolutely
+     positioned popovers, and clipping them here is what made the description
+     disappear off the top of the panel. Corners are rounded on the header
+     instead of by clipping the container. */
+  .gh-ach{margin-top:1.2rem;border:1px solid var(--line2);border-radius:.9rem;overflow:visible;
+    background:linear-gradient(180deg,var(--panel2),var(--cell))}
+  .gh-ach .ph{padding:.85rem 1.05rem;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:.6rem;flex-wrap:wrap;
+    border-radius:.85rem .85rem 0 0}
+  .gh-ach .ph h3{font-family:var(--gserif);margin:0;font-size:1.08rem;font-weight:700}
+  .gh-ach .ph .c{font-family:var(--gmono);font-size:.68rem;color:var(--muted);margin-left:auto;font-variant-numeric:tabular-nums}
+  .gh-ach .ph .pts{font-family:var(--gmono);font-size:.62rem;letter-spacing:.1em;text-transform:uppercase;
+    font-weight:700;color:#2a1004;background:linear-gradient(90deg,var(--ember-hi),var(--ember));
+    padding:.16rem .5rem;border-radius:.32rem}
+  .agrid{padding:.8rem;display:grid;gap:.6rem;grid-template-columns:repeat(auto-fill,minmax(15.5rem,1fr))}
+  .ach{position:relative;border:1px solid var(--line);border-radius:.6rem;padding:.7rem .8rem;
+    background:rgba(0,0,0,.24);display:flex;gap:.7rem;align-items:flex-start;transition:.14s}
+  .ach:hover{border-color:var(--arc-dp)}
+  .ach.on{border-color:var(--green-dp);background:rgba(95,224,163,.055)}
+  .ach.max{border-color:var(--gold);background:rgba(255,178,137,.07)}
+  .ach .ic{width:2rem;height:2rem;flex:none;border-radius:.45rem;display:grid;place-items:center;
+    font-size:1rem;background:#0a1220;border:1px solid var(--line2);color:var(--dim)}
+  .ach.on .ic{background:radial-gradient(circle at 40% 30%,rgba(95,224,163,.35),rgba(10,18,32,.9));
+    border-color:var(--green-dp);color:var(--green)}
+  .ach.max .ic{background:radial-gradient(circle at 40% 30%,var(--ember-hi),var(--ember));
+    border-color:var(--gold);color:#2a1004;box-shadow:0 0 14px rgba(255,138,74,.4)}
+  .ach .bd{min-width:0;flex:1}
+  .ach .nm{font-size:.9rem;font-weight:600;color:var(--muted);display:flex;align-items:center;gap:.4rem;flex-wrap:wrap}
+  .ach.on .nm{color:var(--ctext)}
+  .ach .tier{font-family:var(--gmono);font-size:.58rem;letter-spacing:.1em;font-weight:700;
+    padding:.04rem .32rem;border-radius:.25rem;border:1px solid var(--green-dp);color:var(--green)}
+  .ach.max .tier{border-color:var(--gold);color:var(--gold)}
+  .ach .val{font-family:var(--gmono);font-size:.72rem;color:var(--dim);margin-top:.2rem;font-variant-numeric:tabular-nums}
+  .ach .val b{color:#a8bdd4}
+  .ach .track{height:.28rem;border-radius:999px;background:#0a1220;border:1px solid var(--line);overflow:hidden;margin-top:.4rem}
+  .ach .track i{display:block;height:100%;background:linear-gradient(90deg,var(--arc),var(--green))}
+  .ach.max .track i{background:linear-gradient(90deg,var(--ember),var(--gold))}
+  .ach .acc{position:absolute;top:.45rem;right:.5rem;font-family:var(--gmono);font-size:.5rem;
+    letter-spacing:.1em;color:var(--dim);border:1px solid var(--line2);border-radius:.22rem;padding:0 .22rem}
+  .ach:focus-visible{outline:2px solid var(--arc-hi);outline-offset:2px}
+
+  /* Hover/focus detail: what the badge is for, the whole tier ladder, and what
+     the next tier costs. The card itself only has room for the current tier. */
+  /* Opens DOWNWARD. Opening upward put row-one tooltips over the panel header
+     and off the top of the card, where they were unreadable. Downward always has
+     the rest of the page to grow into. */
+  .ach .tip{position:absolute;left:50%;top:calc(100% + .5rem);transform:translateX(-50%) translateY(-.3rem);
+    width:min(20rem,78vw);z-index:60;opacity:0;visibility:hidden;transition:.15s;pointer-events:none;
+    background:linear-gradient(180deg,#16202f,#0b1220);border:1px solid var(--arc-dp);
+    border-radius:.6rem;padding:.7rem .8rem;box-shadow:0 18px 44px rgba(0,0,0,.75)}
+  .ach:hover,.ach:focus,.ach:focus-within{z-index:61}
+  .ach:hover .tip,.ach:focus .tip,.ach:focus-within .tip{opacity:1;visibility:visible;transform:translateX(-50%) translateY(0)}
+  .ach .tip::after{content:"";position:absolute;bottom:100%;left:50%;margin-left:-6px;
+    border:6px solid transparent;border-bottom-color:var(--arc-dp)}
+  .ach .tip .tt{font-family:var(--gserif);font-size:.95rem;font-weight:700;color:var(--ctext);margin-bottom:.3rem}
+  .ach .tip .td{font-size:.8rem;color:var(--muted);line-height:1.5}
+  .ach .tip .tl{display:flex;flex-wrap:wrap;gap:.25rem;margin:.55rem 0 .45rem}
+  .ach .tip .tr{font-family:var(--gmono);font-size:.62rem;color:var(--dim);
+    border:1px solid var(--line2);border-radius:.28rem;padding:.1rem .3rem;
+    display:inline-flex;align-items:center;gap:.24rem;font-variant-numeric:tabular-nums}
+  .ach .tip .tr i{font-style:normal;font-weight:700;color:var(--dim)}
+  .ach .tip .tr.got{color:var(--green);border-color:var(--green-dp);background:rgba(95,224,163,.09)}
+  .ach .tip .tr.got i{color:var(--green)}
+  .ach .tip .tf{font-size:.76rem;color:#a8bdd4;border-top:1px solid var(--line);padding-top:.4rem}
+  .ach .tip .tf b{color:var(--gold)}
+  .ach .tip .tw{display:block;margin-top:.35rem;font-family:var(--gmono);font-size:.62rem;color:var(--dim)}
+  @media(max-width:46rem){.ach .tip{position:static;transform:none;width:auto;opacity:1;
+    visibility:visible;box-shadow:none;margin-top:.55rem;pointer-events:auto}
+    .ach .tip::after{display:none}}
+
+  .gh-claim{margin-top:1.2rem;padding:1.1rem 1.2rem;border:1px dashed var(--line2);border-radius:.9rem;
+    background:rgba(255,255,255,.015);font-size:.9rem;color:var(--muted);display:flex;gap:.9rem;align-items:flex-start}
+  .gh-claim .i{font-size:1.2rem;color:var(--arc-hi);flex:none}
+  .gh-claim b{color:var(--ctext)}
+  .gh-claim a{color:var(--arc-hi);text-decoration:none;border-bottom:1px solid transparent}
+  .gh-claim a:hover{border-color:currentColor}
+
+  .gh-foot{margin-top:1.5rem;padding:.95rem 1.1rem;border:1px solid var(--line);border-radius:.7rem;
+    background:rgba(255,255,255,.015);font-family:var(--gmono);font-size:.68rem;color:var(--muted);line-height:1.7;text-align:center}
+  .gh-foot b{color:var(--arc-hi)}
+  @media(prefers-reduced-motion:reduce){.gh-sky .aur i,.ghall .hero .aur2{animation:none}}
+  @media(max-width:34rem){.ghall h1{font-size:1.8rem}}
+</style>
+
+<div class="gh-sky" aria-hidden="true">
+  <div class="aur"><i class="a1"></i><i class="a2"></i></div>
+  <canvas id="gh-stars"></canvas>
+</div>
+
+<div class="ghall">
+  <div class="eyebrow">
+    <span>PTDex // guild.hall</span>
+    <a href="{{ url_for('guilds.guild_portal') }}">&larr; All guilds</a>
+  </div>
+
+  <section class="hero">
+    <div class="aur2"></div>
+    <div class="in">
+      <div class="crest" id="crest">{{ banner_svg|safe }}</div>
+      <div class="who">
+        <div class="kicker">Guild Hall</div>
+        <h1>{{ g.name }}</h1>
+        {% if recruiting %}<div class="rec">&#9873; Recruiting</div>{% endif %}
+        {% if blurb %}<p class="blurb">{{ blurb }}</p>{% endif %}
+        {% if profile.updated_by_name %}
+        <div class="stamp">&#9998; Last edited by <b>{{ profile.updated_by_name }}</b>{% if profile.updated_by_title %},
+          {{ profile.updated_by_title }}{% endif %}{% if profile.updated_at %} &middot; {{ profile.updated_at|replace('T',' ') }} UTC{% endif %}</div>
+        {% endif %}
+        {% if g.summary %}
+        <div class="tally">
+          <div class="t a"><div class="n">{{ g.summary.standing }}</div><div class="l">Standing</div></div>
+          <div class="t b"><div class="n">{{ g.summary.members }}</div><div class="l">Members</div></div>
+          <div class="t c"><div class="n">{{ g.summary.capped }}</div><div class="l">At Level 65</div></div>
+          <div class="t d"><div class="n">#{{ g.summary.rank }}</div><div class="l">Server Rank</div></div>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+    {% if g.motd %}
+    <div class="motd">
+      <div class="i">&#128220;</div>
+      <div><div class="b">{{ g.motd }}</div>
+        <div class="src">Message of the day{% if g.motd_setter %} &middot; set by {{ g.motd_setter }}{% endif %} &middot; live from the game</div>
+      </div>
+    </div>
+    {% endif %}
+  </section>
+
+  <div class="gh-grid">
+    <section class="gh-panel">
+      <div class="ph"><h3>Roster</h3>
+        <span class="c">{{ g.roster|length }} member{{ '' if g.roster|length == 1 else 's' }}
+          &middot; {{ g.officers|length }} officer{{ '' if g.officers|length == 1 else 's' }}</span></div>
+      <div class="gh-rost">
+        {% for m in g.roster %}
+        <div class="gh-row {{ 'act' if m.active }} {{ 'off' if m.is_officer }}">
+          <div class="nm">
+            <a href="{{ url_for('characters.character_profile', char_id=m.id) }}">{{ m.name }}</a>
+            <div class="ti">{{ m.title }}{% if m.note %} &middot; {{ m.note }}{% endif %}</div>
+          </div>
+          <div class="lv"><b>{{ m.level }}</b> &middot; {{ '{:,}'.format(m.aa) }} AA</div>
+          <div class="dot" title="{{ 'Active in the last 14 days' if m.active else 'Not seen recently' }}"></div>
+        </div>
+        {% else %}
+        <div style="padding:1.6rem;text-align:center;color:var(--muted)">No visible members.</div>
+        {% endfor %}
+      </div>
+    </section>
+
+    <div>
+      <section class="gh-panel">
+        <div class="ph"><h3>Standing</h3></div>
+        {% if g.summary %}
+        {% set s = g.summary %}
+        <div class="gh-stat">
+          <div class="k">Planes of Power unlocked</div>
+          <div class="v">{{ s.pop_unlocked }} <span style="color:var(--dim);font-size:.85rem">of {{ s.accounts }} accounts</span></div>
+          <div class="track"><i style="width:{{ s.pop_pct }}%"></i></div>
+          <div class="sm">{{ s.time_started }} account{{ '' if s.time_started == 1 else 's' }} have begun the Time flag.</div>
+        </div>
+        <div class="gh-stat">
+          <div class="k">Active in the last 14 days</div>
+          <div class="v">{{ s.active }} <span style="color:var(--dim);font-size:.85rem">of {{ s.members }}</span></div>
+          <div class="track"><i style="width:{{ s.active_pct }}%"></i></div>
+        </div>
+        <div class="gh-stat">
+          <div class="k">Average level</div>
+          <div class="v">{{ s.avg_level }}<span style="color:var(--dim);font-size:.85rem"> &middot; peak {{ s.max_level }}</span></div>
+        </div>
+        <div class="gh-stat">
+          <div class="k">Alternate advancement</div>
+          <div class="v">{{ '{:,}'.format(s.avg_aa) }}<span style="color:var(--dim);font-size:.85rem"> avg &middot; {{ '{:,}'.format(s.capped_aa) }} at 65</span></div>
+        </div>
+        <div class="gh-stat">
+          <div class="k">Raid kills <span style="color:var(--dim);font-weight:400">&middot; last 7 days</span></div>
+          <div class="v">{{ '{:,}'.format(s.kills) }}</div>
+          <div class="sm">From the server kill log &mdash; every group size, not just ranked runs.
+            The log is pruned weekly, so this is current raid tempo rather than a lifetime total.</div>
+        </div>
+        {% endif %}
+      </section>
+
+      {% if profile.discord or profile.contact or g.channel %}
+      <section class="gh-panel" style="margin-top:1rem">
+        <div class="ph"><h3>Find us</h3></div>
+        {% if profile.discord %}<div class="gh-stat"><div class="k">Discord</div>
+          <div class="v" style="font-size:.9rem">
+            <a class="extlink" href="{{ profile.discord }}" rel="noopener nofollow ugc"
+               target="_blank">Join the server</a>
+            <span class="hostname">{{ profile.discord|host }}</span>
+          </div></div>{% endif %}
+        {% if profile.contact %}<div class="gh-stat"><div class="k">Who to ask</div>
+          <div class="v" style="font-size:.9rem">{{ profile.contact }}</div></div>{% endif %}
+        {% if g.channel %}<div class="gh-stat"><div class="k">In-game channel</div>
+          <div class="v" style="font-size:.9rem">{{ g.channel }}</div>
+          <div class="sm">Set in-game, not here.</div></div>{% endif %}
+      </section>
+      {% endif %}
+    </div>
+  </div>
+
+  {% if contrib and contrib.rows %}
+  <section class="gh-panel gh-contrib">
+    <div class="ph"><h3>&#9876; Top Contributors</h3>
+      <span class="c">who is carrying {{ g.name }}{% if contrib.total > contrib.rows|length %}
+        &middot; top {{ contrib.rows|length }} of {{ contrib.total }}{% endif %}</span></div>
+    <div class="ctable">
+      <table>
+        <thead><tr>
+          <th>Member</th>
+          <th class="n">Raid kills</th><th class="n">AA</th>
+          <th class="n">Discoveries</th><th class="n">Days played</th>
+        </tr></thead>
+        <tbody>
+          {% for m in contrib.rows %}
+          <tr>
+            <td class="who">
+              <a href="{{ url_for('characters.character_profile', char_id=m.id) }}">{{ m.name }}</a>
+              <span class="sub">{{ m.title }} &middot; lvl {{ m.level }}</span>
+            </td>
+            <td class="n {{ 'lead' if 'kills' in m.leads }}">
+              {%- if 'kills' in m.leads %}<span class="cr" title="Most raid kills">&#9819;</span>{% endif %}
+              {{ '{:,}'.format(m.kills) }}</td>
+            <td class="n {{ 'lead' if 'aa' in m.leads }}">
+              {%- if 'aa' in m.leads %}<span class="cr" title="Most AA">&#9819;</span>{% endif %}
+              {{ '{:,}'.format(m.aa) }}</td>
+            <td class="n {{ 'lead' if 'discoveries' in m.leads }}">
+              {%- if 'discoveries' in m.leads %}<span class="cr" title="Most first discoveries">&#9819;</span>{% endif %}
+              {{ '{:,}'.format(m.discoveries) }}</td>
+            <td class="n {{ 'lead' if 'days' in m.leads }}">
+              {%- if 'days' in m.leads %}<span class="cr" title="Most time played">&#9819;</span>{% endif %}
+              {{ m.days }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <div class="cnote">Ranked by how many columns a member leads, then raid kills. Every figure is
+      per <b>character</b>, not per account &mdash; a roster of alts can't inflate it. Raid kills
+      count from when tracking began.</div>
+  </section>
+  {% endif %}
+
+  {% if ach %}
+  <section class="gh-ach">
+    <div class="ph"><h3>&#127942; Achievements</h3>
+      <span class="pts">{{ ach.points }} / {{ ach.max_points }} pts</span>
+      <span class="c">{{ ach.earned }} of {{ ach.total }} earned &middot;
+        worth 13% of guild standing</span></div>
+    <div class="agrid">
+      {% for a in ach.list %}
+      <div class="ach {{ 'max' if a.complete else ('on' if a.level else '') }}" tabindex="0">
+        {% if a.accumulated %}<span class="acc" title="Counted from kill events since tracking began">TRACKED</span>{% endif %}
+        <div class="ic">{{ a.icon|safe }}</div>
+        <div class="bd">
+          <div class="nm">{{ a.name }}
+            {% if a.level %}<span class="tier">{{ a.roman }}{{ ' MAX' if a.complete }}</span>{% endif %}</div>
+          <div class="val">
+            <b>{{ '{:,}'.format(a.value) }}</b> {{ a.unit }}
+            {%- if a.next %} &middot; {{ '{:,}'.format(a.remaining) }} more for {{ a.next_roman }}
+            {%- else %} &middot; all {{ a.max_level }} tiers earned{% endif %}
+          </div>
+          <div class="track"><i style="width:{{ a.pct }}%"></i></div>
+        </div>
+        <div class="tip" role="tooltip">
+          <div class="tt">{{ a.icon|safe }} {{ a.name }}</div>
+          <div class="td">{{ a.desc|safe }}</div>
+          <div class="tl">
+            {% for t in a.tiers %}
+            <span class="tr {{ 'got' if loop.index <= a.level else '' }}"><i>{{
+              ['I','II','III','IV','V','VI'][loop.index0] }}</i>{{ '{:,}'.format(t) }}</span>
+            {% endfor %}
+          </div>
+          <div class="tf">
+            {%- if a.complete %}Every tier earned &mdash; <b>{{ '{:,}'.format(a.value) }}</b> {{ a.unit }}.
+            {%- else %}Currently <b>{{ '{:,}'.format(a.value) }}</b> {{ a.unit }};
+              <b>{{ '{:,}'.format(a.remaining) }}</b> more earns {{ a.next_roman }}.{% endif %}
+            {% if a.accumulated %}<span class="tw">Counted from kills recorded since tracking
+              began &mdash; earlier kills can't be recovered.</span>{% endif %}
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </section>
+  {% endif %}
+
+  {% if can_manage %}
+  <form class="gh-edit" method="post" action="{{ url_for('guilds.guild_save', guild_id=g.id) }}">
+    <div class="ph"><h3>&#9873; Officer controls</h3>
+      <span class="why">Leader &amp; Senior Officer only &mdash; every save is signed with your character name</span></div>
+    <div class="gh-body">
+      <div class="bb">
+        <div class="stage" id="preview">{{ banner_svg|safe }}</div>
+        <div class="ctl">
+          <div><div class="lab">Shape</div><div class="opts" data-k="shape">
+            {% for s in shapes %}<button type="button" class="opt" data-v="{{ s }}"
+              aria-pressed="{{ 'true' if banner_cfg.shape == s else 'false' }}">{{ s }}</button>{% endfor %}
+          </div></div>
+          <div><div class="lab">Field</div><div class="opts" data-k="field">
+            {% for f in fields %}<button type="button" class="opt" data-v="{{ f }}"
+              aria-pressed="{{ 'true' if banner_cfg.field == f else 'false' }}">{{ f }}</button>{% endfor %}
+          </div></div>
+          <div><div class="lab">Primary colour</div><div class="opts" data-k="c1">
+            {% for hex, nm in colors %}<button type="button" class="sw" data-v="{{ hex }}" title="{{ nm }}"
+              aria-label="{{ nm }}" style="background:{{ hex }}"
+              aria-pressed="{{ 'true' if banner_cfg.c1 == hex else 'false' }}"></button>{% endfor %}
+            <label class="pick" title="Any colour"><input type="color" data-k="c1"
+              value="{{ banner_cfg.c1 }}"><span>&#9998;</span></label>
+          </div></div>
+          <div><div class="lab">Secondary colour</div><div class="opts" data-k="c2">
+            {% for hex, nm in colors %}<button type="button" class="sw" data-v="{{ hex }}" title="{{ nm }}"
+              aria-label="{{ nm }}" style="background:{{ hex }}"
+              aria-pressed="{{ 'true' if banner_cfg.c2 == hex else 'false' }}"></button>{% endfor %}
+            <label class="pick" title="Any colour"><input type="color" data-k="c2"
+              value="{{ banner_cfg.c2 }}"><span>&#9998;</span></label>
+          </div></div>
+          <div><div class="lab">Charge</div><div class="opts" data-k="charge">
+            {% for key, nm in charges %}<button type="button" class="opt" data-v="{{ key }}"
+              aria-pressed="{{ 'true' if banner_cfg.charge == key else 'false' }}">{{ nm }}</button>{% endfor %}
+          </div></div>
+          <div><div class="lab">Metal &mdash; the charge &amp; trim</div><div class="opts" data-k="metal">
+            {% for hex, nm in metals %}<button type="button" class="sw" data-v="{{ hex }}" title="{{ nm }}"
+              aria-label="{{ nm }}" style="background:{{ hex }}"
+              aria-pressed="{{ 'true' if banner_cfg.metal == hex else 'false' }}"></button>{% endfor %}
+            <label class="pick" title="Any colour"><input type="color" data-k="metal"
+              value="{{ banner_cfg.metal }}"><span>&#9998;</span></label>
+          </div>
+          <div class="warncon" id="contrast" hidden>&#9888; Your charge is close in tone to the
+            field &mdash; it may be hard to make out at small sizes.</div></div>
+        </div>
+      </div>
+
+      {% for k in ['shape','field','c1','c2','charge','metal'] %}
+      <input type="hidden" name="{{ k }}" id="in-{{ k }}" value="{{ banner_cfg[k] }}">
+      {% endfor %}
+
+      <div class="gh-field">
+        <div class="lab">Recruitment pitch</div>
+        <textarea name="blurb" rows="3" maxlength="1200"
+          placeholder="Who you are, when you raid, what you're looking for.">{{ blurb }}</textarea>
+      </div>
+
+      <div class="gh-field">
+        <div class="lab">Discord invite</div>
+        <input type="text" name="discord" maxlength="200" value="{{ profile.discord or '' }}"
+          placeholder="https://discord.gg/yourcode  (or just the code)">
+        <div class="fhint">Must be a real discord.gg invite &mdash; anything else is rejected, so
+          nobody can point &ldquo;our Discord&rdquo; somewhere else.</div>
+      </div>
+
+      <div class="gh-field">
+        <div class="lab">Who to ask about joining</div>
+        <input type="text" name="contact" maxlength="80" value="{{ profile.contact or '' }}"
+          placeholder="Character name to whisper in-game">
+      </div>
+
+      <div class="rowline">
+        <label class="toggle"><input type="checkbox" name="recruiting" {{ 'checked' if recruiting }}>
+          Show as recruiting in the portal</label>
+        <button class="save" type="submit">Save guild page</button>
+        <span class="hintline">This edit will be published under your character's name</span>
+      </div>
+    </div>
+  </form>
+  {% elif signed_in %}
+  <div class="gh-claim"><div class="i">&#9873;</div>
+    <div>This page is edited by <b>{{ g.name }}</b>'s <b>Leader</b> and <b>Senior Officers</b>. None of
+      your linked characters holds that rank here &mdash; if that's wrong, have your leader promote you
+      in-game and the controls appear on your next visit. Nothing to request, and no staff involvement.</div></div>
+  {% else %}
+  <div class="gh-claim"><div class="i">&#9873;</div>
+    <div>Do you lead <b>{{ g.name }}</b>?
+      <a href="{{ url_for('login') }}">Sign in with Discord</a> and, if a character on your account is its
+      <b>Leader</b> or a <b>Senior Officer</b>, you can set the banner and recruitment details straight
+      away. Each save is published under that character's name.</div></div>
+  {% endif %}
+
+  <div class="gh-foot">
+    Roster, ranks and the message of the day are read live from the game &mdash; the site never writes to it.
+    Only the banner and recruitment details are stored here, and only <b>officers</b> can change them.
+  </div>
+</div>
+
+<script>
+(function(){
+  var c=document.getElementById('gh-stars');
+  if(c){
+    var PAL=['#8fd0ff','#ffffff','#cfe6ff','#ff8a4a','#5fe0a3'];
+    var paint=function(){
+      var x=c.getContext('2d'),W=c.width=innerWidth+100,H=c.height=innerHeight+100;
+      x.clearRect(0,0,W,H);
+      var n=Math.round(W*H/3400);
+      for(var i=0;i<n;i++){
+        x.globalAlpha=.2+Math.random()*.5;
+        x.fillStyle=PAL[Math.floor(Math.random()*PAL.length)];
+        x.beginPath();x.arc(Math.random()*W,Math.random()*H,.3+Math.random()*1.1,0,6.283);x.fill();
+      }
+      x.globalAlpha=1;
+    };
+    paint(); var t; addEventListener('resize',function(){clearTimeout(t);t=setTimeout(paint,180);});
+  }
+
+  // ---- heraldry builder: the server renders the SVG so the preview is exactly
+  // what gets stored -- no second implementation to drift out of sync.
+  var box=document.getElementById('preview'); if(!box)return;
+  var crest=document.getElementById('crest'), timer=null;
+
+  function refresh(){
+    var q=[];
+    ['shape','field','c1','c2','charge','metal'].forEach(function(k){
+      q.push(k+'='+encodeURIComponent(document.getElementById('in-'+k).value));
+    });
+    fetch('{{ url_for("guilds.banner_preview") }}?'+q.join('&'))
+      .then(function(r){return r.json();})
+      .then(function(d){ box.innerHTML=d.svg; if(crest) crest.innerHTML=d.svg; })
+      .catch(function(){});
+  }
+
+  function set(key,val){
+    document.getElementById('in-'+key).value=val;
+    var grp=document.querySelector('.opts[data-k="'+key+'"]');
+    if(grp)Array.prototype.forEach.call(grp.querySelectorAll('[data-v]'),function(o){
+      o.setAttribute('aria-pressed',String(o.getAttribute('data-v')===val));});
+    var inp=document.querySelector('input[type=color][data-k="'+key+'"]');
+    if(inp&&/^#[0-9a-f]{6}$/i.test(val))inp.value=val;
+    clearTimeout(timer); timer=setTimeout(function(){refresh();contrast();},90);
+  }
+
+  Array.prototype.forEach.call(document.querySelectorAll('.opts'),function(grp){
+    var key=grp.getAttribute('data-k');
+    grp.addEventListener('click',function(e){
+      var b=e.target.closest('[data-v]'); if(!b||!grp.contains(b))return;
+      set(key,b.getAttribute('data-v'));
+    });
+  });
+  Array.prototype.forEach.call(document.querySelectorAll('input[type=color][data-k]'),function(inp){
+    inp.addEventListener('input',function(){ set(inp.getAttribute('data-k'), inp.value); });
+  });
+
+  // Warn (never block) when the charge won't read against its ground.
+  //
+  // NOT WCAG luminance contrast: that measures TEXT legibility and only looks at
+  // brightness, so it called gold-on-arcane-blue a failure (1.4:1) even though
+  // the two are obviously different colours. It fired on almost every
+  // combination. This uses a perceptual RGB distance instead, which accounts for
+  // hue as well as brightness -- the actual question is "can you tell these two
+  // shapes apart", not "can you read small text".
+  function rgb(h){h=h.replace('#','');
+    return [parseInt(h.substr(0,2),16),parseInt(h.substr(2,2),16),parseInt(h.substr(4,2),16)];}
+  function dist(x,y){
+    var a=rgb(x),b=rgb(y),rm=(a[0]+b[0])/2,
+        dr=a[0]-b[0],dg=a[1]-b[1],db=a[2]-b[2];
+    return Math.sqrt((2+rm/256)*dr*dr + 4*dg*dg + (2+(255-rm)/256)*db*db);
+  }
+  var TOO_CLOSE = 150;         // ~0-765 scale; below this the shapes merge
+  function contrast(){
+    var box=document.getElementById('contrast'); if(!box)return;
+    var m=document.getElementById('in-metal').value,
+        a=document.getElementById('in-c1').value,
+        b=document.getElementById('in-c2').value,
+        solid=document.getElementById('in-field').value==='solid';
+    var worst=solid?dist(m,a):Math.min(dist(m,a),dist(m,b));
+    box.hidden = worst >= TOO_CLOSE;
+  }
+  contrast();
+})();
+</script>
+{% endblock %}

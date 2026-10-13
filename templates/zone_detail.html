@@ -1,0 +1,137 @@
+{% extends "layout.html" %}
+{% block title %}PTDex :: Zone{% if data %} :: {{ data.long_name }}{% endif %}{% endblock %}
+{% block body %}
+{% if data is none %}
+<div class="wp"><h1>Zone not found</h1></div>
+{% else %}
+<script>
+$(document).ready(function () { if (document.getElementById('npc_table')) $('#npc_table').DataTable({ "order": [[1,"desc"]], "pageLength": 25, searching: true, paging: false, info: false, "dom": '<lfp<t>i>' }); });
+</script>
+<style>
+  .z-map{background:#0f1622;border:1px solid var(--w-line2);border-radius:0.75rem;overflow:hidden;margin-bottom:1rem}
+  .z-map .mc{position:relative;width:100%;height:28.75rem;background:#11161f}
+  .z-map #mpos{position:absolute;bottom:0.625rem;left:0.625rem;background:rgba(8,11,17,.8);color:var(--w-arc-hi);padding:0.3125rem 0.5625rem;border-radius:0.375rem;font-family:var(--w-mono);font-size:.78rem;border:1px solid var(--w-line2)}
+  .z-kv .r{display:flex;justify-content:space-between;gap:0.75rem;padding:0.375rem 0;border-bottom:1px dotted var(--w-line);font-size:.88rem}
+  .z-kv .r:last-child{border-bottom:0}.z-kv .k{color:var(--w-muted)}.z-kv .v{font-weight:600;text-align:right}
+  .z-flags{display:flex;flex-wrap:wrap;gap:0.375rem;padding:0.5rem 1rem 0.75rem}
+  .z-flag{font-family:var(--w-mono);font-size:.72rem;padding:0.1875rem 0.625rem;border-radius:0.375rem;border:1px solid var(--w-line2);background:rgba(77,178,255,.06);color:var(--w-arc-hi)}
+  .z-flag.no{color:var(--w-muted);background:transparent}
+  /* spawn cards */
+  .sp-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(18.75rem,1fr));gap:0.625rem;padding:0.75rem 1rem 1rem}
+  .sp-card{background:rgba(13,20,32,.6);border:1px solid var(--w-line);border-radius:0.625rem;padding:0.5625rem 0.75rem;transition:.13s}
+  .sp-card:hover{border-color:var(--w-line2);background:rgba(77,178,255,.05)}
+  .sp-card.rare{border-color:var(--w-gold2);background:rgba(255,178,137,.05);box-shadow:0 0 14px rgba(255,178,137,.1)}
+  .sp-head{display:flex;align-items:center;gap:0.5625rem;font-family:var(--w-mono);font-size:.72rem;color:var(--w-muted)}
+  .sp-idx{color:var(--w-arc-hi);font-weight:700;flex:none}
+  .sp-card.rare .sp-idx{color:var(--w-gold)}
+  .sp-rs{margin-left:auto;flex:none;background:rgba(77,178,255,.08);border:1px solid var(--w-line2);border-radius:999px;
+    padding:0.0625rem 0.5625rem;font-size:.66rem;color:var(--w-arc-hi)}
+  .sp-card.rare .sp-rs{color:var(--w-gold);border-color:var(--w-gold2);background:rgba(255,178,137,.1)}
+  .sp-npcs{display:flex;flex-wrap:wrap;gap:0.3125rem;margin-top:0.5rem}
+  .sp-npc{font-size:.8rem;background:rgba(77,178,255,.06);border:1px solid var(--w-line);border-radius:0.4375rem;padding:0.125rem 0.5625rem}
+  .sp-npc a{color:var(--w-text);text-decoration:none}
+  .sp-npc a:hover{color:var(--w-arc-hi)}
+  .sp-card.rare .sp-npc a{color:var(--w-gold)}
+  .sp-npc .ch{color:var(--w-muted);font-family:var(--w-mono);font-size:.66rem}
+  .sp-npc .xn{color:var(--w-gold);font-family:var(--w-mono);font-size:.68rem;font-weight:700}
+  .sp-count{font-family:var(--w-mono);font-size:.68rem;color:var(--w-muted);font-weight:400;margin-left:0.625rem}
+</style>
+<div class="wp">
+  <div class="wp-eyebrow">PTDex // world.zones</div>
+  <h1>{{ data.long_name }}</h1>
+
+  {% if data['mapping'] %}
+  <div class="z-map"><div class="mc">
+    <svg id="zone-map" width="100%" height="100%" viewBox="-1640.00 -1679.0 1640.0 1679.0" xmlns="http://www.w3.org/2000/svg">
+      {% for entry in data['mapping'] %}<line x1="{{entry.x1}}" y1="{{entry.y1}}" x2="{{entry.x2}}" y2="{{entry.y2}}" stroke="rgb({{entry.rgb}})" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>{% endfor %}
+      {% if data['waypoint'] %}<circle r="25" cx="{{data['waypoint']['x'] * -1}}" cy="{{data['waypoint']['y'] * -1}}" fill="#5fe0a3"/>{% endif %}
+    </svg>
+    <div id="mpos">Y: 0, X: 0</div>
+  </div></div>
+  <script src="https://cdn.jsdelivr.net/npm/@svgdotjs/svg.js@3.0/dist/svg.min.js"></script>
+  <script src="/static/svg.panzoom.min.js"></script>
+  <script type="module">const draw = SVG('#zone-map'); draw.panZoom({ zoomMin: 0.1, zoomMax: 10, zoomFactor: 1 });</script>
+  <script>
+    const svg=document.getElementById('zone-map'), mb=document.getElementById('mpos'), pt=svg.createSVGPoint();
+    function cp(e){pt.x=e.clientX;pt.y=e.clientY;return pt.matrixTransform(svg.getScreenCTM().inverse());}
+    svg.addEventListener('mousemove',function(e){const l=cp(e);mb.textContent=`Y: ${-Math.round(l.y)}, X: ${-Math.round(l.x)}`;});
+  </script>
+  {% endif %}
+
+  <div class="wp-panel">
+    <h2>Zone Information</h2>
+    <div class="wp-pb z-kv">
+      <div class="r"><span class="k">Short Name</span><span class="v">{{ data.short_name }}</span></div>
+      <div class="r"><span class="k">Expansion</span><span class="v">{{ data.expansion }}</span></div>
+      <div class="r"><span class="k">Succor / Safe</span><span class="v">{{ data.safe_x }}, {{ data.safe_y }}</span></div>
+      {% if data.waypoint %}<div class="r"><span class="k" style="color:var(--w-green)">Waypoint</span><span class="v" style="color:var(--w-green)">{{ data.waypoint.x }}, {{ data.waypoint.y }}, {{ data.waypoint.z }}</span></div>{% endif %}
+    </div>
+    <div class="z-flags">
+      <span class="z-flag {{ '' if data.can_bind else 'no' }}">{{ 'Can Bind' if data.can_bind else 'No Bind' }}</span>
+      <span class="z-flag {{ '' if data.can_lev else 'no' }}">{{ 'Levitation' if data.can_lev else 'No Levitation' }}</span>
+      <span class="z-flag">{{ 'Outdoor' if data.outdoor else 'Indoor' }}</span>
+    </div>
+  </div>
+
+  {% if data.linked_zones %}
+  <div class="wp-panel"><h2>Connected Zones</h2>
+    <div class="wp-grid">
+      {% for zid in data.linked_zones %}<a class="wp-card" href="{{ url_for('zones.zone_detail', zone_id=zid) }}"><div class="nm">{{ data['linked_zones'][zid] }}</div></a>{% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+  {% if data.dropped_items %}
+  <div class="wp-panel"><h2>Items Dropped Here</h2>
+    <div class="wp-grid">
+      {% for entry in data.dropped_items|sort(attribute='item_name') %}
+      <a class="wp-card" style="display:flex;align-items:center;gap:10px" href="{{ url_for('items.item_detail', item_id=entry.item_id) }}">
+        <img src="/static/item_icons/item_{{ entry.icon }}.png" style="width:30px;height:30px;border-radius:4px;flex:none" onerror="this.style.visibility='hidden'"><span class="nm" style="font-size:.85rem">{{ entry.item_name }}</span>
+      </a>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+  {% if data.npcs %}
+  <div class="wp-panel"><h2>NPCs</h2><div class="wp-pb wp-tw">
+    <table id="npc_table">
+      <thead><tr><th>Name</th><th>Level</th><th>HP</th><th>Race</th></tr></thead>
+      <tbody>
+      {% for entry in data.npcs %}
+      <tr><td><a href="{{ url_for('npcs.npc_detail', npc_id=entry.id) }}">{{ entry.name }}</a></td>
+          <td style="font-variant-numeric:tabular-nums">{{ entry.level }}</td>
+          <td style="font-variant-numeric:tabular-nums;color:var(--w-green)">{{ entry.hp }}</td>
+          <td style="color:var(--w-muted)">{{ entry.race }}</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div></div>
+  {% endif %}
+
+  {% if data.spawn_groups %}
+  <div class="wp-panel"><h2>Spawns<span class="sp-count">{{ data.spawn_groups|length }} spawn points &middot; y, x, z</span></h2>
+    <div class="sp-grid">
+    {% for entry in data.spawn_groups %}
+      {% set g = data.spawn_groups[entry] %}
+      {% set rare = ('day' in g.respawn) or ('hour' in g.respawn) %}
+      {% set parts = entry.rsplit('_', 1) %}
+      <div class="sp-card{% if rare %} rare{% endif %}">
+        <div class="sp-head">
+          <span class="sp-idx">{% if parts|length == 2 and parts[1].isdigit() %}#{{ parts[1] }}{% else %}{{ entry }}{% endif %}</span>
+          <span>{{ g.y|round|int }}, {{ g.x|round|int }}, {{ g.z|round|int }}</span>
+          <span class="sp-rs" title="Respawn time">{{ g.respawn|replace(' minutes','m')|replace(' minute','m')|replace(' seconds','s')|replace(' second','s')|replace(' hours','h')|replace(' hour','h')|replace(' days','d')|replace(' day','d')|replace(', ',' ') }}</span>
+        </div>
+        <div class="sp-npcs">
+          {% for nname, grp in g.npcs|groupby('npc_name') %}
+          <span class="sp-npc"><a href="{{ url_for('npcs.npc_detail', npc_id=grp[0].npc_id) }}">{{ nname|replace('_',' ')|replace('#','') }}</a>{% if grp|length > 1 %} <span class="xn">&times;{{ grp|length }}</span>{% endif %} <span class="ch">{{ grp[0].chance }}%</span></span>
+          {% endfor %}
+        </div>
+      </div>
+    {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+</div>
+{% endif %}
+{% endblock %}

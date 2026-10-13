@@ -1,0 +1,195 @@
+{% extends "layout.html" %}
+{% block title %}Edit :: Forums{% endblock %}
+{% block body %}
+<style>
+  .fedit{--f-panel:#141a24;--f-cell:#0f1622;--f-line:#25303f;--f-line2:#33425a;--arc:#4db2ff;--arc-hi:#8fd0ff;
+    --emb:#ff8a4a;--emb-hi:#ffb289;--teal:#49d0a0;--txt:#ece5d6;--dim:#b3b0a4;--mut:#8a8f98;
+    --mono:ui-monospace,"Cascadia Code",Consolas,monospace;--serif:var(--nms-serif,Georgia,serif);
+    max-width:52rem;margin:0 auto;padding:1.5rem 1.25rem 5rem;color:var(--txt)}
+  .fedit form{display:block}   /* beats the global form{display:inline} */
+  .fedit a{text-decoration:none;color:var(--arc-hi)}
+  .fedit .back{font-family:var(--mono);font-size:.72rem;color:var(--mut);display:inline-block;margin-bottom:1rem}
+  .fedit .back:hover{color:var(--arc-hi)}
+  .fedit h1{font-family:var(--serif);font-size:1.7rem;font-weight:700;color:#f4ecda;margin:0 0 1.25rem}
+  .fedit .card{background:linear-gradient(180deg,var(--f-panel),#0f1319);border:1px solid var(--f-line2);border-radius:.9rem;padding:1.4rem;box-shadow:0 1rem 2.4rem rgba(0,0,0,.35)}
+  .fedit label{display:block;font-family:var(--mono);font-size:.66rem;letter-spacing:.12em;text-transform:uppercase;color:var(--emb);font-weight:700;margin:0 0 .4rem}
+  .fedit .row2{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1.1rem}
+  @media(max-width:34rem){.fedit .row2{grid-template-columns:1fr}}
+  .fedit .field{margin-bottom:1.1rem}
+  .fedit input, .fedit textarea{width:100%;box-sizing:border-box;background:#0b1220;border:1px solid var(--f-line2);
+    color:var(--txt);border-radius:.5rem;padding:.6rem .8rem;font-size:.95rem;font-family:inherit}
+  .fedit input:focus, .fedit textarea:focus{outline:none;border-color:var(--arc)}
+  .fedit textarea{font-family:var(--mono);font-size:.9rem;line-height:1.6;resize:vertical;min-height:24rem}
+  .fedit .hint{font-family:var(--mono);font-size:.7rem;color:var(--mut);margin-top:.4rem}
+  /* markdown toolbar + uploader + preview */
+  .fedit .mdtoolbar{display:flex;flex-wrap:wrap;gap:.3rem;align-items:center;padding:.5rem;
+    border:1px solid var(--f-line2);border-bottom:0;border-radius:.5rem .5rem 0 0;background:#0d131d}
+  .fedit .mdtoolbar button,.fedit .mdtoolbar .uploadbtn{font-family:var(--mono);font-size:.74rem;color:var(--arc-hi);
+    background:#111a26;border:1px solid var(--f-line2);border-radius:.35rem;padding:.3rem .55rem;cursor:pointer;line-height:1;margin:0}
+  .fedit .mdtoolbar button:hover,.fedit .mdtoolbar .uploadbtn:hover{border-color:var(--arc);background:rgba(77,178,255,.1);color:#fff}
+  .fedit .mdtoolbar .uploadbtn{display:inline-flex;align-items:center;gap:.25rem}
+  .fedit .mdtoolbar .sep{width:1px;height:1.1rem;background:var(--f-line2);margin:0 .15rem}
+  .fedit .mdtoolbar #mdpreview.on{color:#0b1220;background:linear-gradient(180deg,var(--emb-hi),var(--emb));border-color:var(--emb)}
+  .fedit #mdcontent{border-radius:0 0 .5rem .5rem;border-top-color:var(--f-line)}
+  .fedit .mdpreview-pane{border:1px solid var(--f-line2);border-top:0;border-radius:0 0 .5rem .5rem;padding:1.3rem 1.5rem;
+    background:#0b1220;min-height:20rem;line-height:1.7;color:var(--txt);overflow:auto}
+  .fedit .mdpreview-pane>*:first-child{margin-top:0}
+  .fedit .mdpreview-pane h1,.fedit .mdpreview-pane h2,.fedit .mdpreview-pane h3{font-family:var(--serif);color:var(--arc-hi);margin:1.3em 0 .4em}
+  .fedit .mdpreview-pane a{color:var(--emb-hi)}
+  .fedit .mdpreview-pane code{font-family:var(--mono);font-size:.88em;background:#0b1220;border:1px solid var(--f-line);border-radius:.3rem;padding:.08em .38em;color:var(--emb-hi)}
+  .fedit .mdpreview-pane pre{background:#0d1522;border:1px solid var(--f-line2);border-radius:.5rem;padding:1rem;overflow:auto}
+  .fedit .mdpreview-pane pre code{background:none;border:0;padding:0}
+  .fedit .mdpreview-pane table{border-collapse:collapse;width:100%;margin:1rem 0}
+  .fedit .mdpreview-pane th,.fedit .mdpreview-pane td{border:1px solid var(--f-line2);padding:.45rem .7rem}
+  .fedit .mdpreview-pane blockquote{border-left:3px solid var(--emb);margin:1rem 0;padding:.3rem 1rem;color:var(--dim)}
+  .fedit .btns{display:flex;justify-content:space-between;align-items:center;gap:1rem;margin-top:1.25rem}
+  .fedit .btn{font-family:var(--mono);font-size:.82rem;font-weight:700;border-radius:.5rem;padding:.55rem 1.3rem;cursor:pointer;border:1px solid}
+  .fedit .btn.save{color:#0b1220;background:linear-gradient(180deg,var(--emb-hi),var(--emb));border-color:var(--emb)}
+  .fedit .btn.save:hover{filter:brightness(1.07)}
+  .fedit .btn.cancel{color:var(--mut);background:transparent;border-color:var(--f-line2)}
+  .fedit .btn.cancel:hover{color:var(--txt);border-color:var(--mut)}
+</style>
+
+<div class="fedit forums">
+  <a class="back" href="{{ url_for('community_wiki.community_home') }}">&larr; Forums</a>
+
+  {% if not slug %}
+    <h1>New Page</h1>
+    <form method="post" action="{{ url_for('community_wiki.community_new') }}">
+      <div class="card">
+        <div class="field">
+          <label>Page Title</label>
+          <input name="title" placeholder="e.g. Best-in-Slot Weapons" required autofocus>
+          <div class="hint">A URL is generated from the title.</div>
+        </div>
+        <div class="row2">
+          <div>
+            <label>Section</label>
+            <input name="section" list="sections" value="{{ section or '' }}" placeholder="e.g. BiS Build Spreadsheet">
+          </div>
+          <div>
+            <label>Subsection <span style="color:var(--mut)">(optional)</span></label>
+            <input name="subsection" placeholder="e.g. Warrior">
+          </div>
+        </div>
+        <div class="btns">
+          <span></span>
+          <button class="btn save" type="submit">Continue &rarr;</button>
+        </div>
+      </div>
+    </form>
+  {% else %}
+    <h1>{% if is_new %}Create{% else %}Editing{% endif %}: {{ title }}</h1>
+    <form method="post" action="{{ url_for('community_wiki.community_edit', slug=slug) }}">
+      <div class="card">
+        <div class="row2">
+          <div>
+            <label>Section</label>
+            <input name="section" list="sections" value="{{ section or '' }}" placeholder="General">
+          </div>
+          <div>
+            <label>Subsection <span style="color:var(--mut)">(optional)</span></label>
+            <input name="subsection" value="{{ subsection or '' }}" placeholder="e.g. Warrior">
+          </div>
+        </div>
+        <div class="field">
+          <label>Content</label>
+          <div class="mdtoolbar" id="mdtoolbar">
+            <button type="button" data-md="h" title="Heading">H</button>
+            <button type="button" data-md="b" title="Bold"><b>B</b></button>
+            <button type="button" data-md="i" title="Italic"><i>I</i></button>
+            <button type="button" data-md="s" title="Strikethrough">S&#822;</button>
+            <span class="sep"></span>
+            <button type="button" data-md="ul" title="Bulleted list">&bull; List</button>
+            <button type="button" data-md="ol" title="Numbered list">1. List</button>
+            <button type="button" data-md="quote" title="Quote">&rdquo; Quote</button>
+            <span class="sep"></span>
+            <button type="button" data-md="link" title="Link">&#128279; Link</button>
+            <button type="button" data-md="code" title="Inline code">&lt;/&gt;</button>
+            <button type="button" data-md="pre" title="Code block">Code</button>
+            <button type="button" data-md="table" title="Table">Table</button>
+            <button type="button" data-md="hr" title="Divider">&mdash;</button>
+            <span class="sep"></span>
+            <label class="uploadbtn" title="Load a .md / .txt file into the editor">&#8593; Upload
+              <input type="file" id="mdfile" accept=".md,.markdown,.txt" hidden></label>
+            <button type="button" id="mdpreview" title="Toggle live preview">Preview</button>
+          </div>
+          <textarea name="content" id="mdcontent" rows="22" spellcheck="true">{{ content }}</textarea>
+          <div class="mdpreview-pane" id="mdpreviewpane" hidden></div>
+          <div class="hint">Markdown &mdash; headings, lists, links, tables, code, and emojis &#127775; all work. Upload a
+            <code>.md</code> file or use the toolbar; raw HTML is always sanitized for safety.</div>
+        </div>
+        <div class="btns">
+          <a class="btn cancel" href="{{ url_for('community_wiki.community_view', slug=slug) }}">Cancel</a>
+          <button class="btn save" type="submit">Save</button>
+        </div>
+      </div>
+    </form>
+  {% endif %}
+
+  <datalist id="sections">
+    {% for s in all_sections %}<option value="{{ s }}">{% endfor %}
+  </datalist>
+</div>
+
+<script>
+(function(){
+  var ta = document.getElementById('mdcontent');
+  if(!ta) return;
+
+  // ---- toolbar: scaffold markdown at the cursor / around the selection ----
+  function wrap(before, after){
+    var s = ta.selectionStart, e = ta.selectionEnd, v = ta.value, sel = v.slice(s, e);
+    ta.value = v.slice(0, s) + before + sel + after + v.slice(e);
+    ta.focus(); ta.selectionStart = s + before.length; ta.selectionEnd = s + before.length + sel.length;
+  }
+  function linePrefix(prefix){
+    var s = ta.selectionStart, v = ta.value, ls = v.lastIndexOf('\n', s - 1) + 1;
+    ta.value = v.slice(0, ls) + prefix + v.slice(ls);
+    ta.focus(); ta.selectionStart = ta.selectionEnd = s + prefix.length;
+  }
+  function insert(text){
+    var s = ta.selectionStart, v = ta.value;
+    ta.value = v.slice(0, s) + text + v.slice(ta.selectionEnd);
+    ta.focus(); ta.selectionStart = ta.selectionEnd = s + text.length;
+  }
+  var actions = {
+    h: function(){ linePrefix('## '); }, b: function(){ wrap('**','**'); },
+    i: function(){ wrap('*','*'); }, s: function(){ wrap('~~','~~'); },
+    ul: function(){ linePrefix('- '); }, ol: function(){ linePrefix('1. '); },
+    quote: function(){ linePrefix('> '); }, link: function(){ wrap('[','](https://)'); },
+    code: function(){ wrap('`','`'); }, pre: function(){ insert('\n```\n\n```\n'); },
+    table: function(){ insert('\n| Column | Column |\n| --- | --- |\n| cell | cell |\n'); },
+    hr: function(){ insert('\n\n---\n\n'); }
+  };
+  document.querySelectorAll('#mdtoolbar [data-md]').forEach(function(btn){
+    btn.addEventListener('click', function(){ var a = actions[btn.getAttribute('data-md')]; if(a){ a(); } });
+  });
+
+  // ---- sterilized .md upload: text only, size-capped; server bleaches on render ----
+  var file = document.getElementById('mdfile');
+  if(file){ file.addEventListener('change', function(){
+    var f = file.files && file.files[0]; if(!f){ return; }
+    if(f.size > 512 * 1024){ alert('That file is too large (max 512 KB).'); file.value = ''; return; }
+    var r = new FileReader();
+    r.onload = function(){
+      var text = String(r.result || '').replace(/\u0000/g, '');   // strip null bytes
+      if(ta.value.trim() && !confirm('Replace the current content with the uploaded file?')){ file.value = ''; return; }
+      ta.value = text; file.value = ''; ta.focus();
+    };
+    r.readAsText(f);
+  }); }
+
+  // ---- live preview (server-rendered + sanitized -> matches the saved page) ----
+  var pv = document.getElementById('mdpreview'), pane = document.getElementById('mdpreviewpane');
+  if(pv){ pv.addEventListener('click', function(){
+    if(!pane.hidden){ pane.hidden = true; ta.style.display = ''; pv.textContent = 'Preview'; pv.classList.remove('on'); return; }
+    var fd = new FormData(); fd.append('content', ta.value);
+    fetch('{{ url_for("community_wiki.community_preview") }}', { method: 'POST', body: fd })
+      .then(function(r){ return r.text(); })
+      .then(function(html){ pane.innerHTML = html; pane.hidden = false; ta.style.display = 'none'; pv.textContent = 'Edit'; pv.classList.add('on'); })
+      .catch(function(){ alert('Preview failed.'); });
+  }); }
+})();
+</script>
+{% endblock %}

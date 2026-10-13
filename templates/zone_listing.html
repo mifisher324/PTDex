@@ -1,0 +1,21 @@
+{% extends "layout.html" %}
+{% block title %}PTDex :: Zones{% endblock %}
+{% block body %}
+<div class="wp">
+  <div class="wp-eyebrow">PTDex // world.zones</div>
+  <h1>Zones</h1>
+  {% for group in data %}
+  <div class="wp-panel">
+    <h2>{{ group }}</h2>
+    <div class="wp-grid">
+      {% for zname in data[group]|sort %}
+      <a class="wp-card" href="{{ url_for('zones.zone_detail', zone_id=data[group][zname]['id']) }}">
+        <div class="nm">{{ zname }}</div>
+        <div class="meta">{{ data[group][zname]['short_name'] }} &middot; ZEM {{ data[group][zname]['zem'] }}</div>
+      </a>
+      {% endfor %}
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% endblock %}

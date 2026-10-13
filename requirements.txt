@@ -1,0 +1,7 @@
+flask
+Flask-Discord
+SQLAlchemy
+pymysql
+gunicorn
+markdown
+bleach

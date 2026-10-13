@@ -1,0 +1,2 @@
+-- Sample output of extract_spells.py (made-up entries). Regenerate from your own database.
+return {["era_expansion"]=5,["spells"]={["War"]={{"Example Strike",1,0,"dd"}},["Clr"]={{"Example Heal",1,1,"heal"},{"Example Ward",5,1,"buff"}}},["discs"]={["War"]={{"Example Discipline",10}}},["aas"]={["War"]={{"Example Ability",10}},["Clr"]={{"Example Ability",10}}}}

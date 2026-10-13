@@ -1,0 +1,856 @@
+{% extends "layout.html" %}
+{% block title %}PTDex :: {{ profile.name }} — Plane of Time Flags{% endblock %}
+{% block body %}
+<style>
+  .cprog{--void:#05080e;--void2:#080d16;--panel:#0d1420;--panel2:#111b2b;--cell:#0c1420;
+    --line:#1a2637;--line2:#25384f;--arc:#4db2ff;--arc-hi:#8fd0ff;--arc-dp:#1d4a75;
+    --ember:#ff8a4a;--ember-hi:#ffc08e;--gold:#ffb289;--green:#5fe0a3;--green-dp:#2f6b52;
+    --ctext:#dce7f5;--muted:#7f92a9;--dim:#55677d;
+    --pserif:Georgia,"Iowan Old Style","Times New Roman",serif;
+    --pmono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+    position:relative;z-index:1;max-width:62rem;margin:1.4rem auto 4rem;padding:0 1.15rem;color:var(--ctext)}
+  .cprog-sky{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden}
+  .cprog-sky .aurora{position:absolute;inset:-20%;filter:blur(70px);opacity:.34}
+  .cprog-sky .aurora i{position:absolute;border-radius:50%;mix-blend-mode:screen;animation:cpAu 22s ease-in-out infinite}
+  .cprog-sky .a1{width:420px;height:420px;left:4%;top:-6%;background:radial-gradient(circle,#1f6dd0,transparent 66%)}
+  .cprog-sky .a2{width:470px;height:470px;right:0;top:-14%;background:radial-gradient(circle,#7b53d6,transparent 66%);animation-delay:-7s}
+  .cprog-sky .a3{width:540px;height:540px;left:36%;bottom:-30%;background:radial-gradient(circle,#1f9c8a,transparent 66%);animation-delay:-13s}
+  @keyframes cpAu{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(26px,-20px) scale(1.1)}}
+  .cprog-sky canvas{position:absolute;inset:-50px;will-change:transform}
+  .cprog-sky .s1{opacity:.5;animation:cpFa 38s ease-in-out infinite, cpT1 7s ease-in-out infinite}
+  .cprog-sky .s2{opacity:.45;animation:cpFb 52s ease-in-out infinite, cpT2 9s ease-in-out infinite}
+  .cprog-sky .s3{opacity:.55;animation:cpFc 44s ease-in-out infinite, cpT3 5.5s ease-in-out infinite}
+  @keyframes cpFa{0%,100%{transform:translate(0,0)}50%{transform:translate(30px,-18px)}}
+  @keyframes cpFb{0%,100%{transform:translate(0,0)}50%{transform:translate(-36px,22px)}}
+  @keyframes cpFc{0%,100%{transform:translate(0,0)}33%{transform:translate(26px,20px)}66%{transform:translate(-28px,-16px)}}
+  @keyframes cpT1{0%,100%{opacity:.34}50%{opacity:.64}}
+  @keyframes cpT2{0%,100%{opacity:.55}50%{opacity:.27}}
+  @keyframes cpT3{0%,100%{opacity:.38}50%{opacity:.72}}
+
+  .cprog .eyebrow{font-family:var(--pmono);font-size:.66rem;letter-spacing:.26em;text-transform:uppercase;
+    color:var(--arc);display:flex;justify-content:space-between;align-items:center;gap:1rem;margin-bottom:.85rem}
+  .cprog .eyebrow a{color:var(--arc-hi);text-decoration:none;border-bottom:1px solid transparent}
+  .cprog .eyebrow a:hover{border-color:currentColor}
+
+  .cprog .hero{position:relative;border:1px solid var(--line2);border-radius:1.1rem;overflow:hidden;
+    background:linear-gradient(180deg,var(--panel),var(--void2));box-shadow:0 34px 80px rgba(0,0,0,.62)}
+  .cprog .hero .aur{position:absolute;inset:-60% -20% auto -20%;height:200%;pointer-events:none;
+    background:conic-gradient(from 210deg,rgba(77,178,255,0),rgba(77,178,255,.24),rgba(95,224,163,.16),
+      rgba(255,138,74,.20),rgba(77,178,255,0));filter:blur(58px);animation:cpSpin 34s linear infinite}
+  @keyframes cpSpin{to{transform:rotate(360deg)}}
+  .cprog .hero .inner{position:relative;padding:1.6rem 1.5rem;display:flex;gap:1.5rem;align-items:center;flex-wrap:wrap}
+  .cprog .gauge{position:relative;width:9.5rem;height:9.5rem;flex:none}
+  .cprog .gauge svg{transform:rotate(-90deg);overflow:visible}
+  .cprog .gauge .mid{position:absolute;inset:0;display:grid;place-items:center;text-align:center}
+  .cprog .gauge .pct{font-size:2.3rem;font-weight:800;line-height:1;letter-spacing:-.02em;
+    background:linear-gradient(180deg,#fff,var(--arc-hi));-webkit-background-clip:text;background-clip:text;color:transparent}
+  .cprog .gauge .pl{font-family:var(--pmono);font-size:.52rem;letter-spacing:.18em;text-transform:uppercase;color:var(--muted);margin-top:.28rem}
+  .cprog .whobox{flex:1;min-width:14rem}
+  .cprog .kicker{font-family:var(--pmono);font-size:.6rem;letter-spacing:.2em;text-transform:uppercase;color:var(--ember);margin-bottom:.3rem}
+  .cprog .whobox h1{font-family:var(--pserif);margin:0;font-size:2.3rem;line-height:1.02;font-weight:700;
+    background:linear-gradient(92deg,#fff 15%,var(--arc-hi) 70%);-webkit-background-clip:text;background-clip:text;color:transparent}
+  .cprog .whobox .meta{font-family:var(--pmono);font-size:.72rem;color:var(--muted);margin-top:.45rem;display:flex;align-items:center;gap:.4rem;flex-wrap:wrap}
+  .cprog .cchip{font-family:var(--pmono);font-size:.66rem;font-weight:700;color:var(--gold);
+    background:rgba(255,178,137,.08);border:1px solid rgba(255,178,137,.3);padding:.1rem .5rem;border-radius:.35rem}
+  .cprog .tally{display:flex;gap:1.4rem;margin-top:1rem;flex-wrap:wrap}
+  .cprog .t .n{font-size:1.45rem;font-weight:800;line-height:1;font-variant-numeric:tabular-nums}
+  .cprog .t .n small{font-size:.82rem;color:var(--dim);font-weight:700}
+  .cprog .t .l{font-family:var(--pmono);font-size:.53rem;letter-spacing:.15em;text-transform:uppercase;color:var(--muted);margin-top:.28rem}
+  .cprog .t.a .n{color:var(--green)} .cprog .t.b .n{color:var(--arc-hi)} .cprog .t.c .n{color:var(--ember)}
+  .cprog .t.g .n{color:var(--gold)}
+
+  .cprog .sigil{position:relative;width:10.5rem;height:10.5rem;flex:none;margin-left:auto;display:grid;place-items:center;pointer-events:none}
+  .cprog .sigil::before{content:"";position:absolute;inset:4%;border-radius:50%;
+    background:radial-gradient(circle at 50% 50%,transparent 26%,rgba(255,138,74,.10) 48%,rgba(77,178,255,.19) 72%,transparent 88%);filter:blur(13px)}
+  .cprog .sigil svg{position:relative;width:100%;height:100%;overflow:visible;filter:drop-shadow(0 0 10px rgba(77,178,255,.32))}
+  .cprog .sg-out,.cprog .sg-mid,.cprog .sg-tri{transform-box:view-box;transform-origin:60px 60px}
+  .cprog .sg-out{animation:cpSpin 46s linear infinite}
+  .cprog .sg-mid{animation:cpSpin 34s linear infinite reverse}
+  .cprog .sg-tri{animation:cpSpin 26s linear infinite}
+  .cprog .sg-node{transform-box:fill-box;transform-origin:center;animation:cpPulse 4.2s ease-in-out infinite}
+  .cprog .sg-node:nth-of-type(2){animation-delay:-1.4s} .cprog .sg-node:nth-of-type(3){animation-delay:-2.8s}
+  @keyframes cpPulse{0%,100%{opacity:.6;transform:scale(.86)}50%{opacity:1;transform:scale(1.18)}}
+  @media(max-width:60rem){.cprog .sigil{display:none}}
+
+  .cprog .next{margin-top:1rem;border:1px solid var(--arc-dp);border-radius:.8rem;overflow:hidden;position:relative;
+    background:linear-gradient(100deg,rgba(77,178,255,.13),rgba(13,20,32,.6) 62%)}
+  .cprog .next::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:linear-gradient(180deg,var(--arc-hi),var(--green))}
+  .cprog .next.win{border-color:var(--ember);background:linear-gradient(100deg,rgba(255,138,74,.16),rgba(13,20,32,.6) 62%)}
+  .cprog .next.win::before{background:linear-gradient(180deg,var(--ember-hi),var(--ember))}
+  .cprog .next .in{padding:.85rem 1.05rem;display:flex;gap:.85rem;align-items:flex-start}
+  .cprog .next .rune{width:2.1rem;height:2.1rem;flex:none;border-radius:.5rem;display:grid;place-items:center;
+    background:radial-gradient(circle at 40% 30%,var(--arc-hi),var(--arc-dp));color:#04121f;font-size:1.1rem;box-shadow:0 0 18px rgba(77,178,255,.42)}
+  .cprog .next.win .rune{background:radial-gradient(circle at 40% 30%,var(--ember-hi),var(--ember));color:#2a1004;box-shadow:0 0 18px rgba(255,138,74,.5)}
+  .cprog .next .k{font-family:var(--pmono);font-size:.54rem;letter-spacing:.19em;text-transform:uppercase;color:var(--arc);margin-bottom:.14rem}
+  .cprog .next.win .k{color:var(--ember)}
+  .cprog .next .v{font-weight:600;font-size:1rem} .cprog .next .v b{color:var(--arc-hi)}
+  .cprog .next .where{font-family:var(--pmono);font-size:.68rem;color:var(--muted);margin-top:.22rem}
+
+  .cprog .tipcard{margin:.75rem 1.05rem 1.05rem;display:flex;gap:.8rem;align-items:flex-start;padding:.75rem .95rem;
+    border:1px dashed rgba(255,178,137,.35);border-radius:.7rem;background:rgba(255,138,74,.05)}
+  .cprog .tipcard .i{font-size:1.05rem;color:var(--ember-hi);flex:none;line-height:1.35}
+  .cprog .tipcard .b{font-size:.85rem;color:#c3d2e4} .cprog .tipcard b{color:var(--ember-hi)} .cprog .tipcard em{color:var(--gold);font-style:normal}
+
+  .cprog .bar{display:flex;align-items:center;gap:.6rem;margin:1.5rem .15rem .8rem;flex-wrap:wrap}
+  .cprog .bar .lg{font-family:var(--pmono);font-size:.62rem;color:var(--muted);display:flex;gap:.9rem;flex-wrap:wrap}
+  .cprog .bar .lg i{font-style:normal;display:inline-flex;align-items:center;gap:.32rem}
+  .cprog .pdot{width:.5rem;height:.5rem;border-radius:50%;display:inline-block}
+  .cprog .pbtn{margin-left:auto;font-family:var(--pmono);font-size:.64rem;letter-spacing:.1em;text-transform:uppercase;
+    color:var(--arc-hi);background:rgba(77,178,255,.08);border:1px solid var(--arc-dp);padding:.4rem .8rem;border-radius:999px;cursor:pointer;transition:.15s}
+  .cprog .pbtn:hover{background:rgba(77,178,255,.18)}
+  .cprog .pbtn[aria-pressed="true"]{background:var(--arc-hi);color:#04121f;border-color:transparent;font-weight:700}
+  .cprog .pbtn:focus-visible{outline:2px solid var(--arc-hi);outline-offset:2px}
+
+  /* ---- segment headers: the road is two systems, labelled as such ---- */
+  .cprog .seg{display:flex;align-items:center;gap:.7rem;margin:1.6rem .15rem .85rem;flex-wrap:wrap}
+  .cprog .seg .sn{font-family:var(--pserif);font-size:1.25rem;font-weight:700;color:var(--ctext)}
+  .cprog .seg .sd{font-family:var(--pmono);font-size:.63rem;letter-spacing:.13em;text-transform:uppercase;color:var(--muted)}
+  .cprog .seg .sl{flex:1;height:1px;background:linear-gradient(90deg,var(--line2),transparent);min-width:2rem}
+  .cprog .seg .sc{font-family:var(--pmono);font-size:.7rem;color:var(--muted);font-variant-numeric:tabular-nums}
+
+  /* a gate is a door, not a step -- diamond node, era chip, zone/level line */
+  .cprog .ch[data-s="lock"]{opacity:.55;border-style:dashed}
+  .cprog .ch.gate-c .node{border-radius:.5rem;transform:rotate(45deg);font-size:.66rem}
+  .cprog .ch.gate-c .node span{transform:rotate(-45deg)}
+  .cprog .hd .tt .era{font-family:var(--pmono);font-size:.6rem;letter-spacing:.14em;color:var(--gold);
+    border:1px solid rgba(255,178,137,.3);background:rgba(255,178,137,.07);padding:.08rem .38rem;
+    border-radius:.3rem;margin-left:.5rem;vertical-align:middle;font-weight:700}
+  .cprog .whereat{font-family:var(--pmono);font-size:.68rem;color:var(--arc);margin-top:.16rem;
+    display:flex;gap:.5rem;flex-wrap:wrap;align-items:center}
+  .cprog .whereat .lv{color:var(--dim);border:1px solid var(--line2);border-radius:.28rem;padding:0 .3rem}
+  .cprog .whereat .sh{color:var(--dim)}
+  .cprog .whereat a{color:var(--arc-hi);text-decoration:none;border-bottom:1px dotted rgba(143,208,255,.4)}
+  .cprog .whereat a:hover{border-bottom-style:solid}
+  .cprog .st .nm a{color:inherit;text-decoration:none}
+  .cprog .st .nm a:hover{color:var(--arc-hi)}
+  .cprog .opens{margin:.6rem .15rem .1rem;padding:.6rem .75rem;border-left:2px solid var(--gold);
+    background:rgba(255,178,137,.06);border-radius:0 .45rem .45rem 0;font-size:.83rem;color:#c3d2e4}
+  .cprog .opens b{color:var(--gold)}
+  .cprog .opens .zl{font-family:var(--pmono);font-size:.72rem;color:var(--dim);margin-top:.25rem;line-height:1.55}
+  .cprog .lockbar{margin:.9rem 0 1.1rem;padding:.7rem .95rem;border:1px dashed rgba(255,138,74,.4);
+    border-radius:.6rem;background:rgba(255,138,74,.05);font-size:.85rem;color:#c3d2e4;
+    display:flex;gap:.7rem;align-items:center}
+  .cprog .lockbar b{color:var(--ember-hi)}
+
+  .cprog .climb{position:relative;padding-left:2.9rem}
+  .cprog .climb::before{content:"";position:absolute;left:1.02rem;top:.6rem;bottom:.6rem;width:2px;
+    background:linear-gradient(180deg,var(--green) 0%,var(--arc) 26%,var(--line2) 46%,var(--line2) 100%)}
+  .cprog .ch{position:relative;margin-bottom:.75rem;border:1px solid var(--line2);border-radius:.85rem;
+    background:linear-gradient(180deg,var(--panel2),var(--cell));overflow:hidden;transition:.16s}
+  .cprog .ch:hover{border-color:var(--arc-dp)}
+  .cprog .ch[data-s="done"]{border-color:var(--green-dp)}
+  .cprog .ch[data-s="now"]{border-color:var(--arc);box-shadow:0 0 0 1px rgba(77,178,255,.22),0 14px 38px rgba(0,0,0,.5)}
+  .cprog .ch[data-s="soon"]{opacity:.82}
+  .cprog .node{position:absolute;left:-2.9rem;top:1.05rem;width:2.05rem;height:2.05rem;border-radius:50%;display:grid;place-items:center;
+    font-family:var(--pmono);font-size:.72rem;font-weight:800;background:var(--panel2);border:2px solid var(--line2);color:var(--dim);z-index:2}
+  .cprog .ch[data-s="done"] .node{background:var(--green);border-color:var(--green);color:#04231a;box-shadow:0 0 16px rgba(95,224,163,.4)}
+  .cprog .ch[data-s="now"] .node{background:radial-gradient(circle at 40% 30%,var(--arc-hi),var(--arc-dp));border-color:var(--arc-hi);color:#04121f;box-shadow:0 0 20px rgba(77,178,255,.55)}
+  .cprog .ch[data-s="now"] .node::after{content:"";position:absolute;inset:-6px;border-radius:50%;border:1px solid var(--arc);opacity:.45;animation:cpPing 2.6s ease-out infinite}
+  @keyframes cpPing{0%{transform:scale(.85);opacity:.6}100%{transform:scale(1.35);opacity:0}}
+
+  .cprog summary{list-style:none;cursor:pointer;padding:.9rem 1.05rem;display:flex;gap:.9rem;align-items:center}
+  .cprog summary::-webkit-details-marker{display:none}
+  .cprog summary:focus-visible{outline:2px solid var(--arc-hi);outline-offset:-2px;border-radius:.85rem}
+  .cprog .hd{flex:1;min-width:0}
+  .cprog .hd .tt{font-family:var(--pserif);font-size:1.18rem;font-weight:700}
+  .cprog .hd .bl{font-size:.83rem;color:var(--muted);margin-top:.22rem;line-height:1.4}
+  .cprog .cnt{font-family:var(--pmono);font-size:.72rem;color:var(--muted);font-variant-numeric:tabular-nums;display:flex;align-items:center;gap:.5rem;flex:none}
+  .cprog .mini{width:3.4rem;height:.3rem;border-radius:999px;background:#0a1220;border:1px solid var(--line);overflow:hidden}
+  .cprog .mini i{display:block;height:100%;background:linear-gradient(90deg,var(--arc),var(--green))}
+  .cprog .ch[data-s="done"] .mini i{background:var(--green)}
+  .cprog .caret{color:var(--dim);transition:transform .18s;flex:none}
+  .cprog details[open] .caret{transform:rotate(180deg)}
+
+  .cprog .pbody{padding:.1rem .7rem .85rem;border-top:1px solid var(--line)}
+  .cprog .grp{margin-top:.7rem}
+  .cprog .grp .gh{display:flex;align-items:center;gap:.5rem;margin:0 .15rem .32rem;flex-wrap:wrap}
+  .cprog .grp .gn{font-family:var(--pmono);font-size:.63rem;letter-spacing:.13em;text-transform:uppercase;color:var(--arc-hi)}
+  .cprog .grp .gz{font-family:var(--pmono);font-size:.6rem;color:var(--dim)}
+  .cprog .grp .gl{flex:1;height:1px;background:linear-gradient(90deg,var(--line2),transparent)}
+  .cprog .steps{display:grid;gap:.24rem}
+  .cprog .st{display:flex;gap:.7rem;align-items:flex-start;padding:.48rem .6rem;border-radius:.5rem;border:1px solid transparent;transition:.13s}
+  .cprog .st:hover{background:rgba(255,255,255,.022);border-color:var(--line)}
+  .cprog .mk{width:1.15rem;height:1.15rem;flex:none;margin-top:.1rem;border-radius:50%;display:grid;place-items:center;
+    font-size:.62rem;font-weight:800;border:1.5px solid var(--line2);color:transparent;background:#0a1220}
+  .cprog .st.on .mk{background:var(--green);border-color:var(--green);color:#04231a}
+  .cprog .st .tx{min-width:0;flex:1}
+  .cprog .st .nm{font-size:.92rem;font-weight:600;color:var(--muted)}
+  .cprog .st.on .nm{color:var(--ctext)}
+  .cprog .st .ds{font-size:.79rem;color:var(--dim);line-height:1.45;margin-top:.1rem}
+  .cprog .st .ds b{color:#9fb4cc;font-weight:600}
+  .cprog .st .ds em{color:var(--gold);font-style:normal}
+  .cprog .st .tip{font-family:var(--pmono);font-size:.68rem;color:var(--ember);margin-top:.22rem}
+  .cprog .st.next-up{border-color:var(--arc-dp);background:rgba(77,178,255,.07)}
+  .cprog .stage{font-family:var(--pmono);font-size:.56rem;letter-spacing:.1em;color:var(--dim);
+    border:1px solid var(--line2);border-radius:.3rem;padding:.02rem .3rem;margin-left:.35rem;vertical-align:middle}
+
+  .cprog .trials{margin:.45rem .15rem .1rem;border:1px dashed var(--line2);border-radius:.6rem;padding:.6rem .7rem;background:rgba(255,138,74,.035)}
+  .cprog .trials .th{font-family:var(--pmono);font-size:.58rem;letter-spacing:.15em;text-transform:uppercase;color:var(--ember);margin-bottom:.5rem}
+  .cprog .trials .th b{color:var(--ember-hi)}
+  .cprog .tgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(8.6rem,1fr));gap:.35rem}
+  .cprog .tr{display:flex;align-items:center;gap:.45rem;padding:.32rem .5rem;border-radius:.4rem;border:1px solid var(--line);
+    background:rgba(0,0,0,.22);font-size:.82rem;color:var(--dim)}
+  .cprog .tr.on{color:var(--ctext);border-color:var(--green-dp);background:rgba(95,224,163,.09)}
+  .cprog .tr .mk{width:1rem;height:1rem;margin:0}
+  .cprog .gate{margin:.6rem .15rem .1rem;padding:.6rem .75rem;border-left:2px solid var(--ember);
+    background:rgba(255,138,74,.06);border-radius:0 .45rem .45rem 0;font-size:.83rem;color:#c3d2e4}
+  .cprog .gate b{color:var(--ember-hi)} .cprog .gate em{color:var(--gold);font-style:normal}
+
+  .cprog .keybox{margin-top:1.2rem;border:1px solid var(--line2);border-radius:.9rem;overflow:hidden;
+    background:linear-gradient(180deg,var(--panel2),var(--cell))}
+  .cprog .keybox .kh{padding:.85rem 1.05rem;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:.7rem;flex-wrap:wrap}
+  .cprog .keybox .kh h3{font-family:var(--pserif);margin:0;font-size:1.1rem;font-weight:700}
+  .cprog .keybox .kh .s{font-size:.8rem;color:var(--muted)}
+  .cprog .kgrid{padding:.8rem;display:grid;grid-template-columns:repeat(auto-fit,minmax(11.5rem,1fr));gap:.5rem}
+  .cprog .kcard{border:1px solid var(--line);border-radius:.55rem;padding:.6rem .7rem;background:rgba(0,0,0,.22)}
+  .cprog .kcard .kz{font-family:var(--pmono);font-size:.58rem;letter-spacing:.12em;text-transform:uppercase;margin-bottom:.35rem}
+  .cprog .kcard.fire .kz{color:#ff8a4a} .cprog .kcard.air .kz{color:#8fd0ff}
+  .cprog .kcard.water .kz{color:#5bc8e8} .cprog .kcard.earth .kz{color:#8fc98a}
+  .cprog .kcard ul{margin:0;padding-left:.95rem;font-size:.76rem;color:var(--dim);line-height:1.5}
+  .cprog .kcard li b{color:#b7c8dc;font-weight:600}
+
+  .cprog .summit{position:relative;margin-top:1.2rem;border-radius:1rem;overflow:hidden;border:1px solid var(--line2);
+    background:linear-gradient(180deg,#12101a,#0a0d15)}
+  .cprog .summit[data-open="no"]{filter:saturate(.55)}
+  .cprog .summit .glow{position:absolute;inset:auto -10% -60% -10%;height:150%;pointer-events:none;
+    background:radial-gradient(50% 60% at 50% 100%,rgba(255,138,74,.32),transparent 66%)}
+  .cprog .summit .in{position:relative;padding:1.5rem 1.3rem;text-align:center}
+  .cprog .summit .rune{width:3.2rem;height:3.2rem;margin:0 auto .6rem;border-radius:50%;display:grid;place-items:center;font-size:1.5rem;
+    border:2px solid rgba(255,138,74,.5);color:var(--ember-hi);background:radial-gradient(circle at 42% 32%,rgba(255,138,74,.34),rgba(10,13,21,.9))}
+  .cprog .summit[data-open="yes"] .rune{background:radial-gradient(circle at 42% 32%,var(--ember-hi),var(--ember));color:#2a1004;
+    border-color:var(--ember-hi);box-shadow:0 0 34px rgba(255,138,74,.6)}
+  .cprog .summit .tierlab{font-family:var(--pmono);font-size:.58rem;letter-spacing:.2em;text-transform:uppercase;color:var(--ember);margin-bottom:.4rem}
+  .cprog .summit h2{font-family:var(--pserif);margin:0;font-size:1.6rem;font-weight:700;
+    background:linear-gradient(180deg,var(--ember-hi),var(--ember));-webkit-background-clip:text;background-clip:text;color:transparent}
+  .cprog .summit p{margin:.4rem auto 0;max-width:40rem;font-size:.9rem;color:var(--muted)}
+  .cprog .summit p b{color:var(--ember-hi)}
+  .cprog .summit .two{display:flex;gap:.5rem;justify-content:center;flex-wrap:wrap;margin-top:.9rem;text-align:left}
+  .cprog .summit .two div{font-size:.79rem;color:var(--dim);padding:.5rem .75rem;border:1px solid var(--line2);
+    border-radius:.5rem;background:rgba(0,0,0,.34);max-width:19rem}
+  .cprog .summit .two div b{display:block;color:#b7c8dc;font-size:.83rem;margin-bottom:.15rem}
+  .cprog .summit .state{display:inline-flex;align-items:center;gap:.4rem;margin-top:.95rem;font-family:var(--pmono);font-size:.62rem;
+    letter-spacing:.14em;text-transform:uppercase;font-weight:700;padding:.32rem .8rem;border-radius:999px;
+    border:1px solid rgba(255,138,74,.4);color:var(--ember-hi)}
+  .cprog .summit[data-open="yes"] .state{background:linear-gradient(90deg,var(--ember-hi),var(--ember));color:#2a1004;border-color:transparent}
+
+  .cprog .pfoot{margin-top:1.6rem;padding:.95rem 1.1rem;border:1px solid var(--line);border-radius:.7rem;
+    background:rgba(255,255,255,.015);font-family:var(--pmono);font-size:.68rem;color:var(--muted);line-height:1.65;text-align:center}
+  .cprog .pfoot b{color:var(--arc-hi)}
+  .cprog .empty{padding:2.6rem 1.5rem;text-align:center;color:var(--muted)}
+  .cprog .empty .big{font-size:1.1rem;color:var(--ctext);font-weight:700;margin-bottom:.4rem;font-family:var(--pserif)}
+  .cprog .hide{display:none !important}
+  @media(prefers-reduced-motion:reduce){
+    .cprog-sky .aurora i,.cprog-sky canvas,.cprog .hero .aur,.cprog .sg-out,.cprog .sg-mid,
+    .cprog .sg-tri,.cprog .sg-node,.cprog .ch[data-s="now"] .node::after{animation:none}
+  }
+  @media(max-width:34rem){
+    .cprog .climb{padding-left:2.4rem} .cprog .node{left:-2.4rem;width:1.75rem;height:1.75rem;font-size:.62rem}
+    .cprog .whobox h1{font-size:1.85rem} .cprog .cnt .mini{display:none}
+  }
+</style>
+
+<div class="cprog-sky" aria-hidden="true">
+  <div class="aurora"><i class="a1"></i><i class="a2"></i><i class="a3"></i></div>
+  <canvas class="s1" id="cp-s1"></canvas><canvas class="s2" id="cp-s2"></canvas><canvas class="s3" id="cp-s3"></canvas>
+</div>
+
+<div class="cprog">
+  <div class="eyebrow">
+    <span>PTDex // planar.ascension</span>
+    <a href="{{ url_for('characters.character_profile', char_id=profile.id) }}">&larr; Return to player card</a>
+  </div>
+
+  {% if not prog %}
+    <div class="hero"><div class="empty">
+      <div class="big">Progression unavailable</div>
+      Flag data could not be read right now — try again shortly.
+    </div></div>
+  {% else %}
+
+  <section class="hero">
+    <div class="aur"></div>
+    <div class="inner">
+      <div class="gauge">
+        {% set circ = 402.1 %}
+        <svg width="152" height="152" viewBox="0 0 152 152" aria-hidden="true">
+          <defs><linearGradient id="cpring" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0" stop-color="#5fe0a3"/><stop offset="55%" stop-color="#4db2ff"/>
+            <stop offset="100%" stop-color="#ff8a4a"/></linearGradient></defs>
+          <circle cx="76" cy="76" r="64" fill="none" stroke="#121d2c" stroke-width="11"/>
+          <circle cx="76" cy="76" r="64" fill="none" stroke="url(#cpring)" stroke-width="11" stroke-linecap="round"
+                  stroke-dasharray="{{ circ }}"
+                  stroke-dashoffset="{{ '%.1f'|format(circ * (100 - prog.road_pct) / 100.0) }}"
+                  style="filter:drop-shadow(0 0 7px rgba(77,178,255,.5))"/>
+        </svg>
+        <div class="mid"><div>
+          <div class="pct">{{ prog.road_pct }}<span style="font-size:1.1rem">%</span></div>
+          <div class="pl">The Road</div></div></div>
+      </div>
+
+      <div class="whobox">
+        <div class="kicker">Expansion Gates &amp; Plane of Time</div>
+        <h1>{{ profile.name }}</h1>
+        <div class="meta">Level {{ profile.level }} {{ profile.race_name }}
+          {%- if profile.class_name %}{% for c in profile.class_name.split('/') %}<span class="cchip">{{ c }}</span>{% endfor %}{% endif %}
+          <span style="color:var(--dim)">·</span> shared account-wide</div>
+        <div class="tally">
+          <div class="t g"><div class="n">{{ prog.gates_done }}<small>/{{ prog.gates_total }}</small></div><div class="l">Gate Bosses</div></div>
+          <div class="t a"><div class="n">{{ prog.done }}<small>/{{ prog.total }}</small></div><div class="l">Time Flags</div></div>
+          <div class="t b"><div class="n">{{ prog.stages_cleared }}<small>/{{ prog.stages_total }}</small></div><div class="l">Stages Cleared</div></div>
+          <div class="t c"><div class="n">{{ prog.remaining }}</div><div class="l">Remaining</div></div>
+        </div>
+      </div>
+
+      <div class="sigil" aria-hidden="true">
+        <svg viewBox="0 0 120 120">
+          <defs>
+            <linearGradient id="cpArc" x1="0" y1="1" x2="1" y2="0">
+              <stop offset="0" stop-color="#4db2ff"/><stop offset="100%" stop-color="#8fd0ff"/></linearGradient>
+          </defs>
+          <g class="sg-out">
+            <circle cx="60" cy="60" r="54" fill="none" stroke="url(#cpArc)" stroke-width="1.6" opacity=".95"/>
+            <g stroke="#4db2ff" stroke-width="1.5" opacity=".7" stroke-linecap="round">
+              <line x1="60" y1="2.5" x2="60" y2="10"/><line x1="60" y1="110" x2="60" y2="117.5"/>
+              <line x1="2.5" y1="60" x2="10" y2="60"/><line x1="110" y1="60" x2="117.5" y2="60"/>
+              <line x1="19" y1="19" x2="24.3" y2="24.3"/><line x1="95.7" y1="95.7" x2="101" y2="101"/>
+              <line x1="101" y1="19" x2="95.7" y2="24.3"/><line x1="24.3" y1="95.7" x2="19" y2="101"/>
+            </g>
+          </g>
+          <g class="sg-mid">
+            <circle cx="60" cy="60" r="42" fill="none" stroke="url(#cpArc)" stroke-width="1" opacity=".55" stroke-dasharray="5 9"/>
+            <circle cx="60" cy="60" r="34" fill="none" stroke="#4db2ff" stroke-width=".8" opacity=".3"/>
+          </g>
+          <g class="sg-tri">
+            <polygon points="60,26 89.4,77 30.6,77" fill="none" stroke="#8fa5eb" stroke-width="1.5" opacity=".7" stroke-linejoin="round"/>
+            <polygon points="60,26 89.4,77 30.6,77" fill="url(#cpArc)" opacity=".06"/>
+            <circle class="sg-node" cx="60" cy="26" r="4" fill="#9be1ff"/>
+            <circle class="sg-node" cx="89.4" cy="77" r="4" fill="#ff8a4a"/>
+            <circle class="sg-node" cx="30.6" cy="77" r="4" fill="#49d0a0"/>
+          </g>
+        </svg>
+      </div>
+    </div>
+
+    <div class="next {{ 'win' if prog.complete else '' }}"><div class="in">
+      <div class="rune">{% if prog.complete %}&#9733;{% else %}&#10022;{% endif %}</div>
+      <div>
+        {% if prog.complete %}
+          <div class="k">Ascension complete</div>
+          <div class="v">Every flag earned — the Plane of Time stands open.</div>
+          <div class="where">Zebuxoruk awaits</div>
+        {% elif prog.next_step %}
+          <div class="k">Your next step</div>
+          <div class="v">{{ prog.next_step.name }}</div>
+          <div class="where">{{ prog.next_step.where|safe }}</div>
+        {% else %}
+          <div class="k">Begin the ascent</div>
+          <div class="v">Seek <b>Adler Fuirstel</b> in the Plane of Tranquility.</div>
+        {% endif %}
+      </div>
+    </div></div>
+
+    <div class="tipcard">
+      <div class="i">&#127903;</div>
+      <div class="b">Find <b>Gram Dunnar</b> in the Plane of Knowledge and say <em>craft</em> for the
+        <b>Intricate Wooden Figurine</b>. Return to him after each flag for AAXP and stat increases — and hail
+        him for <em>stories</em> after Justice, Valor, Drunder and Solusek Ro.{% if prog.story %}
+        <span style="color:var(--gold)"> You have {{ prog.story }} of 7 stories.</span>{% endif %}</div>
+    </div>
+  </section>
+
+  <div class="bar">
+    <div class="lg">
+      <i><span class="pdot" style="background:var(--green)"></span>Earned</i>
+      <i><span class="pdot" style="background:var(--arc-hi)"></span>In progress</i>
+      <i><span class="pdot" style="background:#25384f"></span>Not yet</i>
+    </div>
+    <button class="pbtn" id="cp-toggle" aria-pressed="false">Show only remaining</button>
+  </div>
+
+  <div class="seg">
+    <span class="sn">The Expansion Gates</span>
+    <span class="sd">{{ prog.gates_total }} bosses &middot; {{ prog.gates_count }} doors</span>
+    <span class="sl"></span>
+    <span class="sc">{{ prog.gates_done }}/{{ prog.gates_total }}</span>
+  </div>
+
+  <div class="climb" id="cp-gates">
+    {% for G in prog.gates %}
+    <details class="ch gate-c" data-s="{{ G.state }}" {% if G.state == 'now' %}open{% endif %}>
+      <div class="node"><span>{{ G.mark }}</span></div>
+      <summary>
+        <div class="hd"><div class="tt">Gate {{ G.n }} — {{ G.title }}<span class="era">{{ G.code }}</span></div>
+          <div class="bl">{{ G.blurb|safe }}</div></div>
+        <div class="cnt"><span>{{ G.done }}/{{ G.total }}</span>
+          <span class="mini"><i style="width:{{ G.pct }}%"></i></span></div>
+        <div class="caret">&#9662;</div>
+      </summary>
+      <div class="pbody"><div class="grp">
+        <div class="steps">
+          {% for B in G.bosses %}
+          <div class="st {{ 'on' if B.done else '' }}{% if prog.next_step and not B.done and B.name == prog.next_step.name %} next-up{% endif %}">
+            <span class="mk">&#10003;</span>
+            <div class="tx">
+              <div class="nm"><a href="{{ url_for('npcs.npc_detail', npc_id=B.npc) }}">{{ B.name }}</a></div>
+              <div class="whereat">
+                <a href="{{ url_for('zones.zone_detail', zone_id=B.zid) }}">{{ B.zone }}</a>
+                {% if B.level %}<span class="lv">lvl {{ B.level }}</span>{% endif %}
+                <span class="sh">{{ B.short }}</span>
+              </div>
+              {% if prog.next_step and not B.done and B.name == prog.next_step.name %}
+              <div class="tip">&#9656; Your next step</div>{% endif %}
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+        <div class="opens"><b>&#9873; Opens the {{ G.era }}</b> — {{ G.zones }} zones
+          <div class="zl">{{ G.opens|safe }} &hellip;</div>
+        </div>
+      </div></div>
+    </details>
+    {% endfor %}
+  </div>
+
+  <div class="seg">
+    <span class="sn">The Plane of Time</span>
+    <span class="sd">{{ prog.total }} flags &middot; {{ prog.tiers_total }} tiers</span>
+    <span class="sl"></span>
+    <span class="sc">{{ prog.done }}/{{ prog.total }}</span>
+  </div>
+
+  {% if not prog.pop_open %}
+  <div class="lockbar">
+    <span style="font-size:1.1rem;color:var(--ember-hi)">&#128274;</span>
+    <span><b>The Planes are still closed.</b>
+      {% set left = prog.gates[-1].total - prog.gates[-1].done %}
+      {{ left }} gate boss{{ '' if left == 1 else 'es' }} remain{{ 's' if left == 1 else '' }} before the Time ascent can begin.</span>
+  </div>
+  {% endif %}
+
+  <div class="climb" id="cp-climb">
+    {% for T in prog.tiers %}{% if not T.summit %}
+    <details class="ch" data-s="{{ 'lock' if not prog.pop_open and T.state != 'done' else T.state }}"
+             {% if prog.pop_open and T.state == 'now' %}open{% endif %}>
+      <div class="node">{{ T.roman }}</div>
+      <summary>
+        <div class="hd"><div class="tt">Tier {{ T.n }} — {{ T.name|safe }}</div>
+          <div class="bl">{{ T.blurb|safe }}</div></div>
+        <div class="cnt"><span>{{ T.done }}/{{ T.total }}</span>
+          <span class="mini"><i style="width:{{ T.pct }}%"></i></span></div>
+        <div class="caret">&#9662;</div>
+      </summary>
+      <div class="pbody">
+        {% for G in T.groups %}
+        <div class="grp">
+          <div class="gh"><span class="gn">{{ G.name }}</span><span class="gz">{{ G.zone }}</span><span class="gl"></span></div>
+          <div class="steps">
+            {% for S in G.steps %}
+            <div class="st {{ 'on' if S.done else '' }}{% if prog.next_step and not S.done and S.name == prog.next_step.name %} next-up{% endif %}">
+              <span class="mk">&#10003;</span>
+              <div class="tx">
+                <div class="nm">{{ S.name }}{% if S.stages %}<span class="stage">{{ S.stages }} stages</span>{% endif %}</div>
+                <div class="ds">{{ S.desc|safe }}</div>
+                {% if prog.next_step and not S.done and S.name == prog.next_step.name %}
+                <div class="tip">&#9656; Your next step</div>{% endif %}
+              </div>
+            </div>
+            {% endfor %}
+          </div>
+          {% if G.trials %}
+          <div class="trials">
+            <div class="th">&#9670; Complete <b>any one</b> trial —
+              {% if G.held_trial %}you hold <b>{{ G.held_trial|replace('Trial of ','') }}</b>{% else %}none yet{% endif %}</div>
+            <div class="tgrid">
+              {% for tr in G.trials %}
+              <div class="tr {{ 'on' if tr.done else '' }}"><span class="mk">&#10003;</span>{{ tr.name|replace('Trial of ','') }}</div>
+              {% endfor %}
+            </div>
+          </div>
+          {% endif %}
+          {% if G.note %}<div class="gate">{{ G.note|safe }}</div>{% endif %}
+        </div>
+        {% endfor %}
+      </div>
+    </details>
+    {% endif %}{% endfor %}
+  </div>
+
+  <section class="keybox">
+    <div class="kh"><span style="color:var(--ember-hi);font-size:1.1rem">&#128273;</span>
+      <h3>Quintessence of Elements</h3>
+      <span class="s">— the Plane of Time key, crafted from what you gather across Tier 4</span></div>
+    <div class="kgrid">
+      {% for cls, zone, items in prog.key_parts %}
+      <div class="kcard {{ cls }}"><div class="kz">{{ zone }}</div>
+        <ul>{% for it in items %}<li>{% if loop.last %}<b>{{ it }}</b>{% else %}{{ it }}{% endif %}</li>{% endfor %}</ul></div>
+      {% endfor %}
+    </div>
+  </section>
+
+  {% for T in prog.tiers %}{% if T.summit %}
+  <section class="summit" data-open="{{ 'yes' if T.done == T.total and T.total else 'no' }}">
+    <div class="glow"></div>
+    <div class="in">
+      <div class="rune">{% if T.done == T.total and T.total %}&#9733;{% else %}&#8987;{% endif %}</div>
+      <div class="tierlab">Tier {{ T.n }}</div>
+      <h2>{{ T.name|safe }}</h2>
+      <p>With the <b>Quintessence of Elements</b> in hand the way opens — and at the end of the ascent
+        waits <b>Zebuxoruk</b>.</p>
+      <div class="two">
+        <div><b>Chronographer Muan <span style="font-weight:400;color:var(--dim);font-size:.72rem">· not flagged</span></b>
+          Found in the Plane of Innovation — his dialog ports you to the Plane of Time Clocks.</div>
+        <div><b>Loreseeker Maelin <span style="font-weight:400;color:{{ 'var(--green)' if T.done else 'var(--dim)' }};font-size:.72rem">· final flag</span></b>
+          At the Clocks. Follow his dialog and click the machine to zone into the Plane of Time.</div>
+      </div>
+      <p style="margin-top:.9rem;font-size:.84rem">The Plane of Time itself is a multiphase timed event.</p>
+      {% if prog.complete %}
+        <div class="state">&#9733; Time flag complete</div>
+      {% else %}
+        <div class="state">&#128274; {{ prog.remaining }} flag{{ '' if prog.remaining == 1 else 's' }} remain</div>
+      {% endif %}
+    </div>
+  </section>
+  {% endif %}{% endfor %}
+
+
+  {% if ldon %}
+  <style>
+  .ldn-stone{border:1px solid #1e3149;border-radius:10px;background:linear-gradient(180deg,#0d1826,#0a1320);
+    padding:1rem 1.1rem;margin:.9rem 0}
+  .ldn-stone h3{margin:0 0 .15rem;font-size:.95rem;letter-spacing:.02em}
+  .ldn-stone .sub{color:var(--dim);font-size:.78rem;margin-bottom:.75rem}
+  .ldn-meter{height:12px;border-radius:7px;background:#132132;overflow:hidden;border:1px solid #1e3149}
+  .ldn-meter i{display:block;height:100%;background:linear-gradient(90deg,#2a6ea8,var(--arc-hi));
+    box-shadow:0 0 10px rgba(120,190,255,.45)}
+  .ldn-pw{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:.55rem;margin-top:.85rem}
+  .ldn-pw div.cell{background:#0c1725;border:1px solid #1a2c42;border-radius:8px;padding:.45rem .55rem}
+  .ldn-pw b{display:block;font-size:.74rem;font-weight:600;color:#cfe0f2}
+  .ldn-pw span{font-size:.72rem;color:var(--dim);font-variant-numeric:tabular-nums}
+  .ldn-raids{width:100%;border-collapse:collapse;font-size:.8rem;margin-top:.35rem}
+  .ldn-raids th{text-align:left;color:var(--dim);font-weight:600;font-size:.72rem;
+    text-transform:uppercase;letter-spacing:.05em;padding:.3rem .5rem;border-bottom:1px solid #1e3149}
+  .ldn-raids td{padding:.36rem .5rem;border-bottom:1px solid #142334}
+  .ldn-raids tr:last-child td{border-bottom:0}
+  .ldn-raids tr.off td{color:var(--dim)}
+  .ldn-tag{display:inline-block;font-size:.66rem;padding:.08rem .38rem;border-radius:999px;
+    border:1px solid #24405e;color:#9fc4e6;white-space:nowrap}
+  .ldn-tag.no{border-color:#3a2a2a;color:#c08a7a}
+  .ldn-scroll{overflow-x:auto}
+  .ldn-adv{margin-top:.7rem;border-top:1px solid #16283c;padding-top:.6rem}
+  .ldn-advhead{font-size:.78rem;color:var(--dim);margin-bottom:.45rem}
+  .ldn-advhead b{color:#cfe0f2}
+  .ldn-dung{border:1px solid #16283c;border-radius:7px;margin-bottom:.3rem;background:#0b1421}
+  .ldn-dung>summary{cursor:pointer;list-style:none;display:flex;align-items:center;
+    gap:.5rem;padding:.35rem .55rem;font-size:.78rem}
+  .ldn-dung>summary::-webkit-details-marker{display:none}
+  .ldn-dung>summary::before{content:"\25B8";color:var(--dim);font-size:.7rem;transition:transform .15s}
+  .ldn-dung[open]>summary::before{transform:rotate(90deg)}
+  .ldn-dung .dn{flex:1;color:#cfe0f2}
+  .ldn-dung .dz{color:var(--dim);font-size:.7rem;font-family:ui-monospace,monospace}
+  .ldn-dung .dc{color:var(--dim);font-variant-numeric:tabular-nums;min-width:2ch;text-align:right}
+  .ldn-adv-t{width:100%;border-collapse:collapse;font-size:.75rem}
+  .ldn-adv-t th{text-align:left;color:var(--dim);font-weight:600;font-size:.68rem;
+    text-transform:uppercase;letter-spacing:.04em;padding:.25rem .55rem;border-top:1px solid #16283c}
+  .ldn-adv-t td{padding:.24rem .55rem;border-top:1px solid #112034;
+    font-variant-numeric:tabular-nums}
+  .ldn-note{font-size:.72rem;color:var(--dim);margin-top:.45rem;font-style:italic}
+  .ldn-band{border:1px solid #1e3149;border-left:3px solid var(--arc-hi);border-radius:0 8px 8px 0;
+    background:#0d1826;padding:.7rem .9rem;margin:.6rem 0 .8rem;font-size:.82rem;color:var(--dim)}
+  .ldn-band b{color:#cfe0f2}
+  .ldn-bandrow{display:flex;flex-wrap:wrap;gap:.3rem;margin-top:.55rem}
+  .ldn-tag.dim{border-color:#1a2c42;color:#5d6f84}
+  /* Monster Missions: one tile per camp. A cleared camp lights up; ranks are this
+     season's, counts are all-time. */
+  .mm-top{display:flex;flex-wrap:wrap;gap:1.4rem;margin:.2rem 0 .9rem}
+  .mm-top .n{font-size:1.45rem;font-weight:700;line-height:1;color:#cfe0f2;
+    font-variant-numeric:tabular-nums}
+  .mm-top .n small{font-size:.8rem;color:var(--dim);font-weight:400}
+  .mm-top .k{font-size:.66rem;letter-spacing:.12em;text-transform:uppercase;
+    color:var(--dim);margin-top:.25rem}
+  .mm-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:.55rem}
+  .mm-cell{border:1px solid #1a2c42;border-radius:9px;padding:.6rem .7rem;background:#0c1725;
+    display:flex;flex-direction:column;gap:.35rem}
+  .mm-cell.done{border-color:#3b2f5e;background:linear-gradient(180deg,#151331,#0c1725)}
+  .mm-cell .hd{display:flex;align-items:center;gap:.5rem}
+  .mm-cell .mk{width:1.55rem;height:1.55rem;flex:none;border-radius:6px;display:grid;
+    place-items:center;font-size:.75rem;font-weight:700;border:1px solid #1e3149;color:var(--dim)}
+  .mm-cell.done .mk{border-color:#a78bfa;color:#e6dcff;background:rgba(167,139,250,.15)}
+  .mm-cell .nm{font-size:.8rem;font-weight:600;color:#cfe0f2;line-height:1.2}
+  .mm-cell .st{font-size:.72rem;color:var(--dim);font-variant-numeric:tabular-nums}
+  .mm-cell .st b{color:#cfe0f2;font-weight:600}
+  .mm-cell .rk{display:flex;gap:.3rem;flex-wrap:wrap}
+  .mm-cell .rk span{font-size:.64rem;padding:.06rem .4rem;border-radius:999px;
+    border:1px solid #3b2f5e;color:#cbbcff;font-variant-numeric:tabular-nums}
+  .mm-cell .rk span.top{border-color:#e5cc80;color:#e5cc80}
+  .mm-set .ldn-meter i{background:linear-gradient(90deg,#5b3fa8,#a78bfa)}
+  </style>
+
+  <div class="seg">
+    <span class="sn">Lost Dungeons of Norrath</span>
+    <span class="sd">{{ ldon.gods_total }} gods &middot; {{ ldon.themes_total }} themes
+      &middot; {{ ldon.wins_total }} wins{% if ldon.band %} &middot; {{ ldon.adventures_at_band }} runs at your bracket{% endif %}</span>
+    <span class="sl"></span>
+    <span class="sc">{{ ldon.road_done }}/{{ ldon.road_total }}</span>
+  </div>
+
+  {% if not ldon.entry_open %}
+  <div class="lockbar">
+    <span style="font-size:1.1rem;color:var(--ember-hi)">&#128274;</span>
+    {% set left = ldon.gods_total - ldon.gods_done %}
+    <span><b>The Wayfarers will not take you yet.</b>
+      {{ left }} elemental god{{ '' if left == 1 else 's' }} of the Plane of Power
+      remain{{ 's' if left == 1 else '' }} before any camp will offer you an adventure.</span>
+  </div>
+  {% endif %}
+
+  <div class="ldn-band">
+    {% if ldon.band %}
+    <b>Level {{ ldon.level }} &rarr; the {{ ldon.band|safe }} bracket.</b>
+    An adventure is one trip into a dungeon. The nine brackets are not different
+    adventures &mdash; they are the same runs re-cut per level range, and the server
+    offers a party only the bracket its <em>group average</em> falls in, so the runs
+    below are what you can be given right now.
+    {% else %}
+    <b>Level {{ ldon.level }} &mdash; below the {{ ldon.band_min }} minimum.</b>
+    Adventures are handed out by level bracket; none are offered yet.
+    {% endif %}
+    <div class="ldn-bandrow">
+      {% for b in ldon.bands %}<span class="ldn-tag{{ '' if b == ldon.band else ' dim' }}">{{ b|safe }}</span>{% endfor %}
+    </div>
+    <div class="ldn-note" style="margin-top:.5rem">A group's highest and lowest level may
+      differ by at most {{ ldon.max_group_spread }}, and wins are recorded per camp, not per
+      run &mdash; so there is no per-adventure tally to show.</div>
+  </div>
+
+  <div class="climb" id="cp-ldon">
+    <details class="ch" data-s="{{ 'done' if ldon.entry_open else 'now' }}"
+             {% if not ldon.entry_open %}open{% endif %}>
+      <div class="node"><span>&#9670;</span></div>
+      <summary>
+        <div class="hd"><div class="tt">The Elemental Gate<span class="era">LDoN</span></div>
+          <div class="bl">All five elemental gods of the Plane of Power. Nothing in the
+            expansion opens until every one of them has fallen.</div></div>
+        <div class="cnt"><span>{{ ldon.gods_done }}/{{ ldon.gods_total }}</span>
+          <span class="mini"><i style="width:{{ (100 * ldon.gods_done / ldon.gods_total)|round|int }}%"></i></span></div>
+        <div class="caret">&#9662;</div>
+      </summary>
+      <div class="pbody"><div class="grp">
+        <div class="steps">
+          {% for G in ldon.gods %}
+          <div class="st {{ 'on' if G.done else '' }}{% if ldon.next_step and not G.done and G.name == ldon.next_step.name %} next-up{% endif %}">
+            <span class="mk">&#10003;</span>
+            <div class="tx">
+              <div class="nm">{{ G.name }}</div>
+              <div class="whereat">{{ G.where }}</div>
+              {% if ldon.next_step and not G.done and G.name == ldon.next_step.name %}
+              <div class="tip">&#9656; Your next step</div>{% endif %}
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+        <div class="opens"><b>&#9873; Opens the Wayfarers Brotherhood camps</b> &mdash; five themes
+          <div class="zl">Butcherblock Mountains &middot; East Commonlands &middot; North Ro
+            &middot; South Ro &middot; Everfrost Peaks</div>
+        </div>
+      </div></div>
+    </details>
+
+    {% for T in ldon.themes %}
+    <details class="ch" data-s="{{ T.state }}" {% if T.state == 'now' %}open{% endif %}>
+      <div class="node"><span>{{ T.mark }}</span></div>
+      <summary>
+        <div class="hd"><div class="tt">{{ T.name }}<span class="era">{{ T.key|upper }}</span></div>
+          <div class="bl">{{ T.blurb }}</div></div>
+        <div class="cnt"><span>{{ T.wins }}/{{ T.required }}</span>
+          <span class="mini"><i style="width:{{ T.pct }}%"></i></span></div>
+        <div class="caret">&#9662;</div>
+      </summary>
+      <div class="pbody"><div class="grp">
+        <div class="steps">
+          <div class="st {{ 'on' if T.complete else '' }}">
+            <span class="mk">&#10003;</span>
+            <div class="tx">
+              <div class="nm">{{ T.required }} adventure wins in {{ T.name }}</div>
+              <div class="whereat">Camp in {{ T.zone }}<span class="sh">{{ T.wins }} won</span></div>
+              {% if T.unlocked and not T.complete %}
+              <div class="tip">&#9656; {{ T.remaining }} more win{{ '' if T.remaining == 1 else 's' }}</div>
+              {% elif not T.unlocked %}
+              <div class="tip">&#128274; Finish the previous theme first</div>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+        <div class="opens"><b>&#9873; Wins are counted per character</b>
+          <div class="zl">The gate and the ladder are shared across your account, but
+            adventure wins are counted for this character alone.</div>
+        </div>
+        <div class="ldn-adv">
+          <div class="ldn-advhead">
+            {%- if ldon.band %}
+            <b>{{ T.adventures }} runs</b> offered at levels {{ ldon.band|safe }}
+            &middot; {{ T.dungeons|length }} dungeon{{ '' if T.dungeons|length == 1 else 's' }}
+            {%- else %}
+            <b>Not yet eligible</b> &mdash; adventuring starts at level {{ ldon.band_min }}
+            {%- endif %}
+            {%- if T.attempts %} &middot; you have run {{ T.attempts }}
+              ({{ T.wins }} won, {{ T.losses }} lost{% if T.winrate is not none %}, {{ T.winrate }}%{% endif %})
+            {%- else %} &middot; none run yet{% endif %}
+          </div>
+          {% for D in T.dungeons %}
+          <details class="ldn-dung">
+            <summary><span class="dn">{{ D.name }}</span>
+              <span class="dz">{{ D.zone }}</span>
+              <span class="dc">{{ D.runs|length }}</span></summary>
+            <table class="ldn-adv-t">
+              <thead><tr><th>Difficulty</th><th>Task</th><th>Points</th></tr></thead>
+              <tbody>
+                {% for R in D.runs %}
+                <tr>
+                  <td>{% if R.hard %}<span class="ldn-tag no">hard</span>{% else %}<span class="ldn-tag">normal</span>{% endif %}</td>
+                  <td>{{ R.objective }}</td>
+                  <td>{{ R.points }}</td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </details>
+          {% endfor %}
+        </div>
+
+      </div></div>
+    </details>
+    {% endfor %}
+  </div>
+
+  <div class="ldn-stone">
+    <h3>The Adventurer&rsquo;s Stone{% if ldon.stone.emblem %} &mdash; Wayfarers Brotherhood Emblem{% endif %}</h3>
+    <div class="sub">{{ ldon.stone.stage_name|safe }} &middot;
+      <a href="{{ url_for('items.item_detail', item_id=ldon.stone.item) }}">item {{ ldon.stone.item }}</a>
+      &middot; grown to {{ ldon.stone.pct }}% of its full power</div>
+    <div class="ldn-meter"><i style="width:{{ ldon.stone.pct }}%"></i></div>
+    <div class="ldn-pw">
+      {% for P in ldon.stone.powers %}
+      <div class="cell"><b>{{ P.name }}</b><span>power {{ P.power }} / {{ P.cap }}</span>
+        <div class="ldn-meter" style="height:5px;margin-top:.3rem"><i style="width:{{ P.pct }}%"></i></div></div>
+      {% endfor %}
+    </div>
+    <div class="sub" style="margin:.8rem 0 0">The stone is a scaling charm: it carries its full
+      stats from the day you receive it and grows into them. Each theme&rsquo;s Wayfarer raises its
+      power as your wins mount &mdash; hail them again after every few adventures.</div>
+  </div>
+
+  {% if ldon.missions %}{% set MM = ldon.missions %}
+  <div class="ldn-stone">
+    <h3>Monster Missions</h3>
+    <div class="sub">One solo mission per camp, played as a monster with a fixed stat block &middot;
+      counts are all-time, ranks are {{ MM.season_name or 'this season' }}
+      &middot; <a href="{{ url_for('leaderboard.leaderboard_home') }}#monster-missions">mission leaderboards</a></div>
+    <div class="mm-top">
+      <div><div class="n">{{ MM.cleared }}<small>/{{ MM.total }}</small></div><div class="k">Camps cleared</div></div>
+      <div><div class="n">{{ MM.runs }}</div><div class="k">Missions completed</div></div>
+      {% if MM.attempts > MM.runs %}<div><div class="n">{{ MM.attempts - MM.runs }}</div><div class="k">Failed</div></div>{% endif %}
+      <div class="mm-set" style="min-width:12rem;flex:1">
+        <div class="n">{{ MM.pieces }}<small>/{{ MM.set_size }}</small></div>
+        <div class="k">Monstrous Mayhem pieces</div>
+        <div class="ldn-meter" style="height:6px;margin-top:.4rem"><i style="width:{{ MM.set_pct }}%"></i></div>
+      </div>
+    </div>
+    <div class="mm-grid">
+      {% for C in MM.camps %}
+      <div class="mm-cell{{ ' done' if C.completed }}">
+        <div class="hd"><span class="mk">{{ C.mark }}</span><span class="nm">{{ C.name }}</span></div>
+        {% if C.completed %}
+        <div class="st"><b>{{ C.completed }}</b> completed{% if C.failed %} &middot; {{ C.failed }} failed{% endif %}</div>
+        <div class="st">Best <b>{{ C.best_time or '—' }}</b>{% if C.best_dps %} &middot; <b>{{ '{:,}'.format(C.best_dps) }}</b> dps{% endif %}</div>
+        {% if C.speed_rank or C.dps_rank %}
+        <div class="rk">
+          {% if C.speed_rank %}<span class="{{ 'top' if C.speed_rank <= 3 }}">#{{ C.speed_rank }} fastest</span>{% endif %}
+          {% if C.dps_rank %}<span class="{{ 'top' if C.dps_rank <= 3 }}">#{{ C.dps_rank }} dps</span>{% endif %}
+          <span>of {{ C.rank_of }}</span>
+        </div>
+        {% endif %}
+        {% elif C.attempts %}
+        <div class="st">{{ C.attempts }} attempt{{ '' if C.attempts == 1 else 's' }}, not completed yet</div>
+        {% else %}
+        <div class="st">Not attempted &middot; camp in {{ C.zone }}</div>
+        {% endif %}
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+  <div class="ldn-stone">
+    <h3>Raids</h3>
+    <div class="sub">{% if ldon.raids_tracked %}{{ ldon.raids_cleared }} of {{ ldon.raids_total }} cleared by this character
+      &middot; best time runs from the instance opening to the win{% else %}{{ ldon.raids_active }} of {{ ldon.raids_total }} currently available{% endif %}</div>
+    <div class="ldn-scroll">
+    <table class="ldn-raids">
+      <thead><tr><th>Raid</th><th>Theme</th><th>Recruiter</th><th>Camp</th><th>Status</th>{% if ldon.raids_tracked %}<th>Best</th>{% endif %}</tr></thead>
+      <tbody>
+        {% for R in ldon.raids %}
+        <tr class="{{ '' if R.active else 'off' }}">
+          <td>{{ R.name }}</td>
+          <td>{{ R.theme_name }}</td>
+          <td>{{ R.recruiter }}</td>
+          <td>{{ R.zone }}</td>
+          <td>{% if R.cleared %}<span class="ldn-tag">cleared{% if R.clears > 1 %} &times;{{ R.clears }}{% endif %}</span>{% elif R.active %}<span class="ldn-tag no">not yet</span>{% else %}<span class="ldn-tag no">unavailable</span>{% endif %}</td>
+          {% if ldon.raids_tracked %}<td>{{ R.best or '' }}</td>{% endif %}
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    </div>
+  </div>
+  {% endif %}
+
+  <div class="pfoot">
+    Gate bosses read from your <b>expansion progress flags</b>; Time flags from the same record
+    <b>Seer Mal Nae&#39;Shi</b> reads in the Plane of Knowledge. Both are earned per <b>account</b>,
+    so every character you own shares this road.
+  </div>
+  {% endif %}
+</div>
+
+<script>
+(function(){
+  var PAL=['#8fd0ff','#ffffff','#8fd0ff','#cfe6ff','#ff8a4a','#5fe0a3'];
+  var L=[{el:'cp-s1',div:2600,r0:.25,rv:.9,a0:.20,av:.45,g:0},
+         {el:'cp-s2',div:4200,r0:.5,rv:1.2,a0:.28,av:.5,g:0},
+         {el:'cp-s3',div:14000,r0:1,rv:1.5,a0:.45,av:.5,g:5}];
+  function paint(){
+    for(var j=0;j<L.length;j++){
+      var o=L[j],c=document.getElementById(o.el); if(!c)continue;
+      var x=c.getContext('2d'),W=c.width=innerWidth+100,H=c.height=innerHeight+100;
+      x.clearRect(0,0,W,H);
+      var n=Math.round(W*H/o.div);
+      for(var i=0;i<n;i++){
+        var col=PAL[Math.floor(Math.random()*PAL.length)];
+        x.globalAlpha=o.a0+Math.random()*o.av; x.fillStyle=col;
+        if(o.g){x.shadowBlur=o.g;x.shadowColor=col;}
+        x.beginPath(); x.arc(Math.random()*W,Math.random()*H,o.r0+Math.random()*o.rv,0,6.283); x.fill();
+      }
+      x.shadowBlur=0; x.globalAlpha=1;
+    }
+  }
+  paint();
+  var rt; addEventListener('resize',function(){clearTimeout(rt);rt=setTimeout(paint,180);});
+
+  // the toggle spans BOTH climbs -- gates and tiers are one road
+  var b=document.getElementById('cp-toggle'),
+      cls=[document.getElementById('cp-gates'),document.getElementById('cp-climb'),document.getElementById('cp-ldon')].filter(Boolean);
+  if(b&&cls.length){b.addEventListener('click',function(){
+    var on=b.getAttribute('aria-pressed')==='true';
+    b.setAttribute('aria-pressed',String(!on));
+    b.textContent=!on?'Show everything':'Show only remaining';
+    cls.forEach(function(cl){
+      Array.prototype.forEach.call(cl.querySelectorAll('.ch'),function(ch){
+        var done=ch.getAttribute('data-s')==='done';
+        ch.classList.toggle('hide',!on&&done);
+        if(!on&&!done)ch.setAttribute('open','');
+      });
+    });
+  });}
+})();
+</script>
+{% endblock %}

@@ -1,0 +1,356 @@
+{% extends "layout.html" %}
+{% block body %}
+<!-- .srchres puts this page in the centred page shell (nms.css): the results table is
+     wide, and in the flex row the partner rail took 300px off it and overlapped
+     the right-hand columns at common screen widths. -->
+<div class="srchres">
+<style>
+.tippy-box[data-theme~='custom'] .item-card,.tippy-box[data-theme~='custom'] table {
+    color: #fff;
+}
+.tippy-box[data-theme~='custom'] {
+    background-color: #333;
+    border-radius: 0.5rem;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.8);
+    padding: 0.625rem;
+    font-family: Arial, sans-serif;
+    font-size: 0.875rem;
+}
+
+.tippy-box[data-theme~='custom'] .tippy-arrow {
+    color: #333;
+}
+
+</style>
+ <script>
+ $(document).ready(function() {
+	 $('#items').DataTable({
+		 "order": [[1, "desc"]],
+		 "pageLength": 50,
+		 searching: false,
+		 paging: false,
+		 info: false
+	 });
+ });
+ </script>
+<script src="https://unpkg.com/@popperjs/core@2"></script>
+<script src="https://unpkg.com/tippy.js@6"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        tippy('.tooltip-link', {
+            placement: 'right',
+            flipDuration: 0,
+            content: 'Loading...',
+            allowHTML: true,
+            maxWidth: 'none',
+            onShow(instance) {
+                const url = instance.reference.dataset.url;
+                fetch(`/tooltip/${encodeURIComponent(url)}`)
+                    .then(response => response.text())
+                    .then(content => {
+                        instance.setContent(content);
+                    })
+                    .catch(error => {
+                        console.error('Error fetching tooltip content:', error);
+                    });
+            },
+        });
+    });
+</script>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        tippy('.spell-tooltip-link', {
+            placement: 'right',
+            flipDuration: 0,
+            content: 'Loading...',
+            allowHTML: true,
+            maxWidth: 'none',
+            onShow(instance) {
+                const url = instance.reference.dataset.url;
+                fetch(`/spell-tooltip/${encodeURIComponent(url)}`)
+                    .then(response => response.text())
+                    .then(content => {
+                        instance.setContent(content);
+                    })
+                    .catch(error => {
+                        console.error('Error fetching tooltip content:', error);
+                    });
+            },
+        });
+    });
+</script>
+<table class="mediumfont table table-bordered" id="items">
+    <thead>
+    <th>Name</th>
+    {% if show_values %}
+     <th>Value</th>
+    {% endif %}
+    <th>Zone</th>
+    <th>Source</th>
+    {% if show_dmg_delay%}
+      <th>Dmg</th>
+    {% endif %}
+    {% if show_dmg_delay%}
+      <th>Delay</th>
+    {% endif %}
+    {% if show_dmg_delay%}
+      <th>Eff.</th>
+    {% endif %}
+    {% if reduce.ac and full_detail %}
+      <th>AC</th>
+    {% endif %}
+    {% if reduce.hp and full_detail %}
+    <th>HP</th>
+    {% endif %}
+    {% if reduce.mana and full_detail %}
+    <th>Mana</th>
+    {% endif %}
+    {% if (reduce.astr or reduce.heroic_str) and full_detail %}
+    <th>STR</th>
+    {% endif %}
+    {% if (reduce.asta or reduce.heroic_sta) and full_detail %}
+    <th>STA</th>
+    {% endif %}
+    {% if (reduce.aagi or reduce.heroic_agi) and full_detail %}
+    <th>AGI</th>
+    {% endif %}
+    {% if (reduce.adex or reduce.heroic_dex) and full_detail %}
+    <th>DEX</th>
+    {% endif %}
+    {% if (reduce.awis or reduce.heroic_wis) and full_detail %}
+    <th>WIS</th>
+    {% endif %}
+    {% if (reduce.aint or reduce.heroic_int) and full_detail %}
+    <th>INT</th>
+    {% endif %}
+    {% if (reduce.acha or reduce.heroic_cha) and full_detail %}
+    <th>CHA</th>
+    {% endif %}
+    {% if reduce.fr and full_detail %}
+    <th>vs Fire</th>
+    {% endif %}
+    {% if reduce.cr and full_detail %}
+    <th>vs Cold</th>
+    {% endif %}
+    {% if reduce.pr and full_detail %}
+    <th>vs Pois</th>
+    {% endif %}
+    {% if reduce.dr and full_detail %}
+    <th>vs Dis</th>
+    {% endif %}
+    {% if reduce.mr and full_detail %}
+    <th>vs Mag</th>
+    {% endif %}
+    {% if reduce.spelldmg and full_detail %}
+    <th>Spell</th>
+    {% endif %}
+    {% if reduce.healamt and full_detail %}
+    <th>Heal</th>
+    {% endif %}
+    {% if reduce.attack and full_detail %}
+    <th>ATK</th>
+    {% endif %}
+    {% if reduce.haste and full_detail %}
+    <th>Haste</th>
+    {% endif %}
+    {% if reduce.regen and full_detail %}
+    <th>HP Reg.</th>
+    {% endif %}
+    {% if reduce.manaregen and full_detail %}
+    <th>Mana Reg.</th>
+    {% endif %}
+    {% if reduce.accuracy and full_detail %}
+    <th>ACC</th>
+    {% endif %}
+    {% if reduce.avoidance and full_detail %}
+    <th>AVD</th>
+    {% endif %}
+    {% if reduce.combateffects and full_detail %}
+    <th>CE</th>
+    {% endif %}
+    {% if reduce.damageshield and full_detail %}
+    <th>DS</th>
+    {% endif %}
+    {% if reduce.dotshielding and full_detail %}
+    <th>DoT SHLD</th>
+    {% endif %}
+    {% if reduce.shielding and full_detail %}
+    <th>SHLD</th>
+    {% endif %}
+    {% if reduce.spellshield and full_detail %}
+    <th>Sp. SHLD</th>
+    {% endif %}
+    {% if reduce.strikethrough and full_detail %}
+    <th>Strk thru</th>
+    {% endif %}
+    {% if reduce.stunresist and full_detail %}
+    <th>Stun Res.</th>
+    {% endif %}
+    {% if show_focus and show_spells %}
+     <th>Focus Name</th>
+     <th>Focus Affects</th>
+     <th>Focus Type</th>
+     <th>Focus Value</th>
+    {% endif %}
+    {% if show_worn and show_spells %}
+     <th>Worn Effect</th>
+    {% endif %}
+    {% if show_inst and show_spells %}
+     <th>Instrument Effect Name</th>
+    {% endif %}
+    {% if show_click %}
+      <th>Click Effect</th>
+    {% endif %}
+    {% if show_proc %}
+    <th>Proc Name</th>
+    {% endif %}
+    </thead>
+{% for entry in data %}
+    <tr>
+        <td><img src="/static/item_icons/item_{{entry.icon}}.png">  <a href="{{url_for('items.item_detail', item_id=entry.id)}}" data-url="{{entry.id}}" class="tooltip-link">{{entry.Name}}</a></td>
+        {% if show_values %}
+         <td>{{'%0.2f' % entry.weight|float}}</td>
+        {% endif %}
+        <td>{{entry.zone_name}}</td>
+        <td>{{entry.npc_name}}</td>
+        {% if show_dmg_delay %}
+            <td>{{entry.damage}}</td>
+        {% endif %}
+        {% if show_dmg_delay %}
+            <td>{{entry.delay}}</td>
+        {% endif %}
+        {% if show_dmg_delay %}
+            <td>{{entry.w_eff}}</td>
+        {% endif %}
+        {% if reduce.ac and full_detail %}
+        <td>{{entry.ac}}</td>
+        {% endif %}
+        {% if reduce.hp and full_detail %}
+        <td>{{entry.hp}}</td>
+        {% endif %}
+        {% if reduce.mana and full_detail %}
+        <td>{{entry.mana}}</td>
+        {% endif %}
+        {% if (reduce.astr or reduce.heroic_str) and full_detail %}
+          <td data-order="{{ entry.astr + entry.heroic_str }}">{{entry.astr}}{% if entry.heroic_str >= 1 %} <font color="Orange">+{{entry.heroic_str}}</font>{% endif %}</td>
+        {% endif %}
+        {% if (reduce.asta or reduce.heroic_sta) and full_detail %}
+          <td data-order="{{ entry.asta + entry.heroic_sta }}">{{entry.asta}}{% if entry.heroic_sta >= 1 %} <font color="Orange">+{{entry.heroic_sta}}</font>{% endif %}</td>
+        {% endif %}
+        {% if (reduce.aagi or reduce.heroic_agi) and full_detail %}
+          <td data-order="{{ entry.aagi + entry.heroic_agi }}">{{entry.aagi}}{% if entry.heroic_agi >= 1 %} <font color="Orange">+{{entry.heroic_agi}}</font>{% endif %}</td>
+        {% endif %}
+        {% if (reduce.adex or reduce.heroic_dex) and full_detail %}
+          <td data-order="{{ entry.adex + entry.heroic_dex }}">{{entry.adex}}{% if entry.heroic_dex >= 1 %} <font color="Orange">+{{entry.heroic_dex}}</font>{% endif %}</td>
+        {% endif %}
+        {% if (reduce.awis or reduce.heroic_wis) and full_detail %}
+          <td data-order="{{ entry.awis + entry.heroic_wis }}">{{entry.awis}}{% if entry.heroic_wis >= 1 %} <font color="Orange">+{{entry.heroic_wis}}</font>{% endif %}</td>
+        {% endif %}
+        {% if (reduce.aint or reduce.heroic_int) and full_detail %}
+          <td data-order="{{ entry.aint + entry.heroic_int }}">{{entry.aint}}{% if entry.heroic_int >= 1 %} <font color="Orange">+{{entry.heroic_int}}</font>{% endif %}</td>
+        {% endif %}
+        {% if (reduce.acha or reduce.heroic_cha) and full_detail %}
+          <td data-order="{{ entry.acha + entry.heroic_cha }}">{{entry.acha}}{% if entry.heroic_cha >= 1 %} <font color="Orange">+{{entry.heroic_cha}}</font>{% endif %}</td>
+        {% endif %}
+        {% if reduce.fr and full_detail%}
+          <td data-order="{{ entry.fr + entry.heroic_fr }}">{{entry.fr}}{% if entry.heroic_fr >= 1 %} <font color="Orange">+{{entry.heroic_fr}}</font>{% endif %}</td>
+        {% endif %}
+        {% if reduce.cr and full_detail%}
+          <td data-order="{{ entry.cr + entry.heroic_cr }}">{{entry.cr}}{% if entry.heroic_cr >= 1 %} <font color="Orange">+{{entry.heroic_cr}}</font>{% endif %}</td>
+        {% endif %}
+        {% if reduce.pr and full_detail%}
+          <td data-order="{{ entry.pr + entry.heroic_pr }}">{{entry.pr}}{% if entry.heroic_pr >= 1 %} <font color="Orange">+{{entry.heroic_pr}}</font>{% endif %}</td>
+        {% endif %}
+        {% if reduce.dr and full_detail%}
+          <td data-order="{{ entry.dr + entry.heroic_dr }}">{{entry.dr}}{% if entry.heroic_dr >= 1 %} <font color="Orange">+{{entry.heroic_dr}}</font>{% endif %}</td>
+        {% endif %}
+        {% if reduce.fr and full_detail%}
+          <td data-order="{{ entry.mr + entry.heroic_mr }}">{{entry.mr}}{% if entry.heroic_mr >= 1 %} <font color="Orange">+{{entry.heroic_mr}}</font>{% endif %}</td>
+        {% endif %}
+        {% if reduce.spelldmg and full_detail %}
+        <td>{{entry.spelldmg}}</td>
+        {% endif %}
+        {% if reduce.healamt and full_detail %}
+        <td>{{entry.healamt}}</td>
+        {% endif %}
+        {% if reduce.attack and full_detail %}
+        <td>{{entry.attack}}</td>
+        {% endif %}
+        {% if reduce.haste and full_detail %}
+        <td>{{entry.haste}}</td>
+        {% endif %}
+        {% if reduce.regen and full_detail %}
+        <td>{{entry.regen}}</td>
+        {% endif %}
+        {% if reduce.manaregen and full_detail %}
+        <td>{{entry.manaregen}}</td>
+        {% endif %}
+        {% if reduce.accuracy and full_detail %}
+        <td>{{entry.accuracy}}</td>
+        {% endif %}
+        {% if reduce.avoidance and full_detail %}
+        <td>{{entry.avoidance}}</td>
+        {% endif %}
+        {% if reduce.combateffects and full_detail %}
+        <td>{{entry.combateffects}}</td>
+        {% endif %}
+        {% if reduce.damageshield and full_detail %}
+        <td>{{entry.damageshield}}</td>
+        {% endif %}
+        {% if reduce.dotshielding and full_detail %}
+        <td>{{entry.dotshielding}}</td>
+        {% endif %}
+        {% if reduce.shielding and full_detail %}
+        <td>{{entry.shielding}}</td>
+        {% endif %}
+        {% if reduce.spellshield and full_detail %}
+        <td>{{entry.spellshield}}</td>
+        {% endif %}
+        {% if reduce.strikethrough and full_detail %}
+        <td>{{entry.strikethrough}}</td>
+        {% endif %}
+        {% if reduce.stunresist and full_detail %}
+        <td>{{entry.stunresist}}</td>
+        {% endif %}
+        {% if show_focus and show_spells %}
+         {% if not entry.focus_spell_name %}
+        <td></td>
+        <td></td>
+        <td></td>
+        <td></td>
+        {% else %}
+        <td><a href="/spell/detail/{{entry.focus_id}}" data-url="{{entry.focus_id}}" class="spell-tooltip-link">{{entry.focus_spell_name}}</a></td>
+         <td>{{entry.focus_type}}</td>
+         <td>{{entry.sub_focus}}</td>
+        {% if entry.focus_max_val|int < entry.focus_min_val|int %}
+           <td>{{entry.focus_min_val}}%</td>
+         {% else %}
+           <td>{{entry.focus_max_val}}%</td>
+         {% endif %}
+        {% endif %}
+        {% endif %}
+         {% if show_worn and show_spells %}
+          {% if entry.worn_name %}
+          <td><a href="/spell/detail/{{entry.worn_id}}" data-url="{{entry.worn_id}}" class="spell-tooltip-link">{{entry.worn_name}}</a></td>
+          {% else %}
+          <td></td>
+          {% endif %}
+        {% endif %}
+        {% if show_inst and show_spells %}
+        {% if entry.inst_name %}
+        <td><a href="/spell/detail/{{entry.inst_id}}" data-url="{{entry.inst_id}}" class="spell-tooltip-link">{{entry.inst_name}}</a></td>
+        {% else %}
+        <td></td>
+        {% endif %}
+        {% endif %}
+        {% if show_click %}
+        <td><a href="/spell/detail/{{entry.click_id}}" data-url="{{entry.click_id}}" class="spell-tooltip-link">{{entry.click_name}}</a></td>
+        {% endif %}
+        {% if show_proc %}
+        <td><a href="/spell/detail/{{entry.proc_id}}" data-url="{{entry.proc_id}}" class="spell-tooltip-link">{{entry.proc_name}}</a></td>
+        {% endif %}
+    </tr>
+{% endfor %}
+</table>
+</div>
+{% endblock %}

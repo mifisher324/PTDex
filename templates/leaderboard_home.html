@@ -1,0 +1,481 @@
+{% extends "layout.html" %}
+{% block title %}PTDex :: Raid Leaderboard{% endblock %}
+{% block body %}
+{#
+  THE RACE BOARD -- the leaderboard landing page.
+
+  Three ranked columns per boss: who got there FIRST, who is FASTEST, who hits
+  HARDEST. Firsts lead because they are the only leaderboard entry nobody can
+  lose; speed and damage records change hands constantly.
+
+  The old page used its own hardcoded greys (#1b1f24 / #333a44) which sat just
+  off the site palette -- close enough to look accidental, far enough to feel
+  foreign. This scope takes the same tokens the Guild Portal uses, so the two
+  landing pages read as one system.
+#}
+<style>
+  .lbrace{--void:#05080e;--panel:#0d1420;--panel2:#111b2b;--cell:#0c1420;
+    --line:#1a2637;--line2:#25384f;--arc:#4db2ff;--arc-hi:#8fd0ff;--arc-dp:#1d4a75;
+    --ember:#ff8a4a;--ember-hi:#ffc08e;--gold:#e5cc80;--green:#5fe0a3;
+    --silver:#d7e0ea;--bronze:#c8873f;--violet:#a78bfa;
+    --ctext:#dce7f5;--muted:#7f92a9;--dim:#55677d;
+    --lserif:Georgia,"Iowan Old Style","Times New Roman",serif;
+    --lmono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+    position:relative;z-index:1;max-width:72rem;margin:1.4rem auto 4rem;
+    padding:0 1.15rem;color:var(--ctext)}
+
+  /* ---- atmosphere: same treatment as the Guild Portal ---- */
+  .lb-sky{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden}
+  .lb-sky .aur{position:absolute;inset:-20%;filter:blur(70px);opacity:.28}
+  .lb-sky .aur i{position:absolute;border-radius:50%;mix-blend-mode:screen;
+    animation:lbAu 26s ease-in-out infinite}
+  .lb-sky .a1{width:460px;height:460px;left:0%;top:-10%;
+    background:radial-gradient(circle,#1f6dd0,transparent 66%)}
+  .lb-sky .a2{width:500px;height:500px;right:-6%;top:-16%;
+    background:radial-gradient(circle,#b3541e,transparent 66%);animation-delay:-9s}
+  .lb-sky .a3{width:540px;height:540px;left:38%;bottom:-34%;
+    background:radial-gradient(circle,#7b53d6,transparent 66%);animation-delay:-15s}
+  @keyframes lbAu{0%,100%{transform:translate(0,0) scale(1)}
+    50%{transform:translate(26px,-20px) scale(1.09)}}
+  .lb-sky canvas{position:absolute;inset:-50px;opacity:.5;
+    animation:lbDrift 48s ease-in-out infinite}
+  @keyframes lbDrift{0%,100%{transform:translate(0,0)}50%{transform:translate(26px,-18px)}}
+
+  .lbrace .eyebrow{font-family:var(--lmono);font-size:.66rem;letter-spacing:.26em;
+    text-transform:uppercase;color:var(--ember);display:flex;justify-content:space-between;
+    align-items:center;gap:1rem;margin-bottom:.85rem;flex-wrap:wrap}
+  .lbrace .eyebrow a{color:var(--arc-hi);text-decoration:none;border-bottom:1px solid transparent}
+  .lbrace .eyebrow a:hover{border-color:currentColor}
+
+  /* ---- hero ---- */
+  .lbrace .hero{position:relative;border:1px solid var(--line2);border-radius:1.1rem;
+    overflow:hidden;background:linear-gradient(180deg,var(--panel),#080d16);
+    box-shadow:0 34px 80px rgba(0,0,0,.62);margin-bottom:1.5rem}
+  .lbrace .hero .aur2{position:absolute;inset:-60% -20% auto -20%;height:200%;
+    pointer-events:none;background:conic-gradient(from 200deg,rgba(255,138,74,0),
+      rgba(255,138,74,.20),rgba(229,204,128,.14),rgba(77,178,255,.18),rgba(255,138,74,0));
+    filter:blur(58px);animation:lbSpin 40s linear infinite}
+  @keyframes lbSpin{to{transform:rotate(360deg)}}
+  .lbrace .hero .in{position:relative;padding:1.7rem 1.5rem 1.5rem;display:flex;
+    gap:1.5rem;align-items:center;flex-wrap:wrap}
+  .lbrace .hcopy{flex:1;min-width:16rem}
+  .lbrace h1{font-family:var(--lserif);font-size:clamp(2rem,1.5rem+2.2vw,3.1rem);
+    margin:.1rem 0 .45rem;font-weight:700;letter-spacing:-.015em;color:#fff;
+    text-wrap:balance}
+  .lbrace .lede{color:var(--muted);max-width:34rem;line-height:1.6;margin:0}
+  .lbrace h1 .sname{color:var(--gold);font-size:.62em;font-weight:400;white-space:nowrap}
+
+  /* ---- Monster Missions: solo, per character ---- */
+  .lbrace .mmhead{display:flex;align-items:baseline;gap:.8rem;flex-wrap:wrap;
+    margin:2.2rem 0 .35rem}
+  .lbrace .mmhead h2{font-family:var(--lserif);font-size:1.6rem;margin:0;color:#fff;
+    font-weight:700;letter-spacing:-.01em}
+  .lbrace .mmhead span{font-family:var(--lmono);font-size:.62rem;letter-spacing:.14em;
+    text-transform:uppercase;color:var(--dim)}
+  .lbrace .mmlede{color:var(--muted);max-width:44rem;line-height:1.6;margin:0 0 1rem;
+    font-size:.92rem}
+  .lbrace .mm{--acc:var(--violet)}
+  .lbrace .mm .cols{grid-template-columns:repeat(2,1fr)}
+  .lbrace .mmrow{display:grid;grid-template-columns:1.6rem minmax(0,1fr) auto;
+    align-items:center;gap:.6rem;padding:.42rem .65rem;margin-bottom:.3rem;
+    border-radius:.5rem;border:1px solid var(--line);text-decoration:none;color:inherit;
+    background:rgba(255,255,255,.02);transition:border-color .16s}
+  .lbrace a.mmrow:hover{border-color:var(--acc)}
+  .lbrace .mmrow .pos{font-family:var(--lmono);font-size:.7rem;color:var(--dim);
+    text-align:right;font-variant-numeric:tabular-nums}
+  .lbrace .mmrow:first-of-type .pos{color:var(--gold);font-weight:700}
+  .lbrace .mmrow .nm{font-size:.88rem;font-weight:600;overflow:hidden;
+    text-overflow:ellipsis;white-space:nowrap}
+  .lbrace .mmrow .cl{display:block;font-family:var(--lmono);font-size:.55rem;
+    color:var(--dim);font-weight:400;overflow:hidden;text-overflow:ellipsis}
+  .lbrace .mmrow .val{font-size:.95rem}
+  .lbrace .mmfirst{font-family:var(--lmono);font-size:.62rem;color:var(--muted);
+    letter-spacing:.04em}
+  .lbrace .mmfirst b{color:var(--ember-hi);font-weight:700}
+  @media(max-width:62rem){.lbrace .mm .cols{grid-template-columns:1fr}}
+
+  .lbrace .tots{display:flex;gap:1.9rem;flex-wrap:wrap;margin-top:1.1rem}
+  .lbrace .tot .n{font-family:var(--lserif);font-size:1.75rem;font-weight:700;
+    line-height:1;font-variant-numeric:tabular-nums;color:var(--arc-hi)}
+  .lbrace .tot .n.e{color:var(--ember)}
+  .lbrace .tot .n.g{color:var(--gold)}
+  .lbrace .tot .n.v{color:var(--green)}
+  .lbrace .tot .k{font-family:var(--lmono);font-size:.58rem;letter-spacing:.14em;
+    text-transform:uppercase;color:var(--dim);margin-top:.32rem}
+
+  /* ---- boss panel ---- */
+  .lbrace .boss{border:1px solid var(--line);border-radius:1rem;overflow:hidden;
+    background:linear-gradient(180deg,var(--panel),#0a0f18);margin-bottom:1.05rem;
+    box-shadow:0 18px 44px rgba(0,0,0,.4);
+    transition:border-color .2s,box-shadow .2s}
+  .lbrace .boss:hover{border-color:var(--line2);
+    box-shadow:0 22px 54px rgba(0,0,0,.5)}
+  .lbrace .bhead{display:flex;align-items:center;gap:1rem;padding:1.05rem 1.2rem;
+    border-bottom:1px solid var(--line);position:relative;overflow:hidden;
+    background:linear-gradient(90deg,var(--panel2),transparent 72%)}
+  /* the accent rail carries the boss identity, one hue each */
+  .lbrace .bhead::before{content:"";position:absolute;inset:0 auto 0 0;width:3px;
+    background:var(--acc,var(--arc));z-index:1}
+  /* a wash of the boss hue bleeding out of the icon -- gives each panel its own
+     atmosphere instead of four identical grey bars */
+  .lbrace .bhead::after{content:"";position:absolute;left:-4rem;top:50%;
+    width:22rem;height:22rem;transform:translateY(-50%);pointer-events:none;
+    background:radial-gradient(circle,var(--acc,var(--arc)),transparent 62%);
+    opacity:.10;filter:blur(28px)}
+  .lbrace .bicon{position:relative;z-index:1;width:2.9rem;height:2.9rem;flex:none;
+    border-radius:.7rem;display:grid;place-items:center;font-size:1.35rem;
+    background:linear-gradient(160deg,var(--panel2),var(--cell));
+    border:1px solid var(--line2);
+    box-shadow:0 0 22px -6px var(--acc,var(--arc)),inset 0 1px 0 rgba(255,255,255,.05)}
+  .lbrace .bhead > div{position:relative;z-index:1}
+  .lbrace .bhead h2{font-family:var(--lserif);font-size:1.3rem;margin:0;font-weight:700;
+    color:#fff;letter-spacing:-.01em}
+  .lbrace .bhead h2 a{color:inherit;text-decoration:none}
+  .lbrace .bhead h2 a:hover{color:var(--acc,var(--arc-hi))}
+  .lbrace .bmeta{font-family:var(--lmono);font-size:.62rem;letter-spacing:.1em;
+    text-transform:uppercase;color:var(--dim);margin-top:.2rem}
+  .lbrace .sp{flex:1}
+  .lbrace .tag{font-family:var(--lmono);font-size:.56rem;letter-spacing:.13em;
+    text-transform:uppercase;font-weight:700;padding:.18rem .5rem;border-radius:.3rem;
+    border:1px solid currentColor;white-space:nowrap}
+  .lbrace .tag.gaunt{color:var(--gold)}
+  .lbrace .tag.open{color:var(--ember)}
+  .lbrace .allbtn{font-family:var(--lmono);font-size:.6rem;letter-spacing:.12em;
+    text-transform:uppercase;color:var(--muted);text-decoration:none;
+    border:1px solid var(--line2);border-radius:.35rem;padding:.28rem .6rem;
+    transition:color .15s,border-color .15s}
+  .lbrace .allbtn:hover{color:var(--arc-hi);border-color:var(--arc-dp)}
+
+  .lbrace .cols{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;
+    background:var(--line)}
+  .lbrace .col{padding:1rem 1.05rem 1.1rem;background:linear-gradient(180deg,
+    rgba(255,255,255,.014),transparent 60%)}
+  .lbrace .col h3{font-family:var(--lmono);font-size:.6rem;letter-spacing:.17em;
+    text-transform:uppercase;color:var(--muted);margin:0 0 .8rem;font-weight:700;
+    display:flex;align-items:center;gap:.5rem}
+  .lbrace .col h3::after{content:"";flex:1;height:1px;
+    background:linear-gradient(90deg,var(--line2),transparent)}
+  .lbrace .col h3 em{font-style:normal;color:var(--dim);letter-spacing:.05em;
+    text-transform:none;font-size:.63rem;font-weight:400}
+
+  /* Each row is one BRACKET -- a separate record, not a podium place, so there
+     are no gold/silver/bronze medals here. GRID, not flex: three fixed tracks
+     mean the values line up in a column across every row and every boss, which
+     is most of why this now reads as a table rather than a pile of cards.
+     (It was flex with an inline <span> holder, so the bracket, name and date
+     ran together on one line and the value fell to a second row.) */
+  .lbrace .row{position:relative;display:grid;
+    grid-template-columns:auto minmax(0,1fr) auto;
+    align-items:center;gap:.7rem;
+    padding:.6rem .8rem .6rem .75rem;margin-bottom:.42rem;border-radius:.6rem;
+    text-decoration:none;color:inherit;border:1px solid var(--line);overflow:hidden;
+    /* Plain fill first: an unsupported color-mix() invalidates its whole
+       declaration, and without this the row would fall through to transparent. */
+    background:rgba(255,255,255,.022);
+    background:linear-gradient(90deg,
+      color-mix(in srgb,var(--bk,#4db2ff) 9%,transparent),
+      rgba(255,255,255,.018) 42%);
+    transition:border-color .16s,transform .16s,box-shadow .16s}
+  .lbrace .row:last-child{margin-bottom:0}
+  .lbrace .row::before{content:"";position:absolute;inset:0 auto 0 0;width:2px;
+    background:var(--bk,var(--line2));transition:width .16s,box-shadow .16s}
+  .lbrace a.row:hover{border-color:var(--bk,var(--line2));transform:translateX(2px);
+    box-shadow:0 6px 18px -8px var(--bk,#000)}
+  .lbrace a.row:hover::before{width:3px;box-shadow:0 0 12px var(--bk)}
+  .lbrace .row.b1{--bk:#4db2ff}
+  .lbrace .row.b2{--bk:#5fe0a3}
+  .lbrace .row.b3{--bk:#a78bfa}
+
+  /* party pips: one dot per player. Says "duo" faster than the word does, and
+     it is the one thing on the row that cannot be misread as a rank. */
+  .lbrace .disc{width:1.95rem;height:1.95rem;flex:none;border-radius:.5rem;
+    display:flex;align-items:center;justify-content:center;gap:.17rem;
+    background:rgba(0,0,0,.28);border:1px solid var(--bk,var(--line2));
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.05)}
+  /* flex:none on the pips is load-bearing. Flex items shrink by default, and an
+     EMPTY <i> has a zero content size, so the browser is free to squash it below
+     its stated width -- the dots rendered as thin vertical bars, and at three
+     across they compressed to nothing. Fixed size, no shrink, no guessing. */
+  .lbrace .disc i{flex:none;width:.34rem;height:.34rem;border-radius:50%;
+    background:var(--bk,var(--arc));box-shadow:0 0 7px var(--bk,transparent)}
+
+  .lbrace .who{display:flex;flex-direction:column;min-width:0;line-height:1.25}
+  .lbrace .who .bk{font-family:var(--lmono);font-size:.5rem;letter-spacing:.16em;
+    text-transform:uppercase;color:var(--bk,var(--dim));font-weight:700}
+  .lbrace .who .nm{font-size:.9rem;font-weight:600;color:var(--ctext);
+    overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-top:.06rem}
+  .lbrace a.row:hover .who .nm{color:var(--arc-hi)}
+  .lbrace .who .when{font-family:var(--lmono);font-size:.57rem;color:var(--dim);
+    margin-top:.1rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+  .lbrace .val{display:flex;flex-direction:column;align-items:flex-end;
+    font-family:var(--lmono);font-size:1.05rem;font-weight:700;
+    font-variant-numeric:tabular-nums;line-height:1.1;white-space:nowrap}
+  .lbrace .val small{font-size:.48rem;letter-spacing:.14em;text-transform:uppercase;
+    color:var(--dim);font-weight:400;margin-top:.15rem}
+  .lbrace .val.first{color:var(--ember-hi);text-shadow:0 0 14px rgba(255,138,74,.3)}
+  .lbrace .val.speed{color:var(--green);text-shadow:0 0 14px rgba(95,224,163,.28)}
+  .lbrace .val.dps{color:var(--gold);text-shadow:0 0 14px rgba(229,204,128,.25)}
+
+  /* an unclaimed bracket is the most motivating thing on the page -- style it so */
+  .lbrace .row.open{border:1px dashed rgba(255,138,74,.36);
+    background:rgba(255,138,74,.035)}
+  .lbrace .row.open::before{background:rgba(255,138,74,.5)}
+  .lbrace .row.open .nm{color:var(--ember);font-style:italic;font-weight:500}
+  .lbrace .row.open .disc{border-style:dashed;border-color:rgba(255,138,74,.5);
+    background:transparent;box-shadow:none}
+  .lbrace .row.open .disc i{background:rgba(255,138,74,.55);box-shadow:none}
+  .lbrace .row.open .bk{color:rgba(255,138,74,.75)}
+
+  .lbrace .empty{padding:1.5rem 1.2rem;text-align:center;grid-column:1/-1}
+  .lbrace .empty b{display:block;font-family:var(--lserif);font-size:1.1rem;
+    color:var(--ember);margin-bottom:.25rem}
+  .lbrace .empty span{font-family:var(--lmono);font-size:.62rem;letter-spacing:.12em;
+    text-transform:uppercase;color:var(--dim)}
+
+  .lbrace .foot{margin-top:1.5rem;padding:.95rem 1.1rem;border:1px solid var(--line);
+    border-radius:.7rem;background:rgba(255,255,255,.015);font-family:var(--lmono);
+    font-size:.68rem;color:var(--muted);line-height:1.7;text-align:center}
+  .lbrace .foot b{color:var(--arc-hi)}
+  .lbrace .foot a{color:var(--arc-hi);text-decoration:none}
+  .lbrace .foot a:hover{text-decoration:underline}
+
+  @media(max-width:62rem){
+    .lbrace .cols{grid-template-columns:1fr}
+    .lbrace .col{border-right:0;border-bottom:1px solid var(--line)}
+    .lbrace .col:last-child{border-bottom:0}
+  }
+  @media(prefers-reduced-motion:reduce){
+    .lb-sky .aur i,.lb-sky canvas,.lbrace .hero .aur2{animation:none}
+  }
+</style>
+
+{# One hue and one mark per boss, so a panel is identifiable before it is read. #}
+{% set BOSS_ACC = {'kerafyrm':'#ff8a4a','seru':'#a78bfa','plane_of_time':'#e5cc80',
+                   'zebuxoruk':'#4db2ff','quarm':'#5fe0a3'} %}
+{% set BOSS_ICON = {'kerafyrm':'&#128009;','seru':'&#9784;','plane_of_time':'&#8987;',
+                    'zebuxoruk':'&#9889;','quarm':'&#10022;'} %}
+{#
+  One bracket row. `r` is a row from get_race_board(); every column carries
+  exactly three of them (Solo, Duo, Trio), claimed or not, so no bracket is ever
+  crowded out by another. `unit` labels the metric under the value.
+#}
+{% macro bracket_row(r, kind, value, unit=None, sub=None) %}
+  {% if r.claimed %}
+  <a class="row b{{ r.group_size }}"
+     href="{{ url_for('leaderboard.encounter_detail', encounter_id=r.encounter_id) }}">
+    <span class="disc" aria-hidden="true">{% for _ in range(r.group_size) %}<i></i>{% endfor %}</span>
+    <span class="who">
+      <span class="bk">{{ r.group_label }}</span>
+      <span class="nm">{{ r.names or 'Unknown' }}</span>
+      {% if sub %}<span class="when">{{ sub }}</span>{% endif %}
+    </span>
+    <span class="val {{ kind }}">{{ value }}{% if unit %}<small>{{ unit }}</small>{% endif %}</span>
+  </a>
+  {% else %}
+  <div class="row open b{{ r.group_size }}">
+    <span class="disc" aria-hidden="true">{% for _ in range(r.group_size) %}<i></i>{% endfor %}</span>
+    <span class="who">
+      <span class="bk">{{ r.group_label }}</span>
+      <span class="nm">Unclaimed</span>
+      <span class="when">No {{ r.group_label|lower }} clear recorded</span>
+    </span>
+  </div>
+  {% endif %}
+{% endmacro %}
+
+<div class="lb-sky" aria-hidden="true">
+  <div class="aur"><i class="a1"></i><i class="a2"></i><i class="a3"></i></div>
+  <canvas id="lb-stars"></canvas>
+</div>
+
+<div class="lbrace">
+  <div class="eyebrow"><span>PTDEX // RAID.ENCOUNTERS</span></div>
+  {% with lbtab = 'raid' %}{% include 'leaderboard_tabs.html' %}{% endwith %}
+
+  <div class="hero">
+    <div class="aur2"></div>
+    <div class="in">
+      <div class="hcopy">
+        <h1>The Race Board{% if season %} <span class="sname">&middot; {{ season.name }}</span>{% endif %}</h1>
+        <p class="lede">Every ranked clear on Project Triune{% if season %} in {{ season.name }}{% endif %},
+          by boss and group size. Speed and damage records change hands. A first clear is
+          claimed once.</p>
+        {% if board %}
+        <div class="tots">
+          <div class="tot"><div class="n">{{ '{:,}'.format(board.totals.clears) }}</div>
+            <div class="k">Ranked clears</div></div>
+          <div class="tot"><div class="n e">{{ board.totals.firsts_claimed }}</div>
+            <div class="k">Firsts claimed</div></div>
+          {% if board.totals.firsts_open %}
+          <div class="tot"><div class="n g">{{ board.totals.firsts_open }}</div>
+            <div class="k">Still unclaimed</div></div>
+          {% endif %}
+          {% if board.totals.peak_dps %}
+          <div class="tot"><div class="n g">{{ '{:,}'.format(board.totals.peak_dps) }}</div>
+            <div class="k">Peak raid DPS</div></div>
+          {% endif %}
+          {% if board.totals.fastest_display %}
+          <div class="tot"><div class="n v">{{ board.totals.fastest_display }}</div>
+            <div class="k">Fastest kill</div></div>
+          {% endif %}
+        </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  {% if board %}
+    {% for b in board.bosses %}
+    {% set acc = BOSS_ACC.get(b.boss_key, '#4db2ff') %}
+    <section class="boss" style="--acc:{{ acc }}">
+      <div class="bhead">
+        <div class="bicon">{{ BOSS_ICON.get(b.boss_key, '&#10022;')|safe }}</div>
+        <div>
+          <h2><a href="{{ url_for('leaderboard.boss_rankings', boss_key=b.boss_key, season=season.key if season else None) }}">{{ b.name }}</a></h2>
+          <div class="bmeta">
+            {% if b.clears %}
+              {{ '{:,}'.format(b.clears) }} ranked clear{{ '' if b.clears == 1 else 's' }}
+              &middot; Solo {{ b.by_size[1] }} &middot; Duo {{ b.by_size[2] }} &middot; Trio {{ b.by_size[3] }}
+            {% else %}No ranked clear yet{% endif %}
+          </div>
+        </div>
+        <div class="sp"></div>
+        {% if b.is_gauntlet %}<span class="tag gaunt">Full Gauntlet</span>{% endif %}
+        {% if not b.clears %}<span class="tag open">Unclaimed</span>{% endif %}
+        <a class="allbtn" href="{{ url_for('leaderboard.boss_rankings', boss_key=b.boss_key, season=season.key if season else None) }}">All rankings</a>
+      </div>
+
+      <div class="cols">
+        {% if not b.clears %}
+          <div class="empty">
+            <b>Nobody has taken {{ b.name }} Solo, Duo or Trio.</b>
+            <span>Three firsts still on the board</span>
+          </div>
+        {% else %}
+        {# Three columns, three brackets each. Solo, Duo and Trio are separate
+           achievements -- a trio will nearly always beat a solo, so ranking them
+           against each other would give every slot to trios. #}
+        <div class="col">
+          <h3>First Clear <em>&mdash; never resets</em></h3>
+          {% for r in b.first %}{{ bracket_row(r, 'first', r.duration_display or '—',
+                                               None, r.when_full) }}{% endfor %}
+        </div>
+
+        <div class="col">
+          <h3>Fastest Kill <em>&mdash; per bracket</em></h3>
+          {% for r in b.fastest %}{{ bracket_row(r, 'speed', r.duration_display,
+                                                 None, r.when_short) }}{% endfor %}
+        </div>
+
+        <div class="col">
+          <h3>Highest DPS <em>&mdash; per bracket</em></h3>
+          {% for r in b.dps %}{{ bracket_row(r, 'dps',
+                                             '{:,}'.format(r.encounter_dps or 0),
+                                             'dps', (('peak ' ~ '{:,}'.format(r.peak_dps) ~ ' · ') if r.peak_dps else '') ~ (r.when_short or '')) }}{% endfor %}
+        </div>
+        {% endif %}
+      </div>
+    </section>
+    {% endfor %}
+  {% else %}
+    {# Fallback: the board query failed, so at least give people the boss links. #}
+    <section class="boss">
+      <div class="cols">
+        <div class="empty"><b>Rankings are being rebuilt.</b>
+          <span>Pick a boss below for its full board</span></div>
+      </div>
+    </section>
+    {% for boss in bosses %}
+    <section class="boss">
+      <div class="bhead">
+        <div class="bicon">{{ BOSS_ICON.get(boss.boss_key, '&#10022;')|safe }}</div>
+        <div><h2><a href="{{ url_for('leaderboard.boss_rankings', boss_key=boss.boss_key) }}">{{ boss.name }}</a></h2>
+          <div class="bmeta">Solo &middot; Duo &middot; Trio rankings</div></div>
+      </div>
+    </section>
+    {% endfor %}
+  {% endif %}
+
+  {% if missions %}
+  <div class="mmhead" id="monster-missions"><h2>Monster Missions</h2><span>Solo &middot; ranked per character</span></div>
+  <p class="mmlede">One mission per LDoN camp, played as a monster. Everyone gets the same form
+    and the same stats, so your gear doesn't count: only how well you play the monster.
+    Each character is listed once per column, at their best run.</p>
+  {% for m in missions %}
+  <section class="boss mm">
+    <div class="bhead">
+      <div class="bicon">&#9760;</div>
+      <div>
+        <h2><a href="{{ url_for('leaderboard.boss_rankings', boss_key=m.boss_key, season=season.key if season else None) }}">{{ m.theme }}</a></h2>
+        <div class="bmeta">
+          {% if m.clears %}{{ '{:,}'.format(m.clears) }} completed run{{ '' if m.clears == 1 else 's' }}
+            &middot; {{ m.runners }} character{{ '' if m.runners == 1 else 's' }}
+          {% else %}No completed run yet{% endif %}
+        </div>
+      </div>
+      <div class="sp"></div>
+      {% if m.first %}<span class="mmfirst">First: <b>{{ m.first.name }}</b> &middot; {{ m.first.when_short }}</span>
+      {% else %}<span class="tag open">Unclaimed</span>{% endif %}
+    </div>
+    <div class="cols">
+      {% if not m.clears %}
+        <div class="empty"><b>Nobody has finished this mission yet.</b>
+          <span>The first completion is still open</span></div>
+      {% else %}
+      <div class="col">
+        <h3>Fastest Run <em>&mdash; start to finish</em></h3>
+        {% for r in m.fastest %}
+        <a class="mmrow" href="{{ url_for('leaderboard.encounter_detail', encounter_id=r.encounter_id) }}">
+          <span class="pos">{{ loop.index }}</span>
+          <span class="nm">{{ r.name }}<span class="cl">{{ r.class_name or '' }} &middot; {{ r.when_short }}</span></span>
+          <span class="val speed">{{ r.duration_display }}</span>
+        </a>
+        {% endfor %}
+      </div>
+      <div class="col">
+        <h3>Highest DPS <em>&mdash; damage over combat time</em></h3>
+        {% for r in m.dps %}
+        <a class="mmrow" href="{{ url_for('leaderboard.encounter_detail', encounter_id=r.encounter_id) }}">
+          <span class="pos">{{ loop.index }}</span>
+          <span class="nm">{{ r.name }}<span class="cl">{{ r.class_name or '' }} &middot; {{ r.when_short }}</span></span>
+          <span class="val dps">{{ '{:,}'.format(r.dps) }}<small>dps</small></span>
+        </a>
+        {% endfor %}
+      </div>
+      {% endif %}
+    </div>
+  </section>
+  {% endfor %}
+  {% endif %}
+
+  <div class="foot">
+    Ranked clears cover <b>Solo, Duo and Trio</b> only &mdash; full-raid kills are counted on the
+    <a href="{{ url_for('guilds.guild_portal') }}">Guild Portal</a>. A first clear is taken from the
+    earliest ranked encounter on record and is never recalculated.
+    Anonymous characters are excluded, exactly as on the player boards.
+  </div>
+
+  {% include 'parse_note.html' %}
+</div>
+
+<script>
+(function(){
+  var c=document.getElementById('lb-stars'); if(!c)return;
+  var PAL=['#8fd0ff','#ffffff','#cfe6ff','#ff8a4a','#e5cc80'];
+  function paint(){
+    var x=c.getContext('2d'),W=c.width=innerWidth+100,H=c.height=innerHeight+100;
+    x.clearRect(0,0,W,H);
+    var n=Math.round(W*H/3200);
+    for(var i=0;i<n;i++){
+      x.globalAlpha=.2+Math.random()*.5;
+      x.fillStyle=PAL[Math.floor(Math.random()*PAL.length)];
+      x.beginPath();x.arc(Math.random()*W,Math.random()*H,.3+Math.random()*1.1,0,6.283);x.fill();
+    }
+    x.globalAlpha=1;
+  }
+  paint();
+  var t;addEventListener('resize',function(){clearTimeout(t);t=setTimeout(paint,180);});
+})();
+</script>
+{% endblock %}

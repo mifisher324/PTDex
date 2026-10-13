@@ -1,0 +1,51 @@
+{% extends "layout.html" %}
+{% block title %}PTDex :: Pet{% if data %} :: {{ data.pet_name }}{% endif %}{% endblock %}
+{% block body %}
+{% if data is none %}
+<div class="wp"><h1>Pet not found</h1></div>
+{% else %}
+<style>
+  .pet-cols{display:grid;grid-template-columns:1fr 1fr;gap:1rem;align-items:start}
+  @media(max-width:47.5em){.pet-cols{grid-template-columns:1fr}}
+  .pet-kv{display:grid;grid-template-columns:1fr 1fr;gap:0.125rem 1.25rem;padding:0.75rem 1rem}
+  .pet-kv .r{display:flex;justify-content:space-between;padding:0.3125rem 0;border-bottom:1px dotted var(--w-line);font-size:.88rem}
+  .pet-kv .k{color:var(--w-muted)} .pet-kv .v{font-weight:600;font-variant-numeric:tabular-nums}
+</style>
+<div class="wp">
+  <div class="wp-eyebrow">PTDex // world.pets</div>
+  <h1>{{ data.pet_name }}</h1>
+  <div class="pet-cols">
+    <div class="wp-panel">
+      <h2>Pet Stats</h2>
+      <div class="pet-kv">
+        {% set stats = [('Level', data.npc.level),('Class', data.npc.class),('Race', data.npc.race),
+          ('Body', data.npc.bodytype),('Pet Power', data.pet_power),('Swarm Pet', data.swarm_pet),
+          ('HP', data.npc.hp),('AC', data.npc.AC),('Damage', data.npc.mindmg ~ ' - ' ~ data.npc.maxdmg),
+          ('HP Regen', data.npc.hp_regen_rate),('STR', data.npc.STR),('STA', data.npc.STA),
+          ('DEX', data.npc.DEX),('AGI', data.npc.AGI),('INT', data.npc._INT),('WIS', data.npc.WIS),
+          ('CHA', data.npc.CHA),('Magic', data.npc.MR),('Fire', data.npc.FR),('Cold', data.npc.CR),
+          ('Disease', data.npc.DR),('Poison', data.npc.PR)] %}
+        {% for k, v in stats %}<div class="r"><span class="k">{{ k }}</span><span class="v">{{ v }}</span></div>{% endfor %}
+      </div>
+      {% if data.npc.special_attacks %}<div class="wp-pb" style="border-top:1px solid var(--w-line);color:var(--w-muted);font-size:.84rem"><b style="color:var(--w-text)">Special Attacks:</b> {{ data.npc.special_attacks }}</div>{% endif %}
+    </div>
+    {% if data.spells %}
+    <div class="wp-panel">
+      <h2>Spells Cast</h2>
+      <div class="wp-tw"><table>
+        <thead><tr><th></th><th>Spell</th><th>Type</th><th>Chance</th></tr></thead><tbody>
+        {% for entry in data.spells %}
+        <tr>
+          <td style="width:36px"><img src="/static/spell_icons/{{ entry.icon }}.png" style="width:28px;height:28px;border-radius:4px" onerror="this.style.visibility='hidden'"></td>
+          <td><a href="{{ url_for('spells.spell_detail', spell_id=entry.spell_id) }}">{{ entry.spell_name }}</a></td>
+          <td style="color:var(--w-muted)">{{ entry.spell_type }}</td>
+          <td style="font-variant-numeric:tabular-nums">{% if entry.proc_chance is not none %}{{ entry.proc_chance }}%{% endif %}</td>
+        </tr>
+        {% endfor %}</tbody>
+      </table></div>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endif %}
+{% endblock %}

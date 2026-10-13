@@ -1,0 +1,26 @@
+{% extends "layout.html" %}
+{% block title %}PTDex :: Tradeskill Results{% endblock %}
+{% block body %}
+<script>
+$(document).ready(function () {
+    $('#results').DataTable({ "order": [[1, "desc"]], "pageLength": 25, searching: true, paging: false, info: false, "dom": '<lfp<t>i>' });
+});
+</script>
+<div class="wp">
+  <div class="wp-eyebrow">PTDex // world.tradeskills</div>
+  <h1>Tradeskill Results</h1>
+  <div class="wp-panel"><div class="wp-pb wp-tw">
+    <table id="results">
+      <thead><tr><th>Recipe</th><th>Trivial</th></tr></thead>
+      <tbody>
+      {% for entry in data %}
+        <tr>
+          <td><a href="{{ url_for('tradeskills.tradeskill_detail', ts_id=entry.ts_id) }}">{{ entry.ts_name }}</a></td>
+          <td style="font-variant-numeric:tabular-nums">{{ entry.trivial }}</td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div></div>
+</div>
+{% endblock %}

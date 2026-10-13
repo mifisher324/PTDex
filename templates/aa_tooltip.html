@@ -1,0 +1,10 @@
+<div class="aa-tip" style="max-width:24rem;font-size:.82rem;line-height:1.45">
+  <div style="font-weight:700;font-size:.95rem">{{ aa.name }}</div>
+  <div style="color:#9fb0c4;font-size:.72rem;margin:.1rem 0 .35rem">
+    {{ aa.tab }} &middot; {{ 'Activated' if aa.activated else 'Passive' }} &middot;
+    {{ aa.available_ranks }} rank{{ '' if aa.available_ranks == 1 else 's' }} &middot; {{ aa.total_cost }} pts
+    {% if aa.ranks and aa.ranks[0].recast %} &middot; recast {{ aa.ranks[0].recast }}{% endif %}
+  </div>
+  {% if aa.description %}<div>{{ aa.description|truncate(320) }}</div>{% endif %}
+  <div style="color:#9fb0c4;font-size:.72rem;margin-top:.35rem">{{ aa.classes|join(', ') }}</div>
+</div>
