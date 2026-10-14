@@ -5,6 +5,8 @@ import os
 from sqlalchemy import and_, or_
 from sqlalchemy.orm import Session
 
+from logic import expansion
+
 here = os.path.dirname(__file__)
 
 
@@ -60,6 +62,67 @@ def convert_time(seconds):
         return f'{minutes} minutes'
     else:
         return f'{seconds} seconds'
+
+
+def get_all_eras():
+    all_era = {'Classic': 'Classic',
+               'Kunark': 'Ruins of Kunark',
+               'Velious': 'Scars of Velious',
+               'Luclin': 'Shadows of Luclin',
+               'Planes': 'Planes of Power',
+               'LDoN': 'Lost Dungeons of Norrath',
+               'GoD': 'Gates of Discord',
+               'OoW': 'Omens of War',
+               'DoN': 'Dragons of Norrath',
+               'DoDH': 'Depths of Darkhollow',
+               'PoR': 'Prophecy of Ro',
+               'TSS': "The Serpent's Spine",
+               'TBS': 'The Buried Sea',
+               'SoF': 'Secrets of Faydwer',
+               'SoD': 'Seeds of Destruction',
+               'UF': 'Underfoot',
+               'HoT': 'House of Thule',
+               'VoA': 'Veil of Alaris',
+               'RoF': 'Rain of Fear'}
+    if expansion < 19:
+        del all_era['RoF']
+    if expansion < 18:
+        del all_era['VoA']
+    if expansion < 17:
+        del all_era['HoT']
+    if expansion < 16:
+        del all_era['UF']
+    if expansion < 15:
+        del all_era['SoD']
+    if expansion < 14:
+        del all_era['SoF']
+    if expansion < 13:
+        del all_era['TBS']
+    if expansion < 12:
+        del all_era['TSS']
+    if expansion < 11:
+        del all_era['PoR']
+    if expansion < 10:
+        del all_era['DoDH']
+    if expansion < 9:
+        del all_era['DoN']
+    if expansion < 8:
+        del all_era['OoW']
+    if expansion < 7:
+        del all_era['GoD']
+    if expansion < 6:
+        del all_era['LDoN']
+    if expansion < 4:
+        del all_era['Planes']
+    if expansion < 3:
+        del all_era['Luclin']
+    if expansion < 2:
+        del all_era['Velious']
+    if expansion < 1:
+        del all_era['Kunark']
+
+    return all_era
+
 
 
 def get_spell_class(class_num):

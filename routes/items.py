@@ -3,6 +3,7 @@ from flask import Blueprint, render_template, request, flash, redirect, url_for,
 import item
 import logic
 import spell
+import utils
 
 item_pages = Blueprint('items', __name__, template_folder='templates')
 
@@ -118,7 +119,8 @@ def _icmp(a, b):
 @item_pages.route("/item/clicks", methods=['GET', 'POST'])
 def click_item_search():
     if request.method == 'GET':
-        return render_template('click_items.html')
+        eras = utils.get_all_eras()
+        return render_template('click_items.html', eras=eras)
     else:
         filters = {}
         if 'g_class_1' in request.form:
@@ -130,7 +132,7 @@ def click_item_search():
         if 'g_class_3' in request.form:
             if request.form['g_class_3'] != 'None':
                 filters.update({'g_class_3': request.form['g_class_3']})
-        base_era_list = ['Classic', 'Kunark', 'Velious', 'Luclin', 'Planes']
+        base_era_list = utils.get_all_eras().keys()
         remove_era_list = request.form.getlist('eras')
         era_list = []
         for era in base_era_list:

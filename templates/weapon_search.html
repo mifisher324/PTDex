@@ -429,10 +429,7 @@ function createOption(ddl, text, value) {
 'Two Hand Piercing', 'Any 2H Weapon', 'Exclude 2H Weapon', 'Bow', 'Arrow', 'Thrown'] %}
 <div class="srch">
 <div class="srch-head"><p class="srch-eyebrow">Items</p><h1>Weapon Search</h1></div>
-<form actions="{{ url_for('item_search') }}" method="post" class="add-entry" id="demoForm" target="_blank">
-    {% if not restricts and not weights %}
-      Don't see your restrict or weight sets? <a href="{{url_for('user_home')}}">Login</a> here!<br>
-    {% endif %}
+<form actions="{{ url_for('item_search') }}" method="post" class="add-entry" id="demoForm">
     <input type="submit" value="Search"><br>
     <table id="searchOpts">
         <tr>
@@ -493,6 +490,8 @@ function createOption(ddl, text, value) {
                                 {% endfor %}
                                 {% endfor %}</select></td>
                         </tr>
+                    </table>
+                    <table>
                                                 <tr>
                             <td colspan="3">
                                 <abbr title="Only items with the provided stats will be searched for.  Heroic resists are included when resists are selected.  Delay is inverted (e.g. delay 20 will get delay 20 and lower.)">
@@ -553,14 +552,12 @@ function createOption(ddl, text, value) {
                         </td>
                     </tr>
                     <tr>
-                        <td colspan="4">
-                            <select multiple name="eras" size="5">
-                                <option value="Classic">Classic</option>
-                                <option value="Kunark">Kunark</option>
-                                <option value="Velious">Velious</option>
-                                <option value="Luclin">Luclin</option>
-                                <option value="Planes">Planes of Power</option>
-                            </select>
+                   <td colspan="4">
+                            <select multiple name="eras" size="{{eras|length}}">
+                                {% for entry in eras %}
+                                <option value="{{entry}}">{{eras[entry]}}</option>
+                                {% endfor %}
+                            </select></td>
                     </tr>
                     <tr>
                         <td>Weapons with Proc:</td>

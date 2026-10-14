@@ -812,7 +812,7 @@ def item_search():
         filters.update({'i_type': i_type})
 
     # Handle Eras
-    base_era_list = ['Classic', 'Kunark', 'Velious', 'Luclin', 'Planes']
+    base_era_list = utils.get_all_eras().keys()
     remove_era_list = request.form.getlist('eras')
     era_list = []
     for era in base_era_list:
@@ -996,24 +996,12 @@ def item_search():
 
 @app.route("/search/weapon", methods=['GET', 'POST'])
 def weapon_search():
-    if discord.authorized:
-        user = discord.fetch_user()
-    else:
-        user = None
     if request.method == 'GET':
+        eras = utils.get_all_eras()
         skills = utils.get_all_skills()
-        if user:
-            restricts = local.get_restrict_sets(user)
-            weights = local.get_weights_sets(user)
-        else:
-            restricts = []
-            weights = []
         return render_template('weapon_search.html',
                                skills=skills,
-                               restricts=restricts,
-                               restrict_json=json.dumps(restricts),
-                               weights=weights,
-                               weights_json=json.dumps(weights))
+                               eras=eras)
     else:
         return redirect(url_for('item_search'), code=307)
 
@@ -1050,24 +1038,12 @@ def stat_search():
 
 @app.route("/search/armor", methods=['GET', 'POST'])
 def armor_search():
-    if discord.authorized:
-        user = discord.fetch_user()
-    else:
-        user = None
     if request.method == 'GET':
         skills = utils.get_all_skills()
-        if user:
-            restricts = local.get_restrict_sets(user)
-            weights = local.get_weights_sets(user)
-        else:
-            restricts = []
-            weights = []
+        eras = utils.get_all_eras()
         return render_template('item_search.html',
                                skills=skills,
-                               restricts=restricts,
-                               restrict_json=json.dumps(restricts),
-                               weights=weights,
-                               weights_json=json.dumps(weights))
+                               eras=eras)
     else:
         return redirect(url_for('item_search'), code=307)
 
