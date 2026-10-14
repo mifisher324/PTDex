@@ -355,6 +355,7 @@ function createOption(ddl, text, value) {
 document.addEventListener("DOMContentLoaded", function () {
     const gSlot = document.getElementById("g_slot");
     const iType = document.getElementById("i_type");
+    const iTypeHidden = document.getElementById("i_type_hidden");
 
     const allTypes = [{ value: "None", text: "All Types" }];
 
@@ -372,14 +373,16 @@ document.addEventListener("DOMContentLoaded", function () {
     const ammoTypes = ["Arrow", "Thrown"];
 
     function setOptions(list) {
-        iType.innerHTML = "";  // clear
+        iType.innerHTML = "";
         [...allTypes, ...list.map(x => ({ value: x, text: x }))].forEach(opt => {
             const o = document.createElement("option");
             o.value = opt.value;
             o.textContent = opt.text;
             iType.appendChild(o);
         });
+
         iType.disabled = false;
+        iTypeHidden.disabled = true;     // real select submits
     }
 
     function disableITypes() {
@@ -388,7 +391,10 @@ document.addEventListener("DOMContentLoaded", function () {
         o.value = "None";
         o.textContent = "All Types";
         iType.appendChild(o);
+
         iType.disabled = true;
+        iTypeHidden.disabled = false;    // hidden field submits
+        iTypeHidden.value = "None";
     }
 
     gSlot.addEventListener("change", function () {
@@ -406,9 +412,6 @@ document.addEventListener("DOMContentLoaded", function () {
             disableITypes();
         }
     });
-
-    // Run once on page load to initialize correctly
-    gSlot.dispatchEvent(new Event("change"));
 });
 </script>
 
@@ -428,7 +431,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 <table id="leftOpts" class="smallerfont">
                     <tr>
                         <td>Slot:</td>
-                        <td><select name="g_slot">
+                        <td><select name="g_slot" id="g_slot">
                             <option value="None" selected="selected">-- Any Slot --</option>
                             {% for option in slots %}
                             <option value="{{option}}">{{option}}</option>
@@ -462,8 +465,9 @@ document.addEventListener("DOMContentLoaded", function () {
                             {% endfor %}
                         </select></td>
                     </tr>
+                    <input type="hidden" name="i_type" id="i_type_hidden" value="None">
                     <td>Item Type:</td>
-                    <td><select name="i_type">
+                    <td><select name="i_type" id="i_type">
                         <option value="None" selected="Selected">All Types</option>
                         {% for option in i_types %}
                         <option value="{{option}}">{{option}}</option>
