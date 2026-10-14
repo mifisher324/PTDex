@@ -145,6 +145,7 @@ def _get_arg_list(tooltip=False):
         arg_list.append(ClickSpell.name.label('click_name'))
         arg_list.append(ProcSpell.id.label('proc_id'))
         arg_list.append(ProcSpell.name.label('proc_name'))
+        arg_list.append(ProcSpell.effect_base_value1.label('proc_max_damage'))
         arg_list.append(WornSpell.id.label('worn_id'))
         arg_list.append(WornSpell.name.label('worn_name'))
         arg_list.append(WornSpell.effect_base_value1.label('worn_value'))
@@ -663,6 +664,9 @@ def get_items_with_filters(weights, ignore_zero, **kwargs):
             filters.append(Item.proceffect == SpellsNew.id)
             if kwargs['proc_type'] == 'Lifetap':
                 filters.append(SpellsNew.targettype == 13)
+            elif kwargs['proc_type'] == 'All':
+                filters.append(SpellsNew.effectid1 == 0)
+                filters.append(SpellsNew.effect_base_value1 < 0)
             elif kwargs['proc_type'] == 'Debuff':
                 filters.append(SpellsNew.buffduration > 0)
                 filters.append(SpellsNew.effectid1 == 0)

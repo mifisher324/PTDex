@@ -724,6 +724,7 @@ def item_search():
     full_detail = False
     show_click = False
     show_proc = False
+    show_proc_max_damage = False
     data = request.form
 
     # Make sure _something_ was provided
@@ -837,6 +838,8 @@ def item_search():
     if 'proc_type' in data and data['proc_type'] != 'None':
         filters.update({'proc_type': data['proc_type']})
         show_proc = True
+        if data['proc_type'] == 'All':
+            show_proc_max_damage = True
 
     # Handle Click Effect Items
     if 'click' in data:
@@ -991,7 +994,7 @@ def item_search():
     return render_template('item_search_results.html', data=ret_items, reduce=reduce_restrictions,
                            show_dmg_delay=show_dmg_delay, show_focus=focus, full_detail=full_detail,
                            show_values=show_values, show_click=show_click, show_proc=show_proc, show_worn=worn,
-                           show_inst=inst, show_spells=show_spells)
+                           show_inst=inst, show_spells=show_spells, show_proc_max_damage=show_proc_max_damage)
 
 
 @app.route("/search/weapon", methods=['GET', 'POST'])
