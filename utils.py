@@ -5,8 +5,6 @@ import os
 from sqlalchemy import and_, or_
 from sqlalchemy.orm import Session
 
-from logic import expansion
-
 here = os.path.dirname(__file__)
 
 
@@ -65,6 +63,9 @@ def convert_time(seconds):
 
 
 def get_all_eras():
+    # Imported here, not at the top: logic imports utils, so a top-level import of logic from
+    # utils fails with 'cannot import name expansion' whenever logic is imported first.
+    from logic import expansion
     all_era = {'Classic': 'Classic',
                'Kunark': 'Ruins of Kunark',
                'Velious': 'Scars of Velious',
