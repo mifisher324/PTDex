@@ -78,6 +78,23 @@ if SITE_TYPE != 'Development':
     app.config['SESSION_COOKIE_SECURE'] = True
 app.config['SITE_TYPE'] = SITE_TYPE
 app.config['SITE_VERSION'] = SITE_VERSION
+
+
+# Cross-site request forgery: a request that changes something and carries a logged-in session
+# must come from this site. Browsers send Origin on POST/PUT/PATCH/DELETE (Referer as a fallback);
+# a different host, or neither header, is refused. Anonymous requests (the item and spell search
+# forms) carry no session to abuse and pass. SameSite=Lax above already blocks most of this; this
+# covers older browsers and same-site subdomains.
+@app.before_request
+def _same_origin_for_session_writes():
+    if request.method in ('GET', 'HEAD', 'OPTIONS') or not session:
+        return None
+    from urllib.parse import urlparse
+    source = request.headers.get('Origin') or request.headers.get('Referer')
+    if source and urlparse(source).netloc == request.host:
+        return None
+    app.logger.warning('refused cross-site %s %s (origin %r)', request.method, request.path, source)
+    return 'Cross-site request refused.', 403
 app.config['DISCORD_CLIENT_ID'] = os.environ.get('DISCORD_CLIENT_ID', site_config.get('discord', 'client_id'))
 app.config['DISCORD_CLIENT_SECRET'] = os.environ.get('DISCORD_CLIENT_SECRET', site_config.get('discord', 'client_secret'))
 

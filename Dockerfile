@@ -9,7 +9,12 @@ RUN pip install --no-cache-dir -r requirements.txt
 # /app/configuration.ini or pass settings as environment variables.
 COPY . .
 
-RUN mkdir -p /app/logs && chmod 777 /app/logs
+# Run as an unprivileged user. It owns /app because the local SQLite store (local_db.db) and the
+# logs are written there.
+RUN useradd --system --uid 10001 --home-dir /app ptdex \
+    && mkdir -p /app/logs \
+    && chown -R ptdex:ptdex /app
+USER ptdex
 
 EXPOSE 5001
 
