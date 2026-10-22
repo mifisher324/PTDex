@@ -369,6 +369,26 @@ function createOption(ddl, text, value) {
       }
 };
 </script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const itemType = document.getElementById('i_type');
+    const augType = document.getElementById('aug_type');
+
+    function updateAugType() {
+        if (itemType.value === 'Augment') {
+            augType.disabled = false;
+        } else {
+            augType.value = 'None';      // Reset to All Aug Types
+            augType.disabled = true;
+        }
+    }
+
+    itemType.addEventListener('change', updateAugType);
+
+    // Set correct state on initial page load
+    updateAugType();
+});
+</script>
 {% set classes = ['Bard', 'Beastlord', 'Berserker', 'Cleric', 'Druid', 'Enchanter', 'Magician', 'Monk', 'Necromancer',
 'Paladin', 'Ranger', 'Rogue', 'Shadow Knight', 'Shaman', 'Warrior', 'Wizard'] %}
 {% set slots = ['Arms', 'Back', 'Charm', 'Chest', 'Ear', 'Face', 'Feet', 'Finger', 'Hands', 'Head',
@@ -419,13 +439,21 @@ function createOption(ddl, text, value) {
                         </select></td>
                     </tr>
                     <td>Item Type:</td>
-                    <td><select name="i_type">
+                    <td><select name="i_type" id="i_type">
                         <option value="None" selected="Selected">All Types</option>
                         {% for option in i_types %}
                         <option value="{{option}}">{{option}}</option>
                         {% endfor %}
                     </select>
                         </tr>
+                    <td>Aug Type:</td>
+                        <td><select name="aug_type" id="aug_type">
+                        <option value="None" selected="Selected">All Aug Types</option>
+                        <option value="1">Type 1</option>
+                        <option value="2">Type 2</option>
+                        <option value="4">Type 4</option>
+                        <option value="8">Type 8</option>
+                </select></td>
                         <tr>
                             <td>Skill Mod Type:</td>
                             <td><select name="skillmodtype">

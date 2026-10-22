@@ -2121,16 +2121,16 @@ def get_aug_types(num):
             out_str = '5 (FIX ME), '
         if num >= 8:
             num -= 8
-            out_str = '4 (Weapon), '
+            out_str = '4 (Weapon), ' + out_str
         if num >= 4:
             num -= 4
-            out_str = '3 (Spells), '
+            out_str = '3 (Spells), ' + out_str
         if num >= 2:
             num -= 2
-            out_str = '2 (Elite), '
+            out_str = '2 (Elite), ' + out_str
         if num >= 1:
             num -= 1
-            out_str = '1 (Stats), '
+            out_str = '1 (Stats), ' + out_str
     return out_str[:-2]
 
 
@@ -2373,7 +2373,6 @@ def lookup_weapon_types(name):
         return 7
     else:
         return 10
-
 
 def get_stat_weights(weights, item, bane_body=None):
     """Helper to calculate and return stat weights."""

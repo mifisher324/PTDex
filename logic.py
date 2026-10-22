@@ -458,6 +458,8 @@ def get_era_items(kwargs):
     special_item_ids = []
     ts_item_ids = []
     quest_items = []
+    vendor_items = []
+    vendor_ids = []
     for era in kwargs['eras']:
         zone_id_list = utils.get_era_zones(era)
         for zone_id in zone_id_list:
@@ -488,6 +490,14 @@ def get_era_items(kwargs):
             with open(os.path.join(here, f'item_files/{era}_special.txt'), 'r') as fh:
                 file_data = fh.read()
             special_item_ids += file_data.split('\n')
+
+        # Certain expansions have specialized vendors (LDoN, DoN, etc) that have items at the higest level.
+        # Read the file for that expansion so we can get the NPC IDs, then with those NPCs, get all of the items
+        # that they sell
+        if os.path.exists(os.path.join(here, f'item_files/{era}_vendors.txt')):
+            with open(os.path.join(here, f'item_files/{era}_vendors.txt'), 'r') as fh:
+                file_data = fh.read()
+            vendor_ids = file_data.split('\n')
 
     filters = []
     class_or_filters = []
@@ -544,7 +554,11 @@ def get_era_items(kwargs):
 
     # Apply universal filters
     if aug_search:
-        filters.append(Item.augtype > 0)
+        if kwargs['aug_type'] == 'None':
+            filters.append(Item.augtype > 0)
+        else:
+            mask = 2**(int(kwargs['aug_type'])-1)
+            filters.append(Item.augtype.op('&')(mask) == mask)
 
     if kwargs.get('exclude_augs'):
         filters.append(Item.augtype == 0)
@@ -573,10 +587,30 @@ def get_era_items(kwargs):
             group_by(Item.id)
         result = query.all()
 
-    for entry in result:
-        new_item = dict(entry._mapping)
-        new_item['id'] = new_item['id'] + 2000000
-        base_items.append(new_item)
+        for entry in result:
+            new_item = dict(entry._mapping)
+            new_item['id'] = new_item['id'] + 2000000
+            base_items.append(new_item)
+
+        if vendor_ids:
+            vendor_filters = []
+            for entry in vendor_ids:
+                vendor_filters.append(NPCTypes.id == entry)
+            vendor_params = or_(*vendor_filters)
+
+            query = session.query(Item.id, NPCTypes.id.label('npc_id'), NPCTypes.name.label('npc_name')).\
+                filter(vendor_params).\
+                filter(and_(NPCTypes.id == MerchantList.merchantid, MerchantList.item == Item.id)).\
+                filter(class_or_params).\
+                filter(weapon_or_params).\
+                filter(symp_or_params).\
+                group_by(Item.id)
+
+            result = query.all()
+
+            for entry in result:
+                if entry[0] >= 2000000:
+                    vendor_items.append({'id': entry[0], 'npc_id': entry[1], 'npc_name': entry[2] + ' (Vendor)'})
 
     if quest_item_ids:
         item_id_filters = []
@@ -627,14 +661,14 @@ def get_era_items(kwargs):
             result = query.all()
         for entry in result:
             ts_items.append({'id': entry[0], 'npc_id': -2, 'npc_name': 'Tradeskills'})
-    return base_items, special_items, quest_items, ts_items
+    return base_items, special_items, quest_items, ts_items, vendor_items
 
 
-def create_lookup_table(base_items, tradeskill_items, quest_items, special_items):
+def create_lookup_table(base_items, tradeskill_items, quest_items, special_items, vendor_items):
     """Returns item id filters and an associated lookup table."""
     lookup = {}
     item_ids = []
-    for entry in base_items + tradeskill_items + quest_items + special_items:
+    for entry in base_items + tradeskill_items + quest_items + special_items + vendor_items:
         item_ids.append(Item.id == entry['id'])
         lookup.update({entry['id']: {'npc_id': entry['npc_id'], 'npc_name': entry['npc_name']}})
     return item_ids, lookup
@@ -643,19 +677,19 @@ def create_lookup_table(base_items, tradeskill_items, quest_items, special_items
 def get_items_with_filters(weights, ignore_zero, **kwargs):
     """Returns all items with filters provided"""
     # Get the base items, tradeskill items, and quest items that drop from the zones in the eras requested.
-    base_items, special_items, quest_items, tradeskill_items = get_era_items(kwargs)
-    if not base_items and not tradeskill_items and not quest_items and not special_items:
+    base_items, special_items, quest_items, tradeskill_items, vendor_items = get_era_items(kwargs)
+    if not base_items and not tradeskill_items and not quest_items and not special_items and not vendor_items:
         return [], False, False, False
 
     # Create the lookup table
-    item_ids, lookup_table = create_lookup_table(base_items, tradeskill_items, quest_items, special_items)
+    item_ids, lookup_table = create_lookup_table(base_items, tradeskill_items, quest_items, special_items, vendor_items)
 
     # Set up basic database filters
     filters = []
     focus_or_filters = []
 
     skip_filters = ['item_name', 'g_class_1', 'g_class_2', 'g_class_3', 'g_slot', 'i_type', 'no_rent', 'sub_type',
-                    'sympathetic', 'eras', 'w_eff', 'pet_search', 'skillmodtype', 'exclude_augs']
+                    'sympathetic', 'eras', 'w_eff', 'pet_search', 'skillmodtype', 'exclude_augs', 'aug_type']
     bane_body = False
     for entry in kwargs:
         if entry in skip_filters:

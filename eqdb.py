@@ -828,6 +828,10 @@ def item_search():
                 return redirect(url_for('error'))
 
         filters.update({'i_type': i_type})
+        if i_type == 'Augment':
+            aug_type = data.get('aug_type')
+            if aug_type != "None":
+                filters.update({'aug_type': aug_type})
 
     # Handle Eras
     base_era_list = utils.get_all_eras().keys()
