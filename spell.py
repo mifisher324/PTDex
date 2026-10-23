@@ -1328,7 +1328,7 @@ def translate_spa(spa, min_val, limit_val, formula, max_val, min_level, data, no
             return f"Limit: Exclude Effect '{spa_name}'"
     elif spa == 138:
         # Focus: Beneficial or Detrimental (w/o this, its all spells)
-        if not min_val:
+        if min_val:
             return 'Limit: Beneficial Spells Only'
         else:
             return 'Limit: Detrimental Spells Only'
