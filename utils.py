@@ -2112,25 +2112,25 @@ def get_aug_types(num):
             out_str = '8 (General: Raid), ' + out_str
         if num >= 64:
             num -= 64
-            out_str = '7 (FIX ME), '
+            out_str = '7 (General: Group), ' + out_str
         if num >= 32:
             num -= 32
-            out_str = '6 (FIX ME), '
+            out_str = '6 (Weapon: Base Damage), ' + out_str
         if num >= 16:
             num -= 16
-            out_str = '5 (FIX ME), '
+            out_str = '5 (Weapon: Elem Damage), ' + out_str
         if num >= 8:
             num -= 8
-            out_str = '4 (Weapon), '
+            out_str = '4 (Weapon), ' + out_str
         if num >= 4:
             num -= 4
-            out_str = '3 (Spells), '
+            out_str = '3 (Spells), ' + out_str
         if num >= 2:
             num -= 2
-            out_str = '2 (Elite), '
+            out_str = '2 (Elite), ' + out_str
         if num >= 1:
             num -= 1
-            out_str = '1 (Stats), '
+            out_str = '1 (Stats), ' + out_str
     return out_str[:-2]
 
 
