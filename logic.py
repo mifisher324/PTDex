@@ -497,7 +497,7 @@ def get_era_items(kwargs):
         if os.path.exists(os.path.join(here, f'item_files/{era}_vendors.txt')):
             with open(os.path.join(here, f'item_files/{era}_vendors.txt'), 'r') as fh:
                 file_data = fh.read()
-            vendor_ids = file_data.split('\n')
+            vendor_ids += file_data.split('\n')
 
     filters = []
     class_or_filters = []
@@ -604,6 +604,7 @@ def get_era_items(kwargs):
                 filter(class_or_params).\
                 filter(weapon_or_params).\
                 filter(symp_or_params).\
+                filter(params).\
                 group_by(Item.id)
 
             result = query.all()
@@ -623,6 +624,7 @@ def get_era_items(kwargs):
                 filter(params).\
                 filter(class_or_params).\
                 filter(weapon_or_params).\
+                filter(params).\
                 group_by(Item.id)
             result = query.all()
         for entry in result:
